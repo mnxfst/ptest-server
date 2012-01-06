@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.mnxfst.testing</groupId>
+  <artifactId>ptest-server</artifactId>
+  <version>0.0.1</version>
+  <name>ptest-server</name>
+  <description>performance testing server component</description>
+  <organization>
+  	<name>mnxfst</name>
+  	<url>www.kreutzfeldt.net</url>
+  </organization>
+
+  <developers>
+  	<developer>
+  		<id>mnxfst</id>
+  		<name>Christian Kreutzfeldt</name>
+  		<email>mnxfst@googlemail.com</email>
+  		<roles>
+  			<role>Architect</role>
+  			<role>Developer</role>
+  		</roles>
+  	</developer>
+  </developers>
+
+  <dependencies>
+  
+    <!-- testing -->
+  	<dependency>
+  		<groupId>junit</groupId>
+  		<artifactId>junit</artifactId>
+  		<version>4.8.2</version>
+  	</dependency>
+  	
+  	<!-- jboss netty -->
+  	<dependency>
+  		<groupId>org.jboss.netty</groupId>
+  		<artifactId>netty</artifactId>
+  		<version>3.2.6.Final</version>
+  	</dependency>
+  	
+  	<!-- logging -->
+  	<dependency>
+  		<groupId>log4j</groupId>
+  		<artifactId>log4j</artifactId>
+  		<version>1.2.12</version>
+  	</dependency>
+  	
+  	<!-- commons -->
+  	<dependency>
+  		<groupId>commons-lang</groupId>
+  		<artifactId>commons-lang</artifactId>
+  		<version>2.6</version>
+  	</dependency>
+  	
+	<dependency>
+		<groupId>commons-io</groupId>
+		<artifactId>commons-io</artifactId>
+		<version>2.1</version>
+	</dependency>  	
+  	
+	<dependency>
+    	<groupId>org.apache.httpcomponents</groupId>
+    	<artifactId>httpclient</artifactId>
+    	<version>4.1.2</version>
+    	<scope>compile</scope>
+  	</dependency>  	
+  </dependencies>
+</project>
