@@ -254,10 +254,11 @@ public class TestTSPlanBuilder {
 		
 		options = builder.parseGlobalConfigurationOptions(doc);
 		Assert.assertNotNull("The result must not be null", options);
-		Assert.assertEquals("The result must contain 3 config options", 3, options.size());
+		Assert.assertEquals("The result must contain 3 config options", 5, options.size());
 		Assert.assertNotNull("There must be an option for 'cassandraStats'", options.get("cassandraStats"));
 		Assert.assertNotNull("There must be an option for 'httpRequestConfig'", options.get("httpRequestConfig"));
 		Assert.assertNotNull("There must be an option for 'smtpServer'", options.get("smtpServer"));
+		Assert.assertNotNull("There must be an option for 'soapRequestConfig'", options.get("soapRequestConfig"));
 		Assert.assertNull("There must not be an option for 'doesNotExist'", options.get("doesNotExist"));
 		
 	}
