@@ -40,6 +40,11 @@ import com.mnxfst.testing.exception.TSPlanConfigurationFormatException;
 import com.mnxfst.testing.exception.TSPlanInstantiationException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 
+/**
+ * Test case for {@link TSPlanBuilder}
+ * @author mnxfst
+ *
+ */
 public class TestTSPlanBuilder {
 
 	@Test
@@ -225,28 +230,13 @@ public class TestTSPlanBuilder {
 		
 		Assert.assertNotNull("The plan must not be null", plan);
 		
-		TSPlanConfigOption singleOption = plan.getConfigurationOption("cassandraStats");		
+		TSPlanConfigOption singleOption = plan.getConfigurationOption("rndCtxValGenCfg");		
 		Assert.assertNotNull("The result must not be null", singleOption);
-		Assert.assertEquals("The options must be named 'cassandraStats'", "cassandraStats", singleOption.getName());
-		Assert.assertEquals("The url must be localhost", "localhost", singleOption.getOption("url"));
-		Assert.assertEquals("The port must be 9160", "9160", singleOption.getOption("port"));
-		Assert.assertEquals("The user must be testUser", "testUser", singleOption.getOption("user"));	
-		Assert.assertEquals("The password must be {SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd", "{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd", singleOption.getOption("password"));
-		Assert.assertEquals("The keyspace must be stats", "stats", singleOption.getOption("keyspace"));
-		Assert.assertNull("The empty attribute value must be null", singleOption.getOption("empty"));
-		Assert.assertEquals("The size of the options set must be 5", 5, singleOption.getOptions().size());
-
-		Assert.assertNotNull("A config set must exist for 'smtpServer'", plan.getConfigurationOption("smtpServer"));
-
-		HTTPRequestActivity httpReqActivity = (HTTPRequestActivity)plan.getActivity("httpRequestIn");
-		Assert.assertNotNull("The request activity must not be null", httpReqActivity);
-		Assert.assertEquals("The proxy url must be 'proxy.mnxfst.com'", "proxy.mnxfst.com", httpReqActivity.getConfiguration().getOption("proxyUrl"));
-		Assert.assertEquals("The proxy port must be '4321'", "4321", httpReqActivity.getConfiguration().getOption("proxyPort"));
-		Assert.assertEquals("The proxy user must be 'testUser'", "testUser", httpReqActivity.getConfiguration().getOption("proxyUser"));
-		Assert.assertEquals("The proxy password must be '{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd'", "{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd", httpReqActivity.getConfiguration().getOption("proxyPassword"));
-		Assert.assertEquals("The testKey param has the value testValue", "testValue", httpReqActivity.getConfiguration().getOption("request.param.testKey"));
-		Assert.assertEquals("The anotherKey param has the value anotherValue", "anotherValue", httpReqActivity.getConfiguration().getOption("request.param.anotherKey"));
-		
+		Assert.assertEquals("The options must be named 'rndCtxValGenCfg'", "rndCtxValGenCfg", singleOption.getName());
+		Assert.assertEquals("The value of generate.variable.arg0 must be integer", "integer", singleOption.getOption("generate.variable.arg0"));
+		Assert.assertEquals("The value of generate.variable.arg1 must be string", "string", singleOption.getOption("generate.variable.arg1"));
+		Assert.assertEquals("The value of generate.variable.arg2 must be boolean", "boolean", singleOption.getOption("generate.variable.arg2"));
+		Assert.assertEquals("The value of generate.variable.arg3 must be date", "date", singleOption.getOption("generate.variable.arg3"));
 		
 	}
 	
@@ -274,11 +264,8 @@ public class TestTSPlanBuilder {
 		
 		options = builder.parseGlobalConfigurationOptions(doc);
 		Assert.assertNotNull("The result must not be null", options);
-		Assert.assertEquals("The result must contain 3 config options", 5, options.size());
-		Assert.assertNotNull("There must be an option for 'cassandraStats'", options.get("cassandraStats"));
-		Assert.assertNotNull("There must be an option for 'httpRequestConfig'", options.get("httpRequestConfig"));
-		Assert.assertNotNull("There must be an option for 'smtpServer'", options.get("smtpServer"));
-		Assert.assertNotNull("There must be an option for 'soapRequestConfig'", options.get("soapRequestConfig"));
+		Assert.assertEquals("The result must contain 3 config options", 1, options.size());
+		Assert.assertNotNull("There must be an option for 'rndCtxValGenCfg'", options.get("rndCtxValGenCfg"));
 		Assert.assertNull("There must not be an option for 'doesNotExist'", options.get("doesNotExist"));
 		
 	}

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ptestplan>
+	<name>sample test plan name</name>
+	<description>sample description</description>
+	<creationDate>2011-12-20</creationDate>
+	<createdBy>mnxfst</createdBy>
+	<initActivity>randomCtxValGen</initActivity>
+	
+	<globalConfiguration>
+		<configuration name="cassandraStats">
+			<url>localhost</url>
+			<port>9160</port>
+			<user>testUser</user>
+			<password>{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd</password>
+			<keyspace>stats</keyspace>
+		</configuration>
+		<configuration name="smtpServer">
+			<url>smtp.googlemail.com</url>
+			<user>test-user</user>
+			<password>{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd</password>
+		</configuration>
+
+		<!-- global configuration options must be identical to local configuration options -->		
+		<configuration name="httpRequestConfig">
+			<maxConnections>300</maxConnections>
+			<method>GET</method>
+			<scheme>http</scheme>
+			<host>localhost</host>
+			<port>8080</port>
+			<path>/examples/servlets/servlet/RequestHeaderExample</path>
+			<parameterEncoding>UTF-8</parameterEncoding>
+			<request.param.testKey>testValue</request.param.testKey>
+			<request.param.anotherKey>anotherValue</request.param.anotherKey>
+
+			<proxyUrl>proxy.mnxfst.com</proxyUrl>
+			<proxyPort>4321</proxyPort>
+			<proxyUser>testUser</proxyUser>
+			<proxyPassword>{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd</proxyPassword>				
+		</configuration>
+
+		<configuration name="soapRequestConfig">
+			<maxConnections>300</maxConnections>
+			<scheme>http</scheme>
+			<host>localhost</host>
+			<port>8080</port>
+			<path>/address-validation/AddressValidationWS</path>
+						
+			<soapAction></soapAction>
+			<payloadTemplate><![CDATA[
+			<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://ws.addressvalidation.mock.mnxfst.com/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ws:addressValidation>
+         <arg0>${arg0}</arg0>
+         <arg1>${arg1}</arg1>
+         <arg2>${arg2}</arg2>
+         <arg3>${arg3}</arg3>
+         <arg4>${arg4}</arg4>
+         <arg5>${arg5}</arg5>
+         <arg6>${arg6}</arg6>
+         <arg7>${arg7}</arg7>
+         <arg8>${arg8}</arg8>
+         <arg9>${arg9}</arg9>
+      </ws:addressValidation>
+   </soapenv:Body>
+</soapenv:Envelope>
+			]]></payloadTemplate>
+			<payloadEncoding>UTF-8</payloadEncoding>
+		</configuration>
+		
+		<configuration name="soapRequestConfigSaved">
+			<maxConnections>300</maxConnections>
+			<scheme>http</scheme>
+			<host>www.webservicex.net</host>
+			<port></port>
+			<path>/stockquote.asmx</path>
+			
+			<proxyUrl>proxy.mnxfst.com</proxyUrl>
+			<proxyPort>1234</proxyPort>
+
+			<soapAction>http://www.webserviceX.NET/GetQuote</soapAction>
+			<payloadTemplate><![CDATA[<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><GetQuote xmlns="http://www.webserviceX.NET/"><symbol>IBM</symbol></GetQuote></soap:Body></soap:Envelope>]]></payloadTemplate>
+			<payloadEncoding>UTF-8</payloadEncoding>
+		</configuration>
+		
+	</globalConfiguration>
+	
+	<activities>
+	
+		<!-- random value generator activity -->
+		<activity id="randomCtxValueGenerator" name="randomCtxValGen">
+			<description>Generate random variable values and store them under the given variable</description>
+			<class>com.mnxfst.testing.activities.context.RandomCtxVarGenActivity</class>
+			<configuration>
+				<generate.variable.arg0>integer</generate.variable.arg0>
+				<generate.variable.arg1>integer</generate.variable.arg1>
+				<generate.variable.arg2>integer</generate.variable.arg2>
+				<generate.variable.arg3>integer</generate.variable.arg3>
+				<generate.variable.arg4>integer</generate.variable.arg4>
+				<generate.variable.arg5>integer</generate.variable.arg5>
+				<generate.variable.arg6>integer</generate.variable.arg6>
+				<generate.variable.arg7>integer</generate.variable.arg7>
+				<generate.variable.arg8>integer</generate.variable.arg8>
+				<generate.variable.arg9>integer</generate.variable.arg9>
+			</configuration>
+			<nextActivity>initTimestamp</nextActivity>
+		</activity>			
+		
+		
+		<!-- set timestamp -->
+		<activity id="timestamp" name="initTimestamp">
+			<description>Sets an initial timestamp stored under the given variable</description>
+			<class>com.mnxfst.testing.activities.timer.TimestampActivity</class>
+			<contextVariable>initTimestamp</contextVariable>			
+			<nextActivity>soapRequestIn</nextActivity>
+		</activity>
+	
+		<!-- send initial request to heise.de -->
+		<activity id="httpRequest" name="httpRequestIn" useGlobalConfig="httpRequestConfig">
+			<description>Send request to www.heise.de</description>
+			<class>com.mnxfst.testing.activities.http.HTTPRequestActivity</class>
+			<contextVariable>httpResponse1</contextVariable>
+
+			<nextActivity>soapRequestIn</nextActivity>
+			<!-- reset to responseLogWriter -->
+		</activity>
+	
+		<!-- send soap request to http://www.webservicex.net/stockquote.asmx?op=GetQuote -->
+		<activity id="soapRequest" name="soapRequestIn" useGlobalConfig="soapRequestConfig">
+			<description>Send soap request to http://www.webservicex.net/stockquote.asmx?op=GetQuote</description>
+			<class>com.mnxfst.testing.activities.http.SOAPRequestActivity</class>
+			<contextVariable>soapResponse1</contextVariable>
+
+			<nextActivity>finalTimestamp</nextActivity>
+			<!-- reset to responseLogWriter -->
+		</activity>
+
+		<activity id="timestamp" name="finalTimestamp">
+			<description>Sets an initial timestamp stored under the given variable</description>
+			<class>com.mnxfst.testing.activities.timer.TimestampActivity</class>
+			<contextVariable>finalTimestamp</contextVariable>			
+			<nextActivity>simpleDurationLogger</nextActivity>
+		</activity>
+s
+		<activity id="simpleDurationLogger" name="simpleDurationLogger">
+			<description>Write out context</description>
+			<class>com.mnxfst.testing.activities.timer.SimpleDurationLoggerActivity</class>
+			<configuration>
+				<startTimestampVariable>initTimestamp</startTimestampVariable>
+				<endTimestampVariable>finalTimestamp</endTimestampVariable>
+			</configuration>
+			<contextVariable>sampleTestplanExecutionDuration</contextVariable>
+			<nextActivity>finish</nextActivity>
+		</activity>		
+		
+		<!-- write response to log file -->
+		<!-- 
+		<activity id="responseLog4j" name="responseLogWriter">
+			<description>Write http response to log file at c:/temp/test.log</description>
+			<class>com.mnxfst.testing.activities.http.HTTPResponseLog4j</class>
+			<properties>
+				<file>src/test/resources/log4j.properties</file>
+				<url>to be defined</url>
+			</properties>
+			<message>this is a log file written at ${timestamp}. the init timestamp is set to ${initTimestamp}</message>
+			<level>DEBUG</level>
+			<nextActivity>cblOR</nextActivity>
+		</activity>
+		 -->
+		
+		<!-- content based OR -->
+		<!-- 
+		<activity id="contentBasedRegExpOR" name="cblOR">
+			<description>Decide on response content whether to finish test plan or send mail</description>
+			<name>Content-Based Logic OR</name>
+			<class>com.mnxfst.testing.activities.logic.ContentBasedRegExpOR</class>
+			<expressions>
+				<expression>
+					<field>mappedTestVariable</field>
+					<regExp>ABC|abc</regExp>
+					<nextActivity>sendInfoMailAdmin</nextActivity>
+				</expression>
+				<expression>
+					<field>mappedTestVariable</field>
+					<regExp>DEF|def</regExp>
+					<nextActivity>sendInfoMailUser</nextActivity>				
+				</expression>
+			</expressions>
+			<nextActivity>finishTimestamp</nextActivity>
+		</activity>
+		 -->
+		 
+		<!-- send info mail to admin -->
+		<!-- 
+		<activity id="sendMail" name="sendInfoMailAdmin">
+			<description>Send mail to administrator</description>
+			<class>com.mnxfst.testing.activities.communication.SendMail</class>
+			<email>ptestAdmin@googlemail.com</email>
+			<smptServer>
+				<url>mail.google.com</url>
+				<user>test-admin</user>
+				<password>testPWD</password>
+			</smptServer>
+			<nextActivity>finishTimestamp</nextActivity>
+		</activity>
+		 -->
+		 
+		<!-- send info mail to user -->
+		<!-- 
+		<activity id="sendMail" name="sendInfoMailUser">
+			<description>Send mail to user</description>
+			<class>com.mnxfst.testing.activities.communication.SendMail</class>
+			<email>mnxfst@googlemail.com</email>
+			<smptServer>
+				<url>mail.google.com</url>
+				<user>test-user</user>
+				<password>testPassword</password>
+			</smptServer>
+			<nextActivity>finishTimestamp</nextActivity>
+		</activity>
+ 		-->
+ 		
+		<!-- set timestamp -->
+		<!--
+		<activity id="timestamp" name="finishTimestamp">
+			<description>Sets the final timestamp stored under the given variable</description>
+			<class>com.mnxfst.testing.activities.timer.Timestamp</class>
+			<variable>finishTimestamp</variable>
+			<nextActivity>statsSaver</nextActivity>
+		</activity>
+		 -->
+		 
+		<!-- database writer -->
+		<!-- store mapped variables as dynamic attributes? nosql databases only -->
+		<!-- 
+		<activity id="statisticsWriter" name="statsSaver">
+			<storageType>cassandra</storageType>
+			<storageConfig>cassandraStats</storageConfig>			
+			<storeDynamicAttributes>true</storeDynamicAttributes>
+			<nextActivity>finish</nextActivity>
+		</activity>
+		 -->
+		<!-- finish -->
+		<!-- 
+		<activity id="finish" name="finish">
+			<description>Final activity</description>
+			<class>com.mnxfst.testing.activities.Finish</class>			
+		</activity>
+		 -->
+	</activities>		
+	<fuck></fuck>
+</ptestplan>

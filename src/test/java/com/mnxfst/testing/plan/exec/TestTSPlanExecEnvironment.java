@@ -20,8 +20,6 @@
 package com.mnxfst.testing.plan.exec;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -30,6 +28,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
+import com.mnxfst.testing.exception.TSPlanInstantiationException;
 import com.mnxfst.testing.exception.TSPlanMissingException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.TSPlanBuilder;
@@ -45,43 +44,77 @@ public class TestTSPlanExecEnvironment {
 	@Test
 	public void testExecute() throws Exception {
 		
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
-		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
-
-		TSPlanExecEnvironment env = new TSPlanExecEnvironment("test-env", plan, 1, TSPlanRecurrenceType.TIMES, 1);
-		//Assert.assertEquals("The number of parallel threads executing the test plan must be 4", 4, env.getNumberOfParallelExecutors());
-
-		List<TSPlanResult> results = env.execute();
-		Assert.assertNotNull("The result set must not be null", results);
-//		Assert.assertEquals("The number of results must be 4", plan.getNumOfExecEnvironments() , results.size());
-
 		try {
-			env = new TSPlanExecEnvironment("test-env", null, 2, TSPlanRecurrenceType.TIMES, 2);
+			new TSPlanExecEnvironment(null,  null, -1, null, -1);
+			Assert.fail("Mssing env identifier");
+		} catch(TSPlanInstantiationException e) {
+			//
+		}
+		
+		try {
+			new TSPlanExecEnvironment("test-env", null, 2, TSPlanRecurrenceType.TIMES, 2);
 			Assert.fail("Missing test plan class");
 		} catch(TSPlanMissingException e) {
 			//
 		}		
+
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
+		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
+
+		try {
+			new TSPlanExecEnvironment("test-env", plan, 0, TSPlanRecurrenceType.TIMES, -1);
+			Assert.fail("Invalid number of recurrences");
+		} catch(TSPlanInstantiationException e) {
+			//
+		}		
+
+		try {
+			new TSPlanExecEnvironment("test-env", plan, 1, null, -1);
+			Assert.fail("Unknown recurrence type");
+		} catch(TSPlanInstantiationException e) {
+			//
+		}		
+
+		try {
+			new TSPlanExecEnvironment("test-env", plan, 1, TSPlanRecurrenceType.UNKNOWN, -1);
+			Assert.fail("Unknown recurrence type");
+		} catch(TSPlanInstantiationException e) {
+			//
+		}		
+
+		try {
+			new TSPlanExecEnvironment("test-env", plan, 1, TSPlanRecurrenceType.TIMES, 0);
+			Assert.fail("Invalid number of threads");
+		} catch(TSPlanInstantiationException e) {
+			//
+		}		
+
+		TSPlanExecEnvironment env = new TSPlanExecEnvironment("test-env", plan, 10, TSPlanRecurrenceType.TIMES, 2);
+
+		List<TSPlanResult> results = env.execute();
+		Assert.assertNotNull("The result set must not be null", results);
+		Assert.assertEquals("The number of results must be 2", 2 , results.size());
+
 	}
 	
 	
 	@Test
-	public void testMassiveParallelExec() throws Exception {
+	public void testParallelPlanExecution() throws Exception {
 		
+		// fetch test plan and instantiate corresponding entity
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
-		
-		ExecutorService service = Executors.newCachedThreadPool();
+
+		// instantiate environment and execute tests
 		TSPlanExecEnvironment env = new TSPlanExecEnvironment("env-1", plan, 5, TSPlanRecurrenceType.TIMES, 8);
 		List<TSPlanResult> result = env.execute();
-		long avg = 0;
-		int count = 0;
-		for(TSPlanResult r : result) {
-			avg = avg + r.getDurationMillis();
-			count = count + 1;
-			System.out.println("Executor: " + r.getPlanExecutorId() + ", Duration: " + r.getDurationMillis()+ "ms");
-		}
-		System.out.println("Average: " + (avg / count) + "ms");
+
+		Assert.assertNotNull("The result must not be null", result);
+		Assert.assertEquals("The result must contain 8 elements", 8, result.size());
 		
+		for(TSPlanResult r : result) {
+			Assert.assertTrue("The overall execution time for this test must be equal or greater than 100ms", (100 <= r.getDurationMillis()));
+		}
 		
 	}
 }

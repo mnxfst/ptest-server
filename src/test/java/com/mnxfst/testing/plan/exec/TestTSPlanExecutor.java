@@ -54,7 +54,9 @@ public class TestTSPlanExecutor {
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 		TSPlanResult result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.TIMES).call();
 		Assert.assertNotNull("The result must not be null", result);
-		System.out.println(result.getTestPlanName() + " - "+result.getDurationMillis() + "ms");
+		Assert.assertEquals("The time to wait must be 20", Long.valueOf(20), (Long)result.getContext().get("waitTime"));
+		
+		
 		
 		
 
