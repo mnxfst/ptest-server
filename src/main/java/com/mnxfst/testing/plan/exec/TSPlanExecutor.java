@@ -35,7 +35,7 @@ import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.TSPlanResult;
 
 /**
- * Provides a runtime environment for a single {@link ITSPlan} 
+ * Provides a closed runtime environment for a {@link TSPlan} 
  * @author mnxfst
  * @since 16.12.2011
  */
@@ -43,7 +43,7 @@ public class TSPlanExecutor implements Callable<TSPlanResult> {
 
 	private static final Logger logger = Logger.getLogger(TSPlanExecutor.class);
 	
-	/** must be used by {@link TSPlanActivity} to override next activity value and must be removed by the executor after forwarding to it */ 
+	/** must be used by {@link TSPlanActivity} to override next activity value and must be removed by the {@link TSPlanExecutor} after forwarding to it */ 
 	private static final String NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE = "nextActivity.override";
 	
 	/** name and identifier of final activity. if this one is reached, the executor stops and returns the result */

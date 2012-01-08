@@ -21,7 +21,6 @@ package com.mnxfst.testing.plan.exec;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,47 +35,74 @@ import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.TSPlanResult;
 
 /**
- * Provides a test plan execution environment 
+ * Provides an execution environment for parallel {@link TSPlanExecutor test plan executors} being ramped up
+ * in a configured number of threads. The <i>exec env</i> ensures that each plan executor receives its own
+ * environment as well as it reports back the collected results.  
  * @author mnxfst
  * @since 16.12.2011
  */
-public class TSPlanExecEnvironment implements Callable<List<TSPlanResult>> {
+public class TSPlanExecEnvironment {
 
 	private static final Logger logger = Logger.getLogger(TSPlanExecEnvironment.class); 
 	
+	// number of parallel executors (= threads) to use
 	private int numberOfParallelExecutors = 0;
+	
+	// unique identifier for this execution environment - a test server is able to run more than one although it is highly questionable
 	private String executionEnvironmentId = null;
+	
+	// holds the services which controls the executors
 	private ExecutorService executorService = null;
+	
+	// as the environment is being initialized, it fills this list containing a configured number of test plan executors 
 	private List<TSPlanExecutor> testPlanExecutors = new ArrayList<TSPlanExecutor>();
 	
+	/**
+	 * Initializes the execution environment
+	 * @param executionEnvironmentId
+	 * @param testPlan
+	 * @param recurrences
+	 * @param recurrenceType
+	 * @param numOfParallelExecutors
+	 * @throws TSPlanMissingException
+	 * @throws TSPlanInstantiationException
+	 */
 	public TSPlanExecEnvironment(String executionEnvironmentId, final TSPlan testPlan, int recurrences, TSPlanRecurrenceType recurrenceType, int numOfParallelExecutors) throws TSPlanMissingException, TSPlanInstantiationException {
 
+		// ensure that the provided input is valid
 		if(executionEnvironmentId == null || executionEnvironmentId.isEmpty())
 			throw new TSPlanInstantiationException("Failed to instantiate test plan due to missing execution environment identifier");
 		
 		if(testPlan == null)
 			throw new TSPlanMissingException("Missing required test plan");
 		
+		if(numOfParallelExecutors < 1)
+			throw new TSPlanInstantiationException("Failed to instantiate test plan due to an invalid number of parallel executors provided to execution environment '"+executionEnvironmentId+"'");
+		
+		// assign received values and initialize executor service		
 		this.executionEnvironmentId = executionEnvironmentId;
-		this.numberOfParallelExecutors = numOfParallelExecutors;
-				
-		// initialize executor service
-		this.executorService = Executors.newFixedThreadPool(this.numberOfParallelExecutors);		
+		this.numberOfParallelExecutors = numOfParallelExecutors;			
+		this.executorService = Executors.newFixedThreadPool(this.numberOfParallelExecutors);
+		
+		// instantiate a configured number of test plan executors
 		for(int i = 0; i < this.numberOfParallelExecutors; i++)
 			testPlanExecutors.add(new TSPlanExecutor(testPlan, executionEnvironmentId, executionEnvironmentId + "-executor-"+i, recurrences, recurrenceType));
 		
 		if(logger.isDebugEnabled())
-			logger.debug("New test plan execution environment instantiated: [execEnvId="+executionEnvironmentId+", numOfParallelExecutors="+testPlanExecutors.size()+", testPlan="+testPlan.getName()+", recurrences="+recurrences+", recurrenceType="+recurrenceType+"]");
+			logger.debug("New test plan execution environment instantiated: [execEnvId="+executionEnvironmentId+", testPlan="+testPlan.getName()+", numOfParallelExecutors="+testPlanExecutors.size()+", recurrences="+recurrences+", recurrenceType="+recurrenceType+"]");
 	}
-	
+
 	/**
-	 * @see java.util.concurrent.Callable#call()
+	 * Executes the environment and returns the consolidated results
+	 * @return
+	 * @throws TSPlanExecutionFailedException 
 	 */
-	public List<TSPlanResult> call() throws Exception {
+	public List<TSPlanResult> execute() throws TSPlanExecutionFailedException {
 		
-		// overall result set
+		// overall results 
 		List<TSPlanResult> execEnvResults = new ArrayList<TSPlanResult>();
 		
+		// TODO: check this for large number of executors and large number of recurrences - there were issues the other day in another test environment
 		// test plan invocation results
 		List<Future<TSPlanResult>> testPlanInvocResults = null;
 		try {
@@ -105,11 +131,6 @@ public class TSPlanExecEnvironment implements Callable<List<TSPlanResult>> {
 			
 		
 		return execEnvResults;
-	}
-
-
-	public int getNumberOfParallelExecutors() {
-		return numberOfParallelExecutors;
 	}
 
 }

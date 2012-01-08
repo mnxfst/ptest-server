@@ -19,11 +19,9 @@
 
 package com.mnxfst.testing.plan.exec;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -53,7 +51,7 @@ public class TestTSPlanExecEnvironment {
 		TSPlanExecEnvironment env = new TSPlanExecEnvironment("test-env", plan, 1, TSPlanRecurrenceType.TIMES, 1);
 		//Assert.assertEquals("The number of parallel threads executing the test plan must be 4", 4, env.getNumberOfParallelExecutors());
 
-		List<TSPlanResult> results = env.call();
+		List<TSPlanResult> results = env.execute();
 		Assert.assertNotNull("The result set must not be null", results);
 //		Assert.assertEquals("The number of results must be 4", plan.getNumOfExecEnvironments() , results.size());
 
@@ -65,44 +63,6 @@ public class TestTSPlanExecEnvironment {
 		}		
 	}
 	
-	@Test
-	public void testParallelExecEnvironments() throws Exception {
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
-		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
-		
-		ExecutorService execSvc = Executors.newFixedThreadPool(4);
-		
-		TSPlanExecEnvironment env1 = new TSPlanExecEnvironment("test-env-1", plan, 2, TSPlanRecurrenceType.TIMES, 2);
-		TSPlanExecEnvironment env2 = new TSPlanExecEnvironment("test-env-2", plan, 2, TSPlanRecurrenceType.TIMES, 2);
-		TSPlanExecEnvironment env3 = new TSPlanExecEnvironment("test-env-3", plan, 2, TSPlanRecurrenceType.TIMES, 2);
-		TSPlanExecEnvironment env4 = new TSPlanExecEnvironment("test-env-4", plan, 2, TSPlanRecurrenceType.TIMES, 2);
-		
-		List<TSPlanExecEnvironment> envs = new ArrayList<TSPlanExecEnvironment>();
-		envs.add(env1);
-		envs.add(env2);
-		envs.add(env3);
-		envs.add(env4);
-		
-		List<Future<List<TSPlanResult>>> results = execSvc.invokeAll(envs);
-		Assert.assertNotNull("The result set must not be null", results);
-		Assert.assertEquals("The result must contain 4 elements", 4, results.size());
-		
-		int samples = 0;
-		long duration = 0;
-		int i = 1;
-		for(Future<List<TSPlanResult>> res : results) {
-			List<TSPlanResult> envres = res.get();
-			for(TSPlanResult er : envres) {
-				Assert.assertNotNull("The result must not be null", er);
-				Assert.assertEquals("The exec env must be test-env-"+i, "test-env-"+i, er.getExecutionEnvironmentId());
-//				System.out.println("Env: " + er.getExecutionEnvironmentId() + ", duration: " + er.getDurationMillis() + "ms");
-				duration = duration + er.getDurationMillis();
-				samples = samples + 1;
-			}
-			i = i+1;
-		}
-		System.out.println("Avg. duration: " + (duration / samples) + "ms. Samples: " + samples);
-	}
 	
 	@Test
 	public void testMassiveParallelExec() throws Exception {
@@ -112,7 +72,7 @@ public class TestTSPlanExecEnvironment {
 		
 		ExecutorService service = Executors.newCachedThreadPool();
 		TSPlanExecEnvironment env = new TSPlanExecEnvironment("env-1", plan, 5, TSPlanRecurrenceType.TIMES, 8);
-		List<TSPlanResult> result = env.call();
+		List<TSPlanResult> result = env.execute();
 		long avg = 0;
 		int count = 0;
 		for(TSPlanResult r : result) {
