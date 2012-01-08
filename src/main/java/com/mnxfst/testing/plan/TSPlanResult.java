@@ -27,7 +27,8 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 
 /**
- * Holds the result of a {@link ITSPlan}
+ * Holds the result of a {@link TSPlan} execution. Beside basic timing information the context of a single
+ * run is contained as well
  * @author mnxfst
  *
  */
@@ -46,7 +47,7 @@ public class TSPlanResult implements Serializable {
 	private int errors = 0;
 	private boolean success = false;
 	
-	private Map<String, Serializable> result = new HashMap<String, Serializable>();
+	private Map<String, Serializable> context = new HashMap<String, Serializable>();
 
 	/**
 	 * Initializes the executor result
@@ -125,12 +126,12 @@ public class TSPlanResult implements Serializable {
 	}
 
 
-	public Map<String, Serializable> getResult() {
-		return result;
+	public Map<String, Serializable> getContext() {
+		return context;
 	}
 
-	public void setResult(Map<String, Serializable> result) {
-		this.result = result;
+	public void setContext(Map<String, Serializable> context) {
+		this.context = context;
 	}
 
 	public String getTestPlanName() {
@@ -170,7 +171,7 @@ public class TSPlanResult implements Serializable {
 				.append("durationMillis", this.durationMillis)
 				.append("errors", this.errors)
 				.append("success", this.success)
-				.append("result", this.result).toString();
+				.append("context", this.context).toString();
 				
 	}
 }

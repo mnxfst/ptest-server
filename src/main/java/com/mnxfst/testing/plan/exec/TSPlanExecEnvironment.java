@@ -76,6 +76,12 @@ public class TSPlanExecEnvironment {
 		if(testPlan == null)
 			throw new TSPlanMissingException("Missing required test plan");
 		
+		if(recurrences < 1)
+			throw new TSPlanInstantiationException("Invalid number of recurrences: " + recurrences + ". Values greater 0 are expected");
+		
+		if(recurrenceType == null || recurrenceType == TSPlanRecurrenceType.UNKNOWN)
+			throw new TSPlanInstantiationException("Recurrence type not provided or unknown: " + recurrenceType);
+		
 		if(numOfParallelExecutors < 1)
 			throw new TSPlanInstantiationException("Failed to instantiate test plan due to an invalid number of parallel executors provided to execution environment '"+executionEnvironmentId+"'");
 		

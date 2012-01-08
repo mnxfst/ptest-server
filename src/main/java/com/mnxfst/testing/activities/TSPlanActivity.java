@@ -39,6 +39,7 @@ public interface TSPlanActivity {
 	public abstract void postInit() throws TSPlanActivityExecutionException;
 	
 	/**
+	 * TODO replace input/context variable by context implementation
 	 * Executes a single test plan step
 	 * @param input contains the data to be processed by this step
 	 * @return 

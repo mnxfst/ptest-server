@@ -157,10 +157,10 @@ public class TSPlanExecutor implements Callable<TSPlanResult> {
 		TSPlanResult result = null;
 		if(success) {
 			result = new TSPlanResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, (overallEnd-overallStart), true);
-			result.getResult().putAll(context);
+			result.getContext().putAll(context);
 		} else {
 			result = new TSPlanResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, (overallEnd-overallStart), 1);
-			result.getResult().putAll(context);
+			result.getContext().putAll(context);
 		}
 		
 		return result;

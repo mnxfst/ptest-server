@@ -25,7 +25,6 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
-import com.mnxfst.testing.activities.TSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 
