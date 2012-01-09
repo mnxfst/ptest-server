@@ -20,8 +20,6 @@
 package com.mnxfst.testing.plan;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 
@@ -32,7 +30,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
  * @author mnxfst
  *
  */
-public class TSPlanResult implements Serializable {
+public class TSPlanExecutorResult implements Serializable {
 
 	private static final long serialVersionUID = -636459103997670821L;
 
@@ -45,10 +43,7 @@ public class TSPlanResult implements Serializable {
 	private long durationMillis = 0;
 	
 	private int errors = 0;
-	private boolean success = false;
 	
-	private Map<String, Serializable> context = new HashMap<String, Serializable>();
-
 	/**
 	 * Initializes the executor result
 	 * @param startMillis
@@ -56,7 +51,7 @@ public class TSPlanResult implements Serializable {
 	 * @param durationMillis
 	 * @param errors
 	 */
-	public TSPlanResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, int errors) {
+	public TSPlanExecutorResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, int errors) {
 		this.executionEnvironmentId = executionEnvironmentId;
 		this.planExecutorId = planExecutorId;
 		this.testPlanName = testPlanName;
@@ -64,25 +59,6 @@ public class TSPlanResult implements Serializable {
 		this.endMillis = endMillis;
 		this.durationMillis = durationMillis;
 		this.errors = errors;
-		this.success = false;
-	}
-	
-	/**
-	 * Initializes the executor result
-	 * @param startMillis
-	 * @param endMillis
-	 * @param durationMillis
-	 * @param success
-	 */
-	public TSPlanResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, boolean success) {
-		this.executionEnvironmentId = executionEnvironmentId;
-		this.planExecutorId = planExecutorId;
-		this.testPlanName = testPlanName;
-		this.startMillis = startMillis;
-		this.endMillis = endMillis;
-		this.durationMillis = durationMillis;
-		this.errors = 0;
-		this.success = success;
 	}
 
 	public long getStartMillis() {
@@ -115,23 +91,6 @@ public class TSPlanResult implements Serializable {
 
 	public void setErrors(int errors) {
 		this.errors = errors;
-	}
-
-	public boolean isSuccess() {
-		return success;
-	}
-
-	public void setSuccess(boolean success) {
-		this.success = success;
-	}
-
-
-	public Map<String, Serializable> getContext() {
-		return context;
-	}
-
-	public void setContext(Map<String, Serializable> context) {
-		this.context = context;
 	}
 
 	public String getTestPlanName() {
@@ -169,9 +128,7 @@ public class TSPlanResult implements Serializable {
 				.append("startMillis", this.startMillis)
 				.append("endMillis", this.endMillis)
 				.append("durationMillis", this.durationMillis)
-				.append("errors", this.errors)
-				.append("success", this.success)
-				.append("context", this.context).toString();
+				.append("errors", this.errors).toString();
 				
 	}
 }

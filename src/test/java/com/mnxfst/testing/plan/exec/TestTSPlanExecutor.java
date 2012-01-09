@@ -30,7 +30,7 @@ import org.w3c.dom.Document;
 import com.mnxfst.testing.exception.TSPlanMissingException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.TSPlanBuilder;
-import com.mnxfst.testing.plan.TSPlanResult;
+import com.mnxfst.testing.plan.TSPlanExecutorResult;
 import com.mnxfst.testing.plan.exec.TSPlanExecutor;
 
 /**
@@ -52,9 +52,9 @@ public class TestTSPlanExecutor {
 		
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
-		TSPlanResult result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.TIMES).call();
+		TSPlanExecutorResult result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.TIMES).call();
 		Assert.assertNotNull("The result must not be null", result);
-		Assert.assertEquals("The time to wait must be 20", Long.valueOf(20), (Long)result.getContext().get("waitTime"));
+		Assert.assertTrue("The execution time must be greater than 20ms", 20 <= result.getDurationMillis());
 		
 		
 		

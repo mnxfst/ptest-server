@@ -29,17 +29,18 @@ import java.util.concurrent.Callable;
 import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.activities.TSPlanActivity;
+import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.exception.TSPlanExecutionFailedException;
 import com.mnxfst.testing.exception.TSPlanMissingException;
 import com.mnxfst.testing.plan.TSPlan;
-import com.mnxfst.testing.plan.TSPlanResult;
+import com.mnxfst.testing.plan.TSPlanExecutorResult;
 
 /**
- * Provides a closed runtime environment for a {@link TSPlan} 
+ * Provides a closed runtime environment for a {@link TSPlan}. The results are returned following the {@link TSPlanExecutorResult} structure. 
  * @author mnxfst
  * @since 16.12.2011
  */
-public class TSPlanExecutor implements Callable<TSPlanResult> {
+public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 
 	private static final Logger logger = Logger.getLogger(TSPlanExecutor.class);
 	
@@ -78,12 +79,10 @@ public class TSPlanExecutor implements Callable<TSPlanResult> {
 	 * a {@link TSPlanMissingException} will be thrown
 	 * @see java.util.concurrent.Callable#call()
 	 */
-	public TSPlanResult call() throws Exception {
+	public TSPlanExecutorResult call() throws Exception {
 		if(testPlan == null)
 			throw new TSPlanMissingException("No test plan found");
 
-		boolean success = true;
-		
 		// holds a list of already visited activities -- used for avoiding loops
 		Set<String> alreadyVisitedActivities = new HashSet<String>();
 		
@@ -96,6 +95,9 @@ public class TSPlanExecutor implements Callable<TSPlanResult> {
 		// TODO support timed recurrences
 		if(recurrenceType != TSPlanRecurrenceType.TIMES)
 			throw new TSPlanExecutionFailedException("Unsupported recurrence type: " + recurrenceType);
+
+		// counts the errors which occur while executing an activity
+		int activityExecutionErrorCount = 0;
 
 		for(int i = 0; i < recurrences; i++) {
 		
@@ -110,40 +112,39 @@ public class TSPlanExecutor implements Callable<TSPlanResult> {
 			
 			// fetch the name of the next activity to visit - which is in this case the initial activity
 			String nextActivityName = testPlan.getInitActivityName();
-			try {
-				
-				// as long as the name of the next activity does not equal 'finish' and is not null, execute the next activity
-				while(nextActivityName != null && !nextActivityName.equalsIgnoreCase(FINAL_ACTIVITY_NAME)) {
+			
+			// as long as the name of the next activity does not equal 'finish' and is not null, execute the next activity
+			while(nextActivityName != null && !nextActivityName.equalsIgnoreCase(FINAL_ACTIVITY_NAME)) {
 					
-					// add the activity to the set of already visited one to raise a base for finding loops
-					alreadyVisitedActivities.add(nextActivityName);
+				// add the activity to the set of already visited one to raise a base for finding loops
+				alreadyVisitedActivities.add(nextActivityName);
 					
-					// fetch the next activity and validate it against null
-					currentActivity = testPlan.getActivity(nextActivityName);
-					if(currentActivity == null)
-						throw new TSPlanExecutionFailedException("Test plan execution failed. Unknown activity: " + nextActivityName);
+				// fetch the next activity and validate it against null
+				currentActivity = testPlan.getActivity(nextActivityName);
+				if(currentActivity == null)
+					throw new TSPlanExecutionFailedException("Test plan execution failed. Unknown activity: " + nextActivityName);
 					
+				try {
 					// execute the activity and get the context back
 					context = currentActivity.execute(context);
-	
-					// if the context has a special marker indicating that the "next activity" attribute must be ignored and
-					// the additionally provided activity must be executed, fetch the name and remove the special marker
-					if(context.containsKey(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE)) {
-						nextActivityName = (String)context.get(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
-						context.remove(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
-					// otherwise: fetch the name of the next activity
-					} else {
-						nextActivityName = currentActivity.getNextActivity();
-					}
-					
-					// check if the next activity has already been visited during this plan exeuction
-					if(alreadyVisitedActivities.contains(nextActivityName))
-						throw new TSPlanExecutionFailedException("Test plan execution failed. Loop found for activity: " + nextActivityName);
-					
+				} catch(TSPlanActivityExecutionException e) {
+					activityExecutionErrorCount = activityExecutionErrorCount + 1;
+					logger.error("Failed to execute activity: " + currentActivity.getClass().getName() +". Error: " + e.getMessage(), e);
 				}
-			} catch(TSPlanExecutionFailedException e) {
-				logger.error(e.getMessage(), e);
-				success = false;
+	
+				// if the context has a special marker indicating that the "next activity" attribute must be ignored and
+				// the additionally provided activity must be executed, fetch the name and remove the special marker
+				if(context.containsKey(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE)) {
+					nextActivityName = (String)context.get(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
+					context.remove(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
+					// otherwise: fetch the name of the next activity
+				} else {
+					nextActivityName = currentActivity.getNextActivity();
+				}
+					
+				// check if the next activity has already been visited during this plan exeuction
+				if(alreadyVisitedActivities.contains(nextActivityName))
+					throw new TSPlanExecutionFailedException("Test plan execution failed. Loop found for activity: " + nextActivityName);
 			}
 			
 			if(interrupted)
@@ -151,18 +152,14 @@ public class TSPlanExecutor implements Callable<TSPlanResult> {
 		}
 		
 		long overallEnd = System.currentTimeMillis();
+		
+		long duration = (overallEnd - overallStart);
 
-		logger.info("Duration: " + (overallEnd-overallStart));
+		if(logger.isDebugEnabled())
+			logger.debug("[execEnv:" + executionEnvironmentId + ", executor: " + planExecutorId + ", recurrences: " + recurrences + ", recType: " + recurrenceType + ", duration: " + duration+"]");
 		
-		TSPlanResult result = null;
-		if(success) {
-			result = new TSPlanResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, (overallEnd-overallStart), true);
-			result.getContext().putAll(context);
-		} else {
-			result = new TSPlanResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, (overallEnd-overallStart), 1);
-			result.getContext().putAll(context);
-		}
-		
+		TSPlanExecutorResult result = new TSPlanExecutorResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, duration, activityExecutionErrorCount);
+
 		return result;
 	}
 	

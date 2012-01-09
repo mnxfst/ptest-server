@@ -32,7 +32,8 @@ import com.mnxfst.testing.exception.TSPlanExecutionFailedException;
 import com.mnxfst.testing.exception.TSPlanInstantiationException;
 import com.mnxfst.testing.exception.TSPlanMissingException;
 import com.mnxfst.testing.plan.TSPlan;
-import com.mnxfst.testing.plan.TSPlanResult;
+import com.mnxfst.testing.plan.TSPlanExecEnvironmentResult;
+import com.mnxfst.testing.plan.TSPlanExecutorResult;
 
 /**
  * Provides an execution environment for parallel {@link TSPlanExecutor test plan executors} being ramped up
@@ -56,6 +57,9 @@ public class TSPlanExecEnvironment {
 	
 	// as the environment is being initialized, it fills this list containing a configured number of test plan executors 
 	private List<TSPlanExecutor> testPlanExecutors = new ArrayList<TSPlanExecutor>();
+	
+	// stores the test plan name
+	private String testPlanName = null;
 	
 	/**
 	 * Initializes the execution environment
@@ -89,6 +93,7 @@ public class TSPlanExecEnvironment {
 		this.executionEnvironmentId = executionEnvironmentId;
 		this.numberOfParallelExecutors = numOfParallelExecutors;			
 		this.executorService = Executors.newFixedThreadPool(this.numberOfParallelExecutors);
+		this.testPlanName = testPlan.getName();
 		
 		// instantiate a configured number of test plan executors
 		for(int i = 0; i < this.numberOfParallelExecutors; i++)
@@ -103,14 +108,12 @@ public class TSPlanExecEnvironment {
 	 * @return
 	 * @throws TSPlanExecutionFailedException 
 	 */
-	public List<TSPlanResult> execute() throws TSPlanExecutionFailedException {
+	public TSPlanExecEnvironmentResult execute() throws TSPlanExecutionFailedException {
 		
-		// overall results 
-		List<TSPlanResult> execEnvResults = new ArrayList<TSPlanResult>();
-		
+		long execStart = System.currentTimeMillis();
 		// TODO: check this for large number of executors and large number of recurrences - there were issues the other day in another test environment
 		// test plan invocation results
-		List<Future<TSPlanResult>> testPlanInvocResults = null;
+		List<Future<TSPlanExecutorResult>> testPlanInvocResults = null;
 		try {
 			testPlanInvocResults = executorService.invokeAll(testPlanExecutors);			 
 		} catch (InterruptedException e) {
@@ -120,11 +123,35 @@ public class TSPlanExecEnvironment {
 		// no results found ==> error
 		if(testPlanInvocResults == null)
 			throw new TSPlanExecutionFailedException("Test plan execution failed for all threads in: " + executionEnvironmentId);		
-				
+
+		TSPlanExecEnvironmentResult result = new TSPlanExecEnvironmentResult(executionEnvironmentId, testPlanName);
+		result.setStartMillis(execStart);
+		
+		long averageDuration = 0;
+		int numOfValidResults = 0;
+		long maxDuration = 0;
+		long minDuration = 0;
+		int errors = 0;
+		
 		// iterate through results, extract them, provide missing data, move to overall result set
-		for(Future<TSPlanResult> res : testPlanInvocResults) {
+		for(Future<TSPlanExecutorResult> futureRes : testPlanInvocResults) {
 			try {
-				execEnvResults.add(res.get());
+				TSPlanExecutorResult executorResult = futureRes.get();
+				if(executorResult == null) {
+					logger.error("Failed to retrieve results from a " + TSPlanExecutor.class.getName());
+				} else {
+					averageDuration = averageDuration + executorResult.getDurationMillis();
+					numOfValidResults = numOfValidResults + 1;
+					
+					if(maxDuration < executorResult.getDurationMillis())
+						maxDuration = executorResult.getDurationMillis();
+					if(minDuration > executorResult.getDurationMillis())
+						minDuration = executorResult.getDurationMillis();
+					if(executorResult.getErrors() > 0)
+						errors = errors + executorResult.getErrors();
+					
+					result.addExecutorId(executorResult.getPlanExecutorId());
+				}
 			} catch (InterruptedException e) {
 				throw new TSPlanExecutionFailedException("Test plan execution interrupted in: " + executionEnvironmentId + ". Error: " + e.getMessage(), e);
 			} catch (ExecutionException e) {
@@ -132,11 +159,18 @@ public class TSPlanExecEnvironment {
 			}
 		}
 		
+		long execEnd = System.currentTimeMillis();
+		result.setEndMillis(execEnd);
+		result.setAverageDurationMillis(averageDuration / numOfValidResults);
+		result.setMinDurationMillis(minDuration);
+		result.setMaxDurationMillis(maxDuration);
+		result.setErrors(errors);
+		
 		if(logger.isDebugEnabled())
-			logger.debug("Received " + execEnvResults.size() + " results from " + testPlanExecutors.size() + " executors for runtime environment '"+executionEnvironmentId+"'");
+			logger.debug("[execEnv: " + result.getExecutionEnvironmentId() + ", testPlan: " + result.getTestPlanName() + ", executors: " + result.getExecutorIds().size() + ", avgDuration: " + result.getAverageDurationMillis() + ", minDuration: " + result.getMinDurationMillis()+ ", maxDuration: " + result.getMaxDurationMillis()+"]");
 			
 		
-		return execEnvResults;
+		return result;
 	}
 
 }
