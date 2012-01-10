@@ -63,7 +63,7 @@
 				<logAppender>console</logAppender>
 				<logLevel>DEBUG</logLevel>
 			</configuration>
-			<contextVariable></contextVariable>
+			<contextVariable>ctxLog4jMsg</contextVariable>
 			<nextActivity>finish</nextActivity>
 		</activity>		
 

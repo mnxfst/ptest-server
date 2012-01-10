@@ -21,9 +21,7 @@ package com.mnxfst.testing.activities.log;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
@@ -59,7 +57,7 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 	private String logMessage = null;
 
 	/** contains the variable strings formatted for being used as patterns in String.replaceAll. The contents are being extracted during the init phase and stored as contextVariable/replacePattern */
-	private Map<String, String> logPatternVariables = new HashMap<String, String>();
+	private Map<String, String> logPatternVariables = null;
 	
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#postInit()
@@ -69,11 +67,20 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 		// fetch the configuration options and read out the log pattern
 		TSPlanConfigOption cfgOpt = getConfiguration();
 		
-		this.conversionPattern = (String)cfgOpt.getOption("conversionPattern");
-		this.logMessage = (String)cfgOpt.getOption("logMessage");
-	
-		// fetch the activity name and the associated log appender - if it exists, skip the remaining initialization
+		if(cfgOpt == null)
+			throw new TSPlanActivityExecutionException("Missing required configuration options");
+				
 		String activityName = getName();
+
+		this.conversionPattern = (String)cfgOpt.getOption("conversionPattern");
+		if(conversionPattern == null || conversionPattern.isEmpty())
+			throw new TSPlanActivityExecutionException("Log message conversion pattern missing for activity '"+activityName+"'");
+		
+		this.logMessage = (String)cfgOpt.getOption("logMessage");
+		if(logMessage == null || logMessage.isEmpty())
+			throw new TSPlanActivityExecutionException("Log message missing for activity '"+activityName+"'");
+	
+		// fetch associated log appender - if it exists, skip the remaining initialization
 		Appender activityAppender = logger.getAppender(activityName);
 		if(activityAppender == null) {
 			
@@ -121,7 +128,9 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 				default: {
 					throw new TSPlanActivityExecutionException("Unsupported log level: " + logLevel);
 				}
-			}			
+			}
+			
+			logPatternVariables = getContextVariablesFromString(logMessage);
 			
 			if(logger.isDebugEnabled())
 				logger.debug("ContextLog4jActivity initialized: [activity="+activityName+", appender="+appenderType+", logLevel="+logLevel+"]");
@@ -130,6 +139,9 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 			if(logger.isDebugEnabled())
 				logger.debug("Existing context log appender found for activity: " + activityName);
 		}
+	
+		if(logPatternVariables == null)
+			logPatternVariables = new HashMap<String, String>();
 		
 	}
     
@@ -137,32 +149,41 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
 	 */
 	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException {
+
+		String resultMessage = new String(logMessage);
 		
-		for(String ctxVar : logPatternVariables.keySet()) {
-			String replacementPattern = logPatternVariables.get(ctxVar);
-			
-			String ctxValue = (String)input.get(ctxVar);
-			// TODO handle different values as well -- maybe use serializable.tostring?!
-			
-		}
+		if(input != null) {
+			for(String ctxVar : logPatternVariables.keySet()) {
+				String replacementPattern = logPatternVariables.get(ctxVar);
+				Serializable ctxValue = input.get(ctxVar);
+	
+				if(ctxValue != null)
+					resultMessage = resultMessage.replaceAll(replacementPattern, ctxValue.toString());			
+			}
 		
-		switch(logLevel) {
-			case DEBUG: {
-				logger.debug(logMessage);
-				break;
+			switch(logLevel) {
+				case DEBUG: {
+					logger.debug(resultMessage);
+					break;
+				}
+				case INFO: {
+					logger.info(resultMessage);
+					break;
+				}
+				case WARN: {
+					logger.warn(resultMessage);
+					break;
+				}
+				case ERROR: {
+					logger.error(resultMessage);
+					break;
+				}
 			}
-			case INFO: {
-				logger.info(logMessage);
-				break;
-			}
-			case WARN: {
-				logger.warn(logMessage);
-				break;
-			}
-			case ERROR: {
-				logger.error(logMessage);
-				break;
-			}
+						
+			input.put(getContextVariable(), resultMessage);
+
+		} else {
+			throw new TSPlanActivityExecutionException("No context provided to activity '"+getName()+"'");
 		}
 		
 		return input;
