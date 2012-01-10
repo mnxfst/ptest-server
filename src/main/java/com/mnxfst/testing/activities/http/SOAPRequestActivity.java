@@ -57,9 +57,16 @@ public class SOAPRequestActivity extends AbstractHTTPRequestActivity {
 		/////////////////////////////////////////////////////////////////////////
 		// soap specific
 		this.soapAction = new StringBuffer("\"").append((String)cfgOpt.getOption("soapAction")).append("\"").toString();
-		this.payloadTemplate = (String)cfgOpt.getOption("payloadTemplate");
-		this.payloadEncoding = (String)cfgOpt.getOption("payloadEncoding");
+		if(soapAction == null || soapAction.isEmpty())
+			throw new TSPlanActivityExecutionException("Required soap action not provided for activity '"+getName()+"'");
 		
+		this.payloadTemplate = (String)cfgOpt.getOption("payloadTemplate");
+		if(payloadTemplate == null || payloadTemplate.isEmpty())
+			throw new TSPlanActivityExecutionException("Required payload template not provided for activity '"+getName()+"'");
+		
+		// TODO test
+		
+		this.payloadEncoding = (String)cfgOpt.getOption("payloadEncoding");		
 		// no payload encoding provided? assume UTF-8 ---  TODO lookup encoding from xml
 		if(this.payloadEncoding == null || this.payloadEncoding.isEmpty()) {
 			this.payloadEncoding = "UTF-8";
@@ -69,24 +76,27 @@ public class SOAPRequestActivity extends AbstractHTTPRequestActivity {
 
 		/////////////////////////////////////////////////////////////////////////
 		// extract variables from payload
-		// TODO verify
-		int index = 0;
-		while((index < payloadTemplate.length()) && (index != -1)) {
-			index = payloadTemplate.indexOf("${", index);
-			if(index != -1 && index < payloadTemplate.length()) {
-				String payloadVariable = payloadTemplate.substring(index, payloadTemplate.indexOf("}", index+1) + 1);
-				if(payloadVariable != null && !payloadVariable.isEmpty()) {
-					String contextVariableName = payloadVariable.substring(2, payloadVariable.length() - 1);
-					payloadVariable = payloadVariable.replace("$", "\\$");
-					payloadVariable = payloadVariable.replace("{", "\\{");
-					payloadVariable = payloadVariable.replace("}", "\\}");
-					payloadVariables.put(contextVariableName, payloadVariable);
-					logger.info("var: " + contextVariableName + " / " + payloadVariable);
-				}
-				index = index + 1;
-			}
-			
-		}
+		payloadVariables = getContextVariablesFromString(payloadTemplate);
+//
+//		// TODO verify
+//		
+//		int index = 0;
+//		while((index < payloadTemplate.length()) && (index != -1)) {
+//			index = payloadTemplate.indexOf("${", index);
+//			if(index != -1 && index < payloadTemplate.length()) {
+//				String payloadVariable = payloadTemplate.substring(index, payloadTemplate.indexOf("}", index+1) + 1);
+//				if(payloadVariable != null && !payloadVariable.isEmpty()) {
+//					String contextVariableName = payloadVariable.substring(2, payloadVariable.length() - 1);
+//					payloadVariable = payloadVariable.replace("$", "\\$");
+//					payloadVariable = payloadVariable.replace("{", "\\{");
+//					payloadVariable = payloadVariable.replace("}", "\\}");
+//					payloadVariables.put(contextVariableName, payloadVariable);
+//					logger.info("var: " + contextVariableName + " / " + payloadVariable);
+//				}
+//				index = index + 1;
+//			}
+//			
+//		}
 		
 		if(logger.isDebugEnabled())
 			logger.debug("Successfully pre-computet soap request being forwarded to " + httpRequestURI);
@@ -120,8 +130,8 @@ public class SOAPRequestActivity extends AbstractHTTPRequestActivity {
 		}
 
 		HttpResponse httpResponse = executeRequest(httpPostRequest);
-
-		String result = new String(getResponseContent(httpResponse));		
+		input.put(getContextVariable(), new String(getResponseContent(httpResponse)));
+		
 		return input;
 	}
 
