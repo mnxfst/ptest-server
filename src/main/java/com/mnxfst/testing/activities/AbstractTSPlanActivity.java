@@ -19,6 +19,9 @@
 
 package com.mnxfst.testing.activities;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 
 /**
@@ -65,6 +68,37 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 		this.nextActivity = nextActivity;
 		this.contextVariable = contextVariable;
 		this.configuration = configuration;
+	}
+	
+	/**
+	 * Returns a map containing the name of context variables associated with their pattern to be applied via String.replaceAll which 
+	 * all show up in the provided input string
+	 * @param input
+	 * @return
+	 */
+	public Map<String, String> getContextVariablesFromString(String input) {
+		
+		Map<String, String> variables = new HashMap<String, String>();
+		
+		if(input != null && !input.isEmpty()) {
+			int index = 0;
+			while((index < input.length()) && (index != -1)) {
+				index = input.indexOf("${", index);
+				if(index != -1 && index < input.length()) {
+					String payloadVariable = input.substring(index, input.indexOf("}", index+1) + 1);
+					if(payloadVariable != null && !payloadVariable.isEmpty()) {
+						String contextVariableName = payloadVariable.substring(2, payloadVariable.length() - 1);
+						payloadVariable = payloadVariable.replace("$", "\\$");
+						payloadVariable = payloadVariable.replace("{", "\\{");
+						payloadVariable = payloadVariable.replace("}", "\\}");
+						variables.put(contextVariableName, payloadVariable);
+					}
+					index = index + 1;
+				}			
+			}
+		}
+		
+		return variables;
 	}
 	
 	public String getId() {
