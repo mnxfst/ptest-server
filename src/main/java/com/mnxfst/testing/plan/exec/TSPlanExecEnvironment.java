@@ -130,7 +130,7 @@ public class TSPlanExecEnvironment {
 		long averageDuration = 0;
 		int numOfValidResults = 0;
 		long maxDuration = 0;
-		long minDuration = 0;
+		long minDuration = Long.MAX_VALUE;
 		int errors = 0;
 		
 		// iterate through results, extract them, provide missing data, move to overall result set
