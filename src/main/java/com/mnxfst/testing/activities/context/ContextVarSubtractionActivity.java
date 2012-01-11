@@ -37,36 +37,48 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 
 	private static final Logger logger = Logger.getLogger(ContextVarSubtractionActivity.class);
 	
-	private String startTimestampVariable = null;
-	private String endTimestampVariable = null;
+	private String leftHandVariable = null;
+	private String rightHandVariable = null;
 		
 	public void postInit() throws TSPlanActivityExecutionException {
 
 		// fetch options and transfer them to inner variables
 		TSPlanConfigOption cfgOpt = getConfiguration();
 
-		startTimestampVariable = (String)cfgOpt.getOption("startTimestampVariable");
-		endTimestampVariable = (String)cfgOpt.getOption("endTimestampVariable");
+		if(cfgOpt == null)
+			throw new TSPlanActivityExecutionException("Required configuration options missing for activity '"+getName()+"'");
 		
-		if(startTimestampVariable == null || startTimestampVariable.isEmpty())
-			throw new TSPlanActivityExecutionException("Failed to get variable to read start timestamp from");
+		this.leftHandVariable = (String)cfgOpt.getOption("leftHandVariable");
+		this.rightHandVariable = (String)cfgOpt.getOption("rightHandVariable");
 		
-		if(endTimestampVariable == null || endTimestampVariable.isEmpty())
-			throw new TSPlanActivityExecutionException("Failed to get variable to read end timestamp from");
+		if(leftHandVariable == null || leftHandVariable.isEmpty())
+			throw new TSPlanActivityExecutionException("Failed to get variable to read left hand value from");
+
+		if(rightHandVariable == null || rightHandVariable.isEmpty())
+			throw new TSPlanActivityExecutionException("Failed to get variable to read right hand value from");
 
 	}
 
+	/**
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
+	 */
 	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException {
 		
-		Long startTimestamp = (Long)input.get(startTimestampVariable);
-		Long endTimestamp = (Long)input.get(endTimestampVariable);
-
-		if(startTimestamp == null)
-			throw new TSPlanActivityExecutionException("Failed to read start timestamp from context varibale '"+startTimestampVariable+"'");
-		if(endTimestamp == null)
-			throw new TSPlanActivityExecutionException("Failed to read start timestamp from context varibale '"+endTimestampVariable+"'");
+		if(input == null)
+			throw new TSPlanActivityExecutionException("Required activity context missing");
 		
-		logger.debug("Duration: " + (endTimestamp.longValue()-startTimestamp.longValue()) + "ms");
+		Long left = (Long)input.get(leftHandVariable);
+		Long right = (Long)input.get(rightHandVariable);
+
+		if(left == null)
+			throw new TSPlanActivityExecutionException("Failed to read left hand value from context varibale '"+left+"'");
+		if(right == null)
+			throw new TSPlanActivityExecutionException("Failed to read right hand value from context varibale '"+right+"'");
+
+		if(logger.isDebugEnabled())
+			logger.debug("subtraction["+left+" - "+right+" = " + (left-right)+"]");
+		
+		input.put(getContextVariable(), (left-right));
 		
 		return input;
 	}

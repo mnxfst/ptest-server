@@ -59,8 +59,8 @@
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.context.ContextVarSubtractionActivity</class>
 			<configuration>
-				<startTimestampVariable>initTimestamp</startTimestampVariable>
-				<endTimestampVariable>finalTimestamp</endTimestampVariable>
+				<leftHandVariable>finalTimestamp</leftHandVariable>
+				<rightHandVariable>initTimestamp</rightHandVariable>
 			</configuration>
 			<contextVariable>sampleTestplanExecutionDuration</contextVariable>
 			<nextActivity>ctxLog4j</nextActivity>
@@ -71,7 +71,7 @@
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>[start=${initTimestamp}, end=${finalTimestamp}]</logMessage>
+				<logMessage>[start=${initTimestamp}, end=${finalTimestamp}, duration=${sampleTestplanExecutionDuration}]</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
 				<logLevel>WARN</logLevel>
