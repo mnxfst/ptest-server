@@ -52,8 +52,20 @@
 			<description>Sets an initial timestamp stored under the given variable</description>
 			<class>com.mnxfst.testing.activities.timer.TimestampActivity</class>
 			<contextVariable>finalTimestamp</contextVariable>			
-			<nextActivity>ctxLog4j</nextActivity>
+			<nextActivity>ctxVarSub</nextActivity>
 		</activity>
+		
+		<activity id="contextVarSubtraction" name="ctxVarSub">
+			<description>Write out context</description>
+			<class>com.mnxfst.testing.activities.context.ContextVarSubtractionActivity</class>
+			<configuration>
+				<startTimestampVariable>initTimestamp</startTimestampVariable>
+				<endTimestampVariable>finalTimestamp</endTimestampVariable>
+			</configuration>
+			<contextVariable>sampleTestplanExecutionDuration</contextVariable>
+			<nextActivity>ctxLog4j</nextActivity>
+		</activity>		
+		
 
 		<activity id="contextLog4j" name="ctxLog4j">
 			<description>Write out context</description>

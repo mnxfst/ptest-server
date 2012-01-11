@@ -121,19 +121,9 @@
 			<description>Sets an initial timestamp stored under the given variable</description>
 			<class>com.mnxfst.testing.activities.timer.TimestampActivity</class>
 			<contextVariable>finalTimestamp</contextVariable>			
-			<nextActivity>simpleDurationLogger</nextActivity>
+			<nextActivity>finish</nextActivity>
 		</activity>
 s
-		<activity id="simpleDurationLogger" name="simpleDurationLogger">
-			<description>Write out context</description>
-			<class>com.mnxfst.testing.activities.timer.SimpleDurationLoggerActivity</class>
-			<configuration>
-				<startTimestampVariable>initTimestamp</startTimestampVariable>
-				<endTimestampVariable>finalTimestamp</endTimestampVariable>
-			</configuration>
-			<contextVariable>sampleTestplanExecutionDuration</contextVariable>
-			<nextActivity>finish</nextActivity>
-		</activity>		
 		
 		<!-- write response to log file -->
 		<!-- 

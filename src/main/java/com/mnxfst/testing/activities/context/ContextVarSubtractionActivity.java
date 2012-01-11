@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.activities.timer;
+package com.mnxfst.testing.activities.context;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -28,9 +28,14 @@ import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 
-public class SimpleDurationLoggerActivity extends AbstractTSPlanActivity {
+/**
+ * This activity takes two numerical context values and subtracts them from each other  
+ * @author ckreutzfeldt
+ * @since 11.01.2012
+ */
+public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 
-	private static final Logger logger = Logger.getLogger(SimpleDurationLoggerActivity.class);
+	private static final Logger logger = Logger.getLogger(ContextVarSubtractionActivity.class);
 	
 	private String startTimestampVariable = null;
 	private String endTimestampVariable = null;
