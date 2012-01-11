@@ -30,7 +30,7 @@ import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 
 /**
- * Generates random values and stores them under the given variable 
+ * Generates random values and stores in the test plan context using the given names 
  * @author ckreutzfeldt
  *
  */
@@ -38,9 +38,11 @@ public class RandomCtxVarGenActivity extends AbstractTSPlanActivity {
 	
 	private static final Logger logger = Logger.getLogger(RandomCtxVarGenActivity.class);
 
+	/** config options prefix used for identifying relevant settings */
 	private static final String GENERATE_VARIABLE_NAME_PREFIX = "generate.variable.";
-	
-	private Map<String, String> generateVariables = new HashMap<String, String>(); 
+		
+	/** holds a mapping from a context variable name to a value generator */
+	private Map<String, IRandomCtxVarValueGenerator<?>> valueGenerators = new HashMap<String, IRandomCtxVarValueGenerator<?>>(); 
 	
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#postInit()
@@ -48,15 +50,38 @@ public class RandomCtxVarGenActivity extends AbstractTSPlanActivity {
 	public void postInit() throws TSPlanActivityExecutionException {
 		TSPlanConfigOption cfgOpt = getConfiguration();
 		
+		if(cfgOpt == null || cfgOpt.getOptions().isEmpty())
+			throw new TSPlanActivityExecutionException("No configuration options found for random ctx generator activity '"+getName()+"'");
+		
 		for(String key : cfgOpt.getOptions().keySet()) {
-			if(key.startsWith(GENERATE_VARIABLE_NAME_PREFIX)) {
-				String variableType = (String)cfgOpt.getOption(key);
-				String variable = key.substring(GENERATE_VARIABLE_NAME_PREFIX.length(), key.length());
-				generateVariables.put(variable, variableType);
+			if(key.startsWith(GENERATE_VARIABLE_NAME_PREFIX) && key.endsWith(".class")) {
+				String randomValueGeneratorClassName = (String)cfgOpt.getOption(key);				
+				String ctxVarName = key.substring(GENERATE_VARIABLE_NAME_PREFIX.length(), key.length() - 6);
 				
+				try {
+					Class<?> genClass = Class.forName(randomValueGeneratorClassName);
+					Object generatorInstance = genClass.newInstance();
+					if(generatorInstance instanceof IRandomCtxVarValueGenerator<?>) {
+						((IRandomCtxVarValueGenerator<?>)generatorInstance).init(cfgOpt, GENERATE_VARIABLE_NAME_PREFIX + ctxVarName );
+						valueGenerators.put(ctxVarName, (IRandomCtxVarValueGenerator<?>)generatorInstance);
+					} else {
+						throw new TSPlanActivityExecutionException("No such random value generator: " + randomValueGeneratorClassName);
+					}
+					
+					if(logger.isDebugEnabled())
+						logger.debug("Successfully added random context value generator: [class="+randomValueGeneratorClassName+", activity="+getName()+"]");
+				} catch(InstantiationException e) {
+					throw new TSPlanActivityExecutionException("Failed to instantiate value generator class " + randomValueGeneratorClassName + ". Error: " + e.getMessage());
+				} catch (ClassNotFoundException e) {
+					throw new TSPlanActivityExecutionException("Failed to instantiate value generator class " + randomValueGeneratorClassName + ". Error: " + e.getMessage());
+				} catch (IllegalAccessException e) {
+					throw new TSPlanActivityExecutionException("Failed to instantiate value generator class " + randomValueGeneratorClassName + ". Error: " + e.getMessage());
+				}				
 			}
 		}		
 
+		if(valueGenerators.isEmpty())
+			throw new TSPlanActivityExecutionException("No value generator configuration found in activity settings. Either remove the activity or provide a proper configuration");
 	}
 
 	/**
@@ -64,11 +89,18 @@ public class RandomCtxVarGenActivity extends AbstractTSPlanActivity {
 	 */
 	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException {
 		
-		for(String varName : generateVariables.keySet()) {
-			input.put(varName, "1");
+		// iterate through context variable names, generate values and write them back into the contxt
+		for(String varName : valueGenerators.keySet()) {
+			IRandomCtxVarValueGenerator<?> generator = valueGenerators.get(varName);
+			input.put(varName, generator.generate());
+			
+			if(logger.isDebugEnabled())
+				logger.debug("generate[ctxVar: " + varName + ", value=" + input.get(varName)+"]");
 		}
 		
 		return input;
 	}
 
+	
+	
 }

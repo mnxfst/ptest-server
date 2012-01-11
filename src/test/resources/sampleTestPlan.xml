@@ -10,10 +10,11 @@
 	<globalConfiguration>
 
 		<configuration name="rndCtxValGenCfg">
-			<generate.variable.arg0>integer</generate.variable.arg0>
-			<generate.variable.arg1>string</generate.variable.arg1>
-			<generate.variable.arg2>boolean</generate.variable.arg2>
-			<generate.variable.arg3>date</generate.variable.arg3>
+			<generate.variable.arg0.class>com.mnxfst.testing.activities.context.RandomIntValueGenerator</generate.variable.arg0.class>
+			<generate.variable.arg0.minValue>0</generate.variable.arg0.minValue>
+			<generate.variable.arg0.maxValue>10</generate.variable.arg0.maxValue>
+			
+			<generate.variable.arg1.class>com.mnxfst.testing.activities.context.RandomUUIDValueGenerator</generate.variable.arg1.class>
 		</configuration>
 	
 	</globalConfiguration>
@@ -61,7 +62,7 @@
 				<logMessage>[start=${initTimestamp}, end=${finalTimestamp}]</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
-				<logLevel>DEBUG</logLevel>
+				<logLevel>WARN</logLevel>
 			</configuration>
 			<contextVariable>ctxLog4jMsg</contextVariable>
 			<nextActivity>finish</nextActivity>

@@ -5,7 +5,7 @@
 	<description>sample description</description>
 	<creationDate>2011-12-20</creationDate>
 	<createdBy>mnxfst</createdBy>
-	<initActivity>randomCtxValGen</initActivity>
+	<initActivity>initTimestamp</initActivity>
 	
 	<globalConfiguration>
 		<configuration name="cassandraStats">
@@ -48,7 +48,7 @@
 						
 			<soapAction></soapAction>
 			<payloadTemplate><![CDATA[
-			<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://ws.addressvalidation.mock.mnxfst.com/">
+			<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://ws.addressvalidation.mock.esp.ottogroup.com/">
    <soapenv:Header/>
    <soapenv:Body>
       <ws:addressValidation>
@@ -88,25 +88,6 @@
 	
 	<activities>
 	
-		<!-- random value generator activity -->
-		<activity id="randomCtxValueGenerator" name="randomCtxValGen">
-			<description>Generate random variable values and store them under the given variable</description>
-			<class>com.mnxfst.testing.activities.context.RandomCtxVarGenActivity</class>
-			<configuration>
-				<generate.variable.arg0>integer</generate.variable.arg0>
-				<generate.variable.arg1>integer</generate.variable.arg1>
-				<generate.variable.arg2>integer</generate.variable.arg2>
-				<generate.variable.arg3>integer</generate.variable.arg3>
-				<generate.variable.arg4>integer</generate.variable.arg4>
-				<generate.variable.arg5>integer</generate.variable.arg5>
-				<generate.variable.arg6>integer</generate.variable.arg6>
-				<generate.variable.arg7>integer</generate.variable.arg7>
-				<generate.variable.arg8>integer</generate.variable.arg8>
-				<generate.variable.arg9>integer</generate.variable.arg9>
-			</configuration>
-			<nextActivity>initTimestamp</nextActivity>
-		</activity>			
-		
 		
 		<!-- set timestamp -->
 		<activity id="timestamp" name="initTimestamp">

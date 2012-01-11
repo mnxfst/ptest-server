@@ -54,7 +54,7 @@ public class TestTSPlanExecutor {
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 		TSPlanExecutorResult result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.TIMES).call();
 		Assert.assertNotNull("The result must not be null", result);
-		Assert.assertTrue("The execution time must be greater than 20ms", 20 <= result.getDurationMillis());
+		Assert.assertTrue("The execution time must be greater than 5ms", 5 <= result.getDurationMillis());
 		
 		
 		
