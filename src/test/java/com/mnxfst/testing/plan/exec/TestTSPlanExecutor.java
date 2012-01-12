@@ -56,11 +56,6 @@ public class TestTSPlanExecutor {
 		Assert.assertNotNull("The result must not be null", result);
 		Assert.assertTrue("The execution time must be greater than 5ms", 5 <= result.getDurationMillis());
 		
-		
-		
-		
-
-		
 	}
 	
 }

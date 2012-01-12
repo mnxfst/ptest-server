@@ -34,13 +34,21 @@ public class TSPlanExecutorResult implements Serializable {
 
 	private static final long serialVersionUID = -636459103997670821L;
 
+	/** holds the name of the test plan that was executed */
 	private String testPlanName = null;
+	/** name or identifier of surrounding execution environment */
 	private String executionEnvironmentId = null;
+	/** name or identifier of plan executor */
 	private String planExecutorId = null;
 
+	/** timestamp at execution start */
 	private long startMillis = 0;
+	/** timestamp at execution end */
 	private long endMillis = 0;
+	/** overall test plan execution duration - for all recurrences/reiterations */
 	private long durationMillis = 0;
+	/** average duration for one test plan execution / one iteration */
+	private long averagePlanExecDuration = 0;
 	
 	private int errors = 0;
 	
@@ -51,13 +59,14 @@ public class TSPlanExecutorResult implements Serializable {
 	 * @param durationMillis
 	 * @param errors
 	 */
-	public TSPlanExecutorResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, int errors) {
+	public TSPlanExecutorResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, long averagePlanExecDuration, int errors) {
 		this.executionEnvironmentId = executionEnvironmentId;
 		this.planExecutorId = planExecutorId;
 		this.testPlanName = testPlanName;
 		this.startMillis = startMillis;
 		this.endMillis = endMillis;
 		this.durationMillis = durationMillis;
+		this.averagePlanExecDuration = averagePlanExecDuration;
 		this.errors = errors;
 	}
 
@@ -117,6 +126,14 @@ public class TSPlanExecutorResult implements Serializable {
 		this.planExecutorId = planExecutorId;
 	}
 
+	public long getAveragePlanExecDuration() {
+		return averagePlanExecDuration;
+	}
+
+	public void setAveragePlanExecDuration(long averagePlanExecDuration) {
+		this.averagePlanExecDuration = averagePlanExecDuration;
+	}
+
 	/**
 	 * @see java.lang.Object#toString()
 	 */
@@ -128,6 +145,7 @@ public class TSPlanExecutorResult implements Serializable {
 				.append("startMillis", this.startMillis)
 				.append("endMillis", this.endMillis)
 				.append("durationMillis", this.durationMillis)
+				.append("averagePlanExecDuration", this.averagePlanExecDuration)
 				.append("errors", this.errors).toString();
 				
 	}

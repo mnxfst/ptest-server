@@ -98,9 +98,13 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 
 		// counts the errors which occur while executing an activity
 		int activityExecutionErrorCount = 0;
-
-		for(int i = 0; i < recurrences; i++) {
 		
+		long averagePlanExecDuration = 0;
+		long singleExecStart = 0;
+		long singleExecEnd = 0;
+		
+		for(int i = 0; i < recurrences; i++) {
+								
 			// clear context for each plan execution run
 			context.clear();
 			
@@ -112,6 +116,8 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 			
 			// fetch the name of the next activity to visit - which is in this case the initial activity
 			String nextActivityName = testPlan.getInitActivityName();
+		
+			singleExecStart = System.currentTimeMillis();
 			
 			// as long as the name of the next activity does not equal 'finish' and is not null, execute the next activity
 			while(nextActivityName != null && !nextActivityName.equalsIgnoreCase(FINAL_ACTIVITY_NAME)) {
@@ -147,6 +153,10 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 					throw new TSPlanExecutionFailedException("Test plan execution failed. Loop found for activity: " + nextActivityName);
 			}
 			
+			singleExecEnd = System.currentTimeMillis();
+			
+			averagePlanExecDuration = averagePlanExecDuration + (singleExecEnd - singleExecStart);
+			
 			if(interrupted)
 				break;
 		}
@@ -155,10 +165,12 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		
 		long duration = (overallEnd - overallStart);
 
-		if(logger.isDebugEnabled())
-			logger.debug("[execEnv:" + executionEnvironmentId + ", executor: " + planExecutorId + ", recurrences: " + recurrences + ", recType: " + recurrenceType + ", duration: " + duration+"]");
+		averagePlanExecDuration = averagePlanExecDuration / recurrences;
 		
-		TSPlanExecutorResult result = new TSPlanExecutorResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, duration, activityExecutionErrorCount);
+		if(logger.isDebugEnabled())
+			logger.debug("[execEnv:" + executionEnvironmentId + ", executor: " + planExecutorId + ", recurrences: " + recurrences + ", recType: " + recurrenceType + ", duration: " + duration+", averageRunDuration: "+ averagePlanExecDuration +"]");
+		
+		TSPlanExecutorResult result = new TSPlanExecutorResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, duration, averagePlanExecDuration, activityExecutionErrorCount);
 
 		return result;
 	}
