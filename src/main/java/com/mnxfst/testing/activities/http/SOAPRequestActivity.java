@@ -77,27 +77,7 @@ public class SOAPRequestActivity extends AbstractHTTPRequestActivity {
 		/////////////////////////////////////////////////////////////////////////
 		// extract variables from payload
 		payloadVariables = getContextVariablesFromString(payloadTemplate);
-//
-//		// TODO verify
-//		
-//		int index = 0;
-//		while((index < payloadTemplate.length()) && (index != -1)) {
-//			index = payloadTemplate.indexOf("${", index);
-//			if(index != -1 && index < payloadTemplate.length()) {
-//				String payloadVariable = payloadTemplate.substring(index, payloadTemplate.indexOf("}", index+1) + 1);
-//				if(payloadVariable != null && !payloadVariable.isEmpty()) {
-//					String contextVariableName = payloadVariable.substring(2, payloadVariable.length() - 1);
-//					payloadVariable = payloadVariable.replace("$", "\\$");
-//					payloadVariable = payloadVariable.replace("{", "\\{");
-//					payloadVariable = payloadVariable.replace("}", "\\}");
-//					payloadVariables.put(contextVariableName, payloadVariable);
-//					logger.info("var: " + contextVariableName + " / " + payloadVariable);
-//				}
-//				index = index + 1;
-//			}
-//			
-//		}
-		
+
 		if(logger.isDebugEnabled())
 			logger.debug("Successfully pre-computet soap request being forwarded to " + httpRequestURI);
 		
@@ -115,9 +95,9 @@ public class SOAPRequestActivity extends AbstractHTTPRequestActivity {
 		String payload = new String(this.payloadTemplate);
 		for(String contextVariable : payloadVariables.keySet()) {
 			String payloadVariable = payloadVariables.get(contextVariable);
-			String contextValue = (String)input.get(contextVariable);
+			Serializable contextValue = input.get(contextVariable);
 			if(contextValue != null)
-				payload = payload.replaceAll(payloadVariable, contextValue);
+				payload = payload.replaceAll(payloadVariable, contextValue.toString());
 		}
 
 		// convert payload into request entity and assign it 
