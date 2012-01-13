@@ -38,13 +38,26 @@ public class TSPlanExecEnvironmentResult implements Serializable {
 
 	private static final long serialVersionUID = -3345396449258114219L;
 
+	/** name of executed test plan */
 	private String testPlanName = null;
+	/** name or identifier of execution environment */
 	private String executionEnvironmentId = null;
+	/** timestamp of test plan execution start within this environment */
 	private long startMillis = 0;
+	/** timestamp of test plan execution end within this environment */
 	private long endMillis = 0;
+	/** average test plan execution */
 	private long averageDurationMillis = 0;
+	/** max test plan execution for all recurrences */
 	private long maxDurationMillis = 0;
+	/** min test plan execution for all recurrences */
 	private long minDurationMillis = 0;
+	/** average test plan execution for a single run computed for all executors */
+	private long singleRunExecutionDurationAverage = 0;
+	/** min test plan execution for a single run computed for all executors */
+	private long singleRunExecutionDurationMin = Long.MAX_VALUE;
+	/** max test plan execution for a single run computed for all executors */
+	private long singleRunExecutionDurationMax = 0;
 	private int errors = 0;
 	private Set<String> executorIds = new HashSet<String>();
 
@@ -52,18 +65,7 @@ public class TSPlanExecEnvironmentResult implements Serializable {
 		this.executionEnvironmentId = executionEnvironmentId;
 		this.testPlanName = testPlanName;
 	}
-	
-	public TSPlanExecEnvironmentResult(String executionEnvironmentId, String testPlanName, long startMillis, long endMillis, long averageDuration, long maxDuration, long minDuration, int errors) {
-		this.executionEnvironmentId = executionEnvironmentId;
-		this.testPlanName = testPlanName;
-		this.startMillis = startMillis;
-		this.endMillis = endMillis;
-		this.averageDurationMillis = averageDuration;
-		this.maxDurationMillis = maxDuration;
-		this.minDurationMillis = minDuration;
-		this.errors = errors;
-	}
-	
+
 	public void addExecutorId(String executorId) {
 		this.executorIds.add(executorId);
 	}
@@ -144,6 +146,31 @@ public class TSPlanExecEnvironmentResult implements Serializable {
 		this.executorIds = executorIds;
 	}
 
+	public long getSingleRunExecutionDurationAverage() {
+		return singleRunExecutionDurationAverage;
+	}
+
+	public void setSingleRunExecutionDurationAverage(
+			long singleRunExecutionDurationAverage) {
+		this.singleRunExecutionDurationAverage = singleRunExecutionDurationAverage;
+	}
+
+	public long getSingleRunExecutionDurationMin() {
+		return singleRunExecutionDurationMin;
+	}
+
+	public void setSingleRunExecutionDurationMin(long singleRunExecutionDurationMin) {
+		this.singleRunExecutionDurationMin = singleRunExecutionDurationMin;
+	}
+
+	public long getSingleRunExecutionDurationMax() {
+		return singleRunExecutionDurationMax;
+	}
+
+	public void setSingleRunExecutionDurationMax(long singleRunExecutionDurationMax) {
+		this.singleRunExecutionDurationMax = singleRunExecutionDurationMax;
+	}
+
 	/**
 	 * @see java.lang.Object#toString()
 	 */
@@ -156,6 +183,9 @@ public class TSPlanExecEnvironmentResult implements Serializable {
 				.append("averageDurationMillis", this.averageDurationMillis)
 				.append("minDurationMillis", this.minDurationMillis)
 				.append("maxDurationMillis", this.maxDurationMillis)
+				.append("singleRunExecutionDurationAverage", this.singleRunExecutionDurationAverage)
+				.append("singleRunExecutionDurationMin", this.singleRunExecutionDurationMin)
+				.append("singleRunExecutionDurationMax", this.singleRunExecutionDurationMax)
 				.append("errors", this.errors)
 				.append("executorIds", this.executorIds).toString();
 				

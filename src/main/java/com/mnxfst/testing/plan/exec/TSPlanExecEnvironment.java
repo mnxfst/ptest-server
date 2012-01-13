@@ -124,14 +124,25 @@ public class TSPlanExecEnvironment {
 		if(testPlanInvocResults == null)
 			throw new TSPlanExecutionFailedException("Test plan execution failed for all threads in: " + executionEnvironmentId);		
 
+		// create new exec env result
 		TSPlanExecEnvironmentResult result = new TSPlanExecEnvironmentResult(executionEnvironmentId, testPlanName);
 		result.setStartMillis(execStart);
 		
+		// holds the average duration for all executor threads
 		long averageDuration = 0;
+		// counts the number of valid responses
 		int numOfValidResults = 0;
+		// holds the min / max duration
 		long maxDuration = 0;
-		long minDuration = Long.MAX_VALUE;
+		long minDuration = Long.MAX_VALUE;		
+		// error counter
 		int errors = 0;
+		
+		// holds the average, min and max times for a single run within any executor
+		long singleRunAvg = 0;
+		long singleRunMax = 0;
+		long singleRunMin = Long.MAX_VALUE;
+		
 		
 		// iterate through results, extract them, provide missing data, move to overall result set
 		for(Future<TSPlanExecutorResult> futureRes : testPlanInvocResults) {
@@ -140,15 +151,25 @@ public class TSPlanExecEnvironment {
 				if(executorResult == null) {
 					logger.error("Failed to retrieve results from a " + TSPlanExecutor.class.getName());
 				} else {
+					
+					// add plan exec duration to overall duration for calculating the average duration
 					averageDuration = averageDuration + executorResult.getDurationMillis();
 					numOfValidResults = numOfValidResults + 1;
 					
+					// validate the min/max runtimes for each executor and re-set the values if necessary
 					if(maxDuration < executorResult.getDurationMillis())
 						maxDuration = executorResult.getDurationMillis();
 					if(minDuration > executorResult.getDurationMillis())
 						minDuration = executorResult.getDurationMillis();
 					if(executorResult.getErrors() > 0)
 						errors = errors + executorResult.getErrors();
+
+					// count up the average runtimes for a single plan exec run. re-set the min/max timers accordingly
+					singleRunAvg = singleRunAvg + executorResult.getSingleRunExecutionDurationAverage();
+					if(singleRunMax < executorResult.getSingleRunExecutionDurationMax())
+						singleRunMax = executorResult.getSingleRunExecutionDurationMax();
+					if(singleRunMin > executorResult.getSingleRunExecutionDurationMin())
+						singleRunMin = executorResult.getSingleRunExecutionDurationMin();
 					
 					result.addExecutorId(executorResult.getPlanExecutorId());
 				}
@@ -160,14 +181,19 @@ public class TSPlanExecEnvironment {
 		}
 		
 		long execEnd = System.currentTimeMillis();
+		
+		// set collected information
 		result.setEndMillis(execEnd);
 		result.setAverageDurationMillis(averageDuration / numOfValidResults);
 		result.setMinDurationMillis(minDuration);
 		result.setMaxDurationMillis(maxDuration);
 		result.setErrors(errors);
+		result.setSingleRunExecutionDurationAverage(singleRunAvg / numOfValidResults);
+		result.setSingleRunExecutionDurationMax(singleRunMax);
+		result.setSingleRunExecutionDurationMin(singleRunMin);
 		
 		if(logger.isDebugEnabled())
-			logger.debug("[execEnv: " + result.getExecutionEnvironmentId() + ", testPlan: " + result.getTestPlanName() + ", executors: " + result.getExecutorIds().size() + ", avgDuration: " + result.getAverageDurationMillis() + ", minDuration: " + result.getMinDurationMillis()+ ", maxDuration: " + result.getMaxDurationMillis()+"]");
+			logger.debug("[execEnv: " + result.getExecutionEnvironmentId() + ", testPlan: " + result.getTestPlanName() + ", executors: " + result.getExecutorIds().size() + ", avgDuration: " + result.getAverageDurationMillis() + ", minDuration: " + result.getMinDurationMillis()+ ", maxDuration: " + result.getMaxDurationMillis()+", singleRunAvg: " + result.getSingleRunExecutionDurationAverage() + ", singleRunMin: " + result.getSingleRunExecutionDurationMin() + ", singleRunMax: " + result.getSingleRunExecutionDurationMax() + "]");
 			
 		
 		return result;

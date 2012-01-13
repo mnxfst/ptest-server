@@ -99,9 +99,17 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		// counts the errors which occur while executing an activity
 		int activityExecutionErrorCount = 0;
 		
+		// contain the average plan execution for all iterations
 		long averagePlanExecDuration = 0;
+		
+		// start / stop timestamp
 		long singleExecStart = 0;
 		long singleExecEnd = 0;
+		
+		// hold the min and max runtimes for a single run for all iterations
+		long singleRunMin = Long.MAX_VALUE;
+		long singleRunMax = 0;		
+		long singleRunDuration = 0;
 		
 		for(int i = 0; i < recurrences; i++) {
 								
@@ -117,6 +125,7 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 			// fetch the name of the next activity to visit - which is in this case the initial activity
 			String nextActivityName = testPlan.getInitActivityName();
 		
+			// set start timer
 			singleExecStart = System.currentTimeMillis();
 			
 			// as long as the name of the next activity does not equal 'finish' and is not null, execute the next activity
@@ -153,26 +162,36 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 					throw new TSPlanExecutionFailedException("Test plan execution failed. Loop found for activity: " + nextActivityName);
 			}
 			
+			// set end timer
 			singleExecEnd = System.currentTimeMillis();
 			
-			averagePlanExecDuration = averagePlanExecDuration + (singleExecEnd - singleExecStart);
+			// calculate duration and match it for min / max runtimes so far
+			singleRunDuration = singleExecEnd - singleExecStart;			
+			if(singleRunMin > singleRunDuration )
+				singleRunMin = singleRunDuration;
+			if(singleRunMax < singleRunDuration)
+				singleRunMax = singleRunDuration;
+			
+			// add plan exec duration to average plan duration
+			averagePlanExecDuration = averagePlanExecDuration + singleRunDuration;
 			
 			if(interrupted)
 				break;
 		}
 		
+		// set end timer for whole test run
 		long overallEnd = System.currentTimeMillis();
 		
+		// calculate overall duration
 		long duration = (overallEnd - overallStart);
 
+		// calculate average plan duration
 		averagePlanExecDuration = averagePlanExecDuration / recurrences;
 		
 		if(logger.isDebugEnabled())
 			logger.debug("[execEnv:" + executionEnvironmentId + ", executor: " + planExecutorId + ", recurrences: " + recurrences + ", recType: " + recurrenceType + ", duration: " + duration+", averageRunDuration: "+ averagePlanExecDuration +"]");
 		
-		TSPlanExecutorResult result = new TSPlanExecutorResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, duration, averagePlanExecDuration, activityExecutionErrorCount);
-
-		return result;
+		return new TSPlanExecutorResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, duration, singleRunMin, singleRunMax, averagePlanExecDuration, activityExecutionErrorCount);
 	}
 	
 	public void interrupt() {

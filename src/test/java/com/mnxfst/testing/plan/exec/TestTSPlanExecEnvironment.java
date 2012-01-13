@@ -105,11 +105,11 @@ public class TestTSPlanExecEnvironment {
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 
 		// instantiate environment and execute tests
-		TSPlanExecEnvironment env = new TSPlanExecEnvironment("env-1", plan, 1000, TSPlanRecurrenceType.TIMES, 8);
+		TSPlanExecEnvironment env = new TSPlanExecEnvironment("env-1", plan, 5, TSPlanRecurrenceType.TIMES, 8);
 		TSPlanExecEnvironmentResult result = env.execute();
-
-		Assert.assertNotNull("The result must not be null", result);
-		// TODO valid test  for result
-
+		
+		Assert.assertNotNull("The overall result must not be null", result);
+		Assert.assertEquals("The number of errors must be 0", 0, result.getErrors());
+		
 	}
 }

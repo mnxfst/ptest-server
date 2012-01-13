@@ -47,8 +47,12 @@ public class TSPlanExecutorResult implements Serializable {
 	private long endMillis = 0;
 	/** overall test plan execution duration - for all recurrences/reiterations */
 	private long durationMillis = 0;
-	/** average duration for one test plan execution / one iteration */
-	private long averagePlanExecDuration = 0;
+	/** average duration for a single test plan execution */
+	private long singleRunExecutionDurationAverage = 0;
+	/** min duration for a single test plan execution */
+	private long singleRunExecutionDurationMin = Long.MAX_VALUE;
+	/** max duration for a single test plan execution */
+	private long singleRunExecutionDurationMax = 0;
 	
 	private int errors = 0;
 	
@@ -59,14 +63,16 @@ public class TSPlanExecutorResult implements Serializable {
 	 * @param durationMillis
 	 * @param errors
 	 */
-	public TSPlanExecutorResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, long averagePlanExecDuration, int errors) {
+	public TSPlanExecutorResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, long singleRunExecutionDurationMin, long singleRunExecutionDurationMax, long singleRunExecutionDurationAverage, int errors) {
 		this.executionEnvironmentId = executionEnvironmentId;
 		this.planExecutorId = planExecutorId;
 		this.testPlanName = testPlanName;
 		this.startMillis = startMillis;
 		this.endMillis = endMillis;
 		this.durationMillis = durationMillis;
-		this.averagePlanExecDuration = averagePlanExecDuration;
+		this.singleRunExecutionDurationMin = singleRunExecutionDurationMin;
+		this.singleRunExecutionDurationMax = singleRunExecutionDurationMax;
+		this.singleRunExecutionDurationAverage = singleRunExecutionDurationAverage;
 		this.errors = errors;
 	}
 
@@ -126,12 +132,29 @@ public class TSPlanExecutorResult implements Serializable {
 		this.planExecutorId = planExecutorId;
 	}
 
-	public long getAveragePlanExecDuration() {
-		return averagePlanExecDuration;
+	public long getSingleRunExecutionDurationAverage() {
+		return singleRunExecutionDurationAverage;
 	}
 
-	public void setAveragePlanExecDuration(long averagePlanExecDuration) {
-		this.averagePlanExecDuration = averagePlanExecDuration;
+	public void setSingleRunExecutionDurationAverage(
+			long singleRunExecutionDurationAverage) {
+		this.singleRunExecutionDurationAverage = singleRunExecutionDurationAverage;
+	}
+
+	public long getSingleRunExecutionDurationMin() {
+		return singleRunExecutionDurationMin;
+	}
+
+	public void setSingleRunExecutionDurationMin(long singleRunExecutionDurationMin) {
+		this.singleRunExecutionDurationMin = singleRunExecutionDurationMin;
+	}
+
+	public long getSingleRunExecutionDurationMax() {
+		return singleRunExecutionDurationMax;
+	}
+
+	public void setSingleRunExecutionDurationMax(long singleRunExecutionDurationMax) {
+		this.singleRunExecutionDurationMax = singleRunExecutionDurationMax;
 	}
 
 	/**
@@ -145,7 +168,9 @@ public class TSPlanExecutorResult implements Serializable {
 				.append("startMillis", this.startMillis)
 				.append("endMillis", this.endMillis)
 				.append("durationMillis", this.durationMillis)
-				.append("averagePlanExecDuration", this.averagePlanExecDuration)
+				.append("singleRunExecutionDurationMin", this.singleRunExecutionDurationMin)
+				.append("singleRunExecutionDurationMax", this.singleRunExecutionDurationMax)
+				.append("singleRunExecutionDurationAverage", this.singleRunExecutionDurationAverage)
 				.append("errors", this.errors).toString();
 				
 	}

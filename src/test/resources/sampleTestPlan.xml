@@ -63,9 +63,10 @@
 				<rightHandVariable>initTimestamp</rightHandVariable>
 			</configuration>
 			<contextVariable>sampleTestplanExecutionDuration</contextVariable>
-			<nextActivity>ctxLog4j</nextActivity>
+			<nextActivity>finish</nextActivity>
 		</activity>		
 		
+		<!-- 
 
 		<activity id="contextLog4j" name="ctxLog4j">
 			<description>Write out context</description>
@@ -79,7 +80,8 @@
 			<contextVariable>ctxLog4jMsg</contextVariable>
 			<nextActivity>finish</nextActivity>
 		</activity>		
-
+		 -->
+		 
 	</activities>		
 	<fuck></fuck>
 </ptestplan>
