@@ -19,8 +19,6 @@
 
 package com.mnxfst.testing.activities.log;
 
-import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -29,6 +27,8 @@ import org.junit.Test;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Test case for {@link ContextLog4jActivity}
@@ -44,97 +44,87 @@ public class TestContextLog4jActivity {
 		activity.setName("test-activity");
 		
 		try {
-			activity.postInit();
+			activity.initialize(null);
 			Assert.fail("No valid config options provided");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		TSPlanConfigOption cfgOpt = new TSPlanConfigOption();
-		activity.setConfiguration(cfgOpt);
 
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Config options missing conversion pattern");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 
 		cfgOpt.addOption("conversionPattern", "%d [%t] %-5p %c - %m%n");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Log message missing");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 
 		cfgOpt.addOption("logMessage", "[start=${initTimestamp}, end=${finalTimestamp}]");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Log appender missing");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		cfgOpt.addOption("logAppender", null);
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Invalid log appender");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		cfgOpt.addOption("logAppender", "no such appender");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Unknown log appender");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		cfgOpt.addOption("logAppender", "file");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Unsupported log appende rtyp 'FILE'");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 
 		cfgOpt.addOption("logAppender", "console");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Config options missing log level");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 
 		cfgOpt.addOption("logLevel", null);
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Config options missing log level");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		cfgOpt.addOption("logLevel", "no such type");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Invalid log level");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		cfgOpt.addOption("logLevel", "warn");
-		activity.setConfiguration(cfgOpt);
-		activity.postInit();		
+		activity.initialize(cfgOpt);
 	}
 
 	@Test
@@ -148,9 +138,8 @@ public class TestContextLog4jActivity {
 
 		ContextLog4jActivity activity = new ContextLog4jActivity();
 		activity.setName("test-activity");
-		activity.setConfiguration(cfgOpt);
 		activity.setContextVariable("ctxLog4jMsg");
-		activity.postInit();		
+		activity.initialize(cfgOpt);
 		
 		try {
 			activity.execute(null);
@@ -159,14 +148,14 @@ public class TestContextLog4jActivity {
 			
 		}
 		
-		Map<String, Serializable> ctx = new HashMap<String, Serializable>();
+		TSPlanExecutionContext ctx = new TSPlanBasicExecutionContext();
 		activity.execute(ctx);
 		
-		ctx.put("initTimestamp", Long.valueOf(1234));
-		ctx.put("finalTimestamp", "5678");
+		ctx.addTransientVariable("initTimestamp", Long.valueOf(1234));
+		ctx.addTransientVariable("finalTimestamp", "5678");
 		ctx = activity.execute(ctx);
 		Assert.assertNotNull("The result must not be null", ctx);
-		Assert.assertEquals("The log message must be equal to '[start=1234, end=5678'", "[start=1234, end=5678]", ctx.get("ctxLog4jMsg"));
+		Assert.assertEquals("The log message must be equal to '[start=1234, end=5678'", "[start=1234, end=5678]", ctx.getTransientVariable("ctxLog4jMsg"));
 	}
 	
 	@Test

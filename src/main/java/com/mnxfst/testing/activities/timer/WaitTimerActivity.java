@@ -1,7 +1,23 @@
-package com.mnxfst.testing.activities.timer;
+/*
+ *  ptest-server and client provides you with a performance test utility
+ *  Copyright (C) 2012  Christian Kreutzfeldt <mnxfst@googlemail.com>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
-import java.io.Serializable;
-import java.util.Map;
+package com.mnxfst.testing.activities.timer;
 
 import org.apache.log4j.Logger;
 
@@ -9,6 +25,7 @@ import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Implements a simple timer that halts the {@link TSPlan} execution for a configured time (in millis). The wait time will be written
@@ -23,13 +40,10 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 	private long waitTime = 0;
 
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#postInit()
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
 	 */
-	public void postInit() throws TSPlanActivityExecutionException {
+	public void initialize(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException {
 
-		// fetch options and transfer them to inner variables
-		TSPlanConfigOption cfgOpt = getConfiguration();
-		
 		if(cfgOpt == null)
 			throw new TSPlanActivityExecutionException("Failed to initialize activity '" + WaitTimerActivity.class.getName() + "' due to missing configuration options");
 
@@ -54,7 +68,7 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
 	 */
-	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException {
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
 		try {
 			Thread.sleep(waitTime);
@@ -62,9 +76,9 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 			logger.error(WaitTimerActivity.class.getName() + " interrupted. Exception: "  + e.getMessage(), e);
 		}
 		
-		input.put(getContextVariable(), Long.valueOf(waitTime));
+		ctx.addTransientVariable(getContextVariable(), Long.valueOf(waitTime));
 		
-		return input;
+		return ctx;
 	}
 
 }

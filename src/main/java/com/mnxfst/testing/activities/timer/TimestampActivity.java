@@ -19,11 +19,10 @@
 
 package com.mnxfst.testing.activities.timer;
 
-import java.io.Serializable;
-import java.util.Map;
-
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
+import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Creates or updates a time stamp stored in the variable defined through <i>variable</i>. 
@@ -33,21 +32,19 @@ import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 public class TimestampActivity extends AbstractTSPlanActivity {
 
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
 	 */
-	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException {
+	public void initialize(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException {
+	}
 
-		if(input == null)
-			throw new TSPlanActivityExecutionException("Missing required input!");
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+
+		if(ctx == null)
+			throw new TSPlanActivityExecutionException("Missing required activity context!");
 		
-		input.put(getContextVariable(), Long.valueOf(System.currentTimeMillis()));
+		ctx.addTransientVariable(getContextVariable(), Long.valueOf(System.currentTimeMillis()));
 
-		return input;
+		return ctx;
 	}
 
-	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#postInit()
-	 */
-	public void postInit() throws TSPlanActivityExecutionException {
-	}
 }

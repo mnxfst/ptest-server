@@ -19,16 +19,14 @@
 
 package com.mnxfst.testing.activities.context;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
 import junit.framework.Assert;
 
 import org.junit.Test;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Test case for {@link RandomCtxVarGenActivity}
@@ -41,29 +39,27 @@ public class TestRandomCtxVarGenActivity {
 	public void testPostInit() throws TSPlanActivityExecutionException {
 
 		try {
-			new RandomCtxVarGenActivity().postInit();
+			new RandomCtxVarGenActivity().initialize(null);
 			Assert.fail("No config options provided");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		RandomCtxVarGenActivity activity = new RandomCtxVarGenActivity();
-		activity.setName("junit-test");
-		activity.setConfiguration(new TSPlanConfigOption());
+		activity.setName("junit-test");		
 
 		try {
-			activity.postInit();
+			activity.initialize(new TSPlanConfigOption());
 			Assert.fail("No config options provided");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 
 		TSPlanConfigOption cfgOpt = new TSPlanConfigOption();
-		cfgOpt.addOption("no-such-context-gen", "test");
-		activity.setConfiguration(cfgOpt);
+		cfgOpt.addOption("no-such-context-gen", "test");		
 		
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("No proper configuration provided");
 			Assert.fail("No config options provided");
 		} catch(TSPlanActivityExecutionException e) {
@@ -71,18 +67,16 @@ public class TestRandomCtxVarGenActivity {
 		}
 
 		cfgOpt.addOption("generate.variable.arg0", "unknown-class");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Unknown generator class");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 
 		cfgOpt.addOption("generate.variable.arg0", RandomIntValueGenerator.class.getName());
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Missing required configuration settings for random integer generator");
 		} catch(TSPlanActivityExecutionException e) {
 			//
@@ -90,9 +84,8 @@ public class TestRandomCtxVarGenActivity {
 
 		cfgOpt.addOption("generate.variable.arg0.minValue", "1");
 		cfgOpt.addOption("generate.variable.arg0.maxValue", "10");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("No generator config contained");
 		} catch(TSPlanActivityExecutionException e) {
 			//
@@ -101,13 +94,12 @@ public class TestRandomCtxVarGenActivity {
 		cfgOpt.addOption("generate.variable.arg0.class", RandomIntValueGenerator.class.getName());
 		cfgOpt.addOption("generate.variable.arg0.minValue", "1");
 		cfgOpt.addOption("generate.variable.arg0.maxValue", "10");
-		activity.setConfiguration(cfgOpt);
-		activity.postInit();
+		activity.initialize(cfgOpt);
 
-		Map<String, Serializable> ctx = activity.execute(new HashMap<String, Serializable>());
+		TSPlanExecutionContext ctx = activity.execute(new TSPlanBasicExecutionContext());
 		Assert.assertNotNull("The context must not be null", ctx);
-		Assert.assertEquals("The context must contain one element", 1, ctx.size());
-		Assert.assertTrue("The value of arg0 must be available", (ctx.get("arg0") != null));
+		Assert.assertEquals("The context must contain one element", 1, ctx.getTransientVariableNames().size());
+		Assert.assertTrue("The value of arg0 must be available", (ctx.getTransientVariable("arg0") != null));
 
 	}
 	

@@ -206,7 +206,6 @@ public class TSPlanBuilder {
 		testPlan.setDescription(description);
 		testPlan.setName(name);
 		testPlan.setInitActivityName(initActivity);
-		testPlan.getConfigurationOptions().putAll(configurationOptions);
 		
 		testPlan.getActivities().putAll(activities);
 		
@@ -324,15 +323,11 @@ public class TSPlanBuilder {
 						TSPlanConfigOption cfgOpt = globalOptions.get(activityUseGlobalConfig);
 						if(cfgOpt == null)
 							throw new TSPlanConfigurationFormatException("No such global configuration option found for name '"+activityUseGlobalConfig+"'");
-						activity.setConfiguration(cfgOpt);
+						activity.initialize(cfgOpt);
 					} else {
-						activity.setConfiguration(activityConfigOptions);
+						activity.initialize(activityConfigOptions);
 					}
 
-					
-					// TODO insert activity options using reflection 
-					
-					activity.postInit();
 					
 					if(logger.isDebugEnabled())
 						logger.debug("Parsed activity: [id="+activityId+", name="+activityName+", class="+activityClass+", useGlobalCfg="+activityUseGlobalConfig+", ctxVarName="+activityContextVariable+", nextActivity="+activityNextActivity+", description="+activityDescription+"]");

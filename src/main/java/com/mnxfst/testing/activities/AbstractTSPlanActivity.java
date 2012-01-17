@@ -22,8 +22,6 @@ package com.mnxfst.testing.activities;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-
 /**
  * Defines a common parent to single steps within a {@link ITSPlan test plan}.
  * These steps a so-called <i>activities</i>
@@ -44,8 +42,6 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 	public String nextActivity = null;
 	/** variable used for storing results etc */
 	private String contextVariable = null;
-	/** configuration */
-	private TSPlanConfigOption configuration = null;
 	
 	public AbstractTSPlanActivity() {
 		
@@ -60,14 +56,13 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 	 * @param nextActivity
 	 * @param variable
 	 */
-	public AbstractTSPlanActivity(String id, String name, String description, String className, String nextActivity, String contextVariable, TSPlanConfigOption configuration) {
+	public AbstractTSPlanActivity(String id, String name, String description, String className, String nextActivity, String contextVariable) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
 		this.className = className;
 		this.nextActivity = nextActivity;
 		this.contextVariable = contextVariable;
-		this.configuration = configuration;
 	}
 	
 	/**
@@ -147,14 +142,6 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 
 	public void setContextVariable(String contextVariable) {
 		this.contextVariable = contextVariable;
-	}
-
-	public TSPlanConfigOption getConfiguration() {
-		return configuration;
-	}
-
-	public void setConfiguration(TSPlanConfigOption configuration) {
-		this.configuration = configuration;
 	}
 
 	

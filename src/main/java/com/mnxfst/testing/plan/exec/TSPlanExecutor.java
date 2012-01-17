@@ -19,10 +19,7 @@
 
 package com.mnxfst.testing.plan.exec;
 
-import java.io.Serializable;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -34,6 +31,8 @@ import com.mnxfst.testing.exception.TSPlanExecutionFailedException;
 import com.mnxfst.testing.exception.TSPlanMissingException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.TSPlanExecutorResult;
+import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Provides a closed runtime environment for a {@link TSPlan}. The results are returned following the {@link TSPlanExecutorResult} structure. 
@@ -90,7 +89,7 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		long overallStart = System.currentTimeMillis();
 		
 		// create empty input
-		Map<String, Serializable> context = new HashMap<String, Serializable>();
+		TSPlanExecutionContext context = new TSPlanBasicExecutionContext();
 		
 		// TODO support timed recurrences
 		if(recurrenceType != TSPlanRecurrenceType.TIMES)
@@ -114,7 +113,7 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		for(int i = 0; i < recurrences; i++) {
 								
 			// clear context for each plan execution run
-			context.clear();
+			context.refreshTransientVariables();
 			
 			// clear set of already visited activities for each execution run
 			alreadyVisitedActivities.clear();
@@ -149,9 +148,9 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 	
 				// if the context has a special marker indicating that the "next activity" attribute must be ignored and
 				// the additionally provided activity must be executed, fetch the name and remove the special marker
-				if(context.containsKey(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE)) {
-					nextActivityName = (String)context.get(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
-					context.remove(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
+				if(context.hasTransientVariable(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE)) {
+					nextActivityName = (String)context.getTransientVariable(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
+					context.removeTransientVariable(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
 					// otherwise: fetch the name of the next activity
 				} else {
 					nextActivityName = currentActivity.getNextActivity();

@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Sends a SOAP request to a configured destination using a previously defined payload
@@ -77,42 +78,42 @@ public class SOAPRequestActivity extends AbstractHTTPRequestActivity {
 		/////////////////////////////////////////////////////////////////////////
 		// extract variables from payload
 		payloadVariables = getContextVariablesFromString(payloadTemplate);
-
-		if(logger.isDebugEnabled())
-			logger.debug("Successfully pre-computet soap request being forwarded to " + httpRequestURI);
-		
+//
+//		if(logger.isDebugEnabled())
+//			logger.debug("Successfully pre-computet soap request being forwarded to " + httpRequestURI);
+//		
 	}
 
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
 	 */
-	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException {
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
-		HttpPost httpPostRequest = new HttpPost(this.httpRequestURI);
-		httpPostRequest.setHeader("SOAPAction", this.soapAction);
-
-		// replace payload variables with values fetched from context
-		String payload = new String(this.payloadTemplate);
-		for(String contextVariable : payloadVariables.keySet()) {
-			String payloadVariable = payloadVariables.get(contextVariable);
-			Serializable contextValue = input.get(contextVariable);
-			if(contextValue != null)
-				payload = payload.replaceAll(payloadVariable, contextValue.toString());
-		}
-
-		// convert payload into request entity and assign it 
-		try {
-			StringEntity entity = new StringEntity(payload, payloadEncoding);
-			entity.setContentType("text/xml");
-			httpPostRequest.setEntity(entity);
-		} catch(UnsupportedEncodingException e) {
-			throw new TSPlanActivityExecutionException("Failed to assign configured payload to post request. Error: " + e.getMessage(), e);
-		}
-
-		HttpResponse httpResponse = executeRequest(httpPostRequest);
-		input.put(getContextVariable(), new String(getResponseContent(httpResponse)));
+//		HttpPost httpPostRequest = new HttpPost(this.httpRequestURI);
+//		httpPostRequest.setHeader("SOAPAction", this.soapAction);
+//
+//		// replace payload variables with values fetched from context
+//		String payload = new String(this.payloadTemplate);
+//		for(String contextVariable : payloadVariables.keySet()) {
+//			String payloadVariable = payloadVariables.get(contextVariable);
+//			Serializable contextValue = input.get(contextVariable);
+//			if(contextValue != null)
+//				payload = payload.replaceAll(payloadVariable, contextValue.toString());
+//		}
+//
+//		// convert payload into request entity and assign it 
+//		try {
+//			StringEntity entity = new StringEntity(payload, payloadEncoding);
+//			entity.setContentType("text/xml");
+//			httpPostRequest.setEntity(entity);
+//		} catch(UnsupportedEncodingException e) {
+//			throw new TSPlanActivityExecutionException("Failed to assign configured payload to post request. Error: " + e.getMessage(), e);
+//		}
+//
+//		HttpResponse httpResponse = executeRequest(httpPostRequest);
+//		input.put(getContextVariable(), new String(getResponseContent(httpResponse)));
 		
-		return input;
+		return ctx;
 	}
 
 }

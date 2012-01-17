@@ -19,14 +19,12 @@
 
 package com.mnxfst.testing.activities.context;
 
-import java.io.Serializable;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * This activity takes two numerical context values and subtracts them from each other  
@@ -39,11 +37,11 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 	
 	private String leftHandVariable = null;
 	private String rightHandVariable = null;
-		
-	public void postInit() throws TSPlanActivityExecutionException {
-
-		// fetch options and transfer them to inner variables
-		TSPlanConfigOption cfgOpt = getConfiguration();
+	
+	/**
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
+	 */
+	public void initialize(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException {
 
 		if(cfgOpt == null)
 			throw new TSPlanActivityExecutionException("Required configuration options missing for activity '"+getName()+"'");
@@ -60,15 +58,15 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 	}
 
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.TSPlanExecutionContext)
 	 */
-	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException {
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
-		if(input == null)
+		if(ctx == null)
 			throw new TSPlanActivityExecutionException("Required activity context missing");
 		
-		Long left = (Long)input.get(leftHandVariable);
-		Long right = (Long)input.get(rightHandVariable);
+		Long left = (Long)ctx.getTransientVariable(leftHandVariable);
+		Long right = (Long)ctx.getTransientVariable(rightHandVariable);
 
 		if(left == null)
 			throw new TSPlanActivityExecutionException("Failed to read left hand value from context varibale '"+left+"'");
@@ -78,8 +76,8 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 		if(logger.isDebugEnabled())
 			logger.debug("subtraction["+left+" - "+right+" = " + (left-right)+"]");
 		
-		input.put(getContextVariable(), (left-right));
+		ctx.addTransientVariable(getContextVariable(), (left-right));
 		
-		return input;
+		return ctx;
 	}
 }

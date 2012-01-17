@@ -19,11 +19,9 @@
 
 package com.mnxfst.testing.activities;
 
-import java.io.Serializable;
-import java.util.Map;
-
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Defines a common interface to all activitíes
@@ -33,19 +31,20 @@ import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 public interface TSPlanActivity {
 
 	/**
-	 * Executed right after the instance initialization
+	 * Initializes the activity using the provided {@link TSPlanConfigOption}
+	 * @param cfgOpt
 	 * @throws TSPlanActivityExecutionException
 	 */
-	public abstract void postInit() throws TSPlanActivityExecutionException;
+	public abstract void initialize(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException;
 	
 	/**
-	 * TODO replace input/context variable by context implementation
-	 * Executes a single test plan step
-	 * @param input contains the data to be processed by this step
+	 * Executes the action implemented by the current activity. The provided {@link TSPlanExecutionContext context} provides
+	 * all necessary and available information. The method returns the (un)modified context
+	 * @param 
 	 * @return 
 	 * @throws TSPlanActivityExecutionException thrown in case the activity execution failed for some reason
 	 */
-	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException;
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException;
 	
 	/**
 	 * Fetch the activity identifier which must be unique throughout the whole system
@@ -118,18 +117,6 @@ public interface TSPlanActivity {
 	 * @param variable
 	 */
 	public void setContextVariable(String contextVariable);
-	
-	/**
-	 * Sets the activity configuration
-	 * @param configuration
-	 */
-	public void setConfiguration(TSPlanConfigOption configuration);
-	
-	/**
-	 * Gets the activity configuration
-	 * @return
-	 */
-	public TSPlanConfigOption getConfiguration();
 	
 }
 

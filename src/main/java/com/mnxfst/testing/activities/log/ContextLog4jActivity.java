@@ -32,6 +32,7 @@ import org.apache.log4j.PatternLayout;
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Configurable logging activity which uses the log4j subsystem as destination. 
@@ -60,13 +61,10 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 	private Map<String, String> logPatternVariables = null;
 	
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#postInit()
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
 	 */
-	public void postInit() throws TSPlanActivityExecutionException {
+	public void initialize(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException {
 
-		// fetch the configuration options and read out the log pattern
-		TSPlanConfigOption cfgOpt = getConfiguration();
-		
 		if(cfgOpt == null)
 			throw new TSPlanActivityExecutionException("Missing required configuration options");
 				
@@ -144,18 +142,18 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 			logPatternVariables = new HashMap<String, String>();
 		
 	}
-    
+
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.TSPlanExecutionContext)
 	 */
-	public Map<String, Serializable> execute(Map<String, Serializable> input) throws TSPlanActivityExecutionException {
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 
 		String resultMessage = new String(logMessage);
 		
-		if(input != null) {
+		if(ctx != null) {
 			for(String ctxVar : logPatternVariables.keySet()) {
 				String replacementPattern = logPatternVariables.get(ctxVar);
-				Serializable ctxValue = input.get(ctxVar);
+				Serializable ctxValue = ctx.getTransientVariable(ctxVar);
 	
 				if(ctxValue != null)
 					resultMessage = resultMessage.replaceAll(replacementPattern, ctxValue.toString());			
@@ -180,13 +178,13 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 				}
 			}
 						
-			input.put(getContextVariable(), resultMessage);
+			ctx.addTransientVariable(getContextVariable(), resultMessage);
 
 		} else {
 			throw new TSPlanActivityExecutionException("No context provided to activity '"+getName()+"'");
 		}
 		
-		return input;
+		return ctx;
 	}
 
 	/**

@@ -19,16 +19,14 @@
 
 package com.mnxfst.testing.activities.context;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
 import junit.framework.Assert;
 
 import org.junit.Test;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Test case for {@link ContextVarSubtractionActivity}
@@ -41,7 +39,7 @@ public class TestContextVarSubtractionActivity {
 	public void testPostInit() throws TSPlanActivityExecutionException {
 		
 		try {
-			new ContextVarSubtractionActivity().postInit();
+			new ContextVarSubtractionActivity().initialize(null);
 			Assert.fail("Config options missing");
 		} catch(TSPlanActivityExecutionException e) {
 			//
@@ -49,26 +47,23 @@ public class TestContextVarSubtractionActivity {
 		
 		TSPlanConfigOption cfgOpt = new TSPlanConfigOption();
 		ContextVarSubtractionActivity activity = new ContextVarSubtractionActivity();
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Required left hand options missing");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		cfgOpt.addOption("leftHandVariable", "left");
-		activity.setConfiguration(cfgOpt);
 		try {
-			activity.postInit();
+			activity.initialize(cfgOpt);
 			Assert.fail("Required right hand options missing");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
 		cfgOpt.addOption("rightHandVariable", "right");
-		activity.setConfiguration(cfgOpt);
-		activity.postInit();
+		activity.initialize(cfgOpt);
 	}
 	
 	@Test
@@ -79,8 +74,7 @@ public class TestContextVarSubtractionActivity {
 		activity.setContextVariable("result");
 		cfgOpt.addOption("leftHandVariable", "left");
 		cfgOpt.addOption("rightHandVariable", "right");
-		activity.setConfiguration(cfgOpt);
-		activity.postInit();
+		activity.initialize(cfgOpt);
 		
 		try {
 			activity.execute(null);
@@ -90,14 +84,24 @@ public class TestContextVarSubtractionActivity {
 		}
 
 		try {
-			activity.execute(new HashMap<String, Serializable>());
+			activity.execute(new TSPlanBasicExecutionContext());
 			Assert.fail("Left hand variable missing");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
-		Map<String, Serializable> ctx = new HashMap<String, Serializable>();
-		ctx.put("left", Long.valueOf(2));
+		TSPlanExecutionContext ctx = new TSPlanBasicExecutionContext();
+		ctx.addDurableVariable("left", Long.valueOf(2));
+		try {
+			activity.execute(ctx);
+			Assert.fail("Invalid variable storage: durable");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		
+		
+		
+		ctx.addTransientVariable("left", Long.valueOf(2));
 		try {
 			activity.execute(ctx);
 			Assert.fail("Right hand variable missing");
@@ -105,13 +109,13 @@ public class TestContextVarSubtractionActivity {
 			//
 		}
 			
-		ctx.put("right", Long.valueOf(3));
+		ctx.addTransientVariable("right", Long.valueOf(3));
 		ctx = activity.execute(ctx);
 		Assert.assertNotNull("The context must not be null", ctx);
-		Assert.assertEquals("The number of variables within the context must be 3", 3, ctx.size());
-		Assert.assertEquals("The left hand variable value must be 2", Long.valueOf(2), (Long)ctx.get("left"));
-		Assert.assertEquals("The left hand variable value must be 3", Long.valueOf(3), (Long)ctx.get("right"));
-		Assert.assertEquals("The subtraction result must be -1", Long.valueOf(-1), (Long)ctx.get("result"));
+		Assert.assertEquals("The number of variables within the context must be 3", 3, ctx.getTransientVariableNames().size());
+		Assert.assertEquals("The left hand variable value must be 2", Long.valueOf(2), (Long)ctx.getTransientVariable("left"));
+		Assert.assertEquals("The left hand variable value must be 3", Long.valueOf(3), (Long)ctx.getTransientVariable("right"));
+		Assert.assertEquals("The subtraction result must be -1", Long.valueOf(-1), (Long)ctx.getTransientVariable("result"));
 	}
 	
 }

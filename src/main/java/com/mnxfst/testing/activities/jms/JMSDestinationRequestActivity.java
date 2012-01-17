@@ -19,11 +19,10 @@
 
 package com.mnxfst.testing.activities.jms;
 
-import java.io.Serializable;
-import java.util.Map;
-
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
+import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Activity implementation for sending requests to a jms destination 
@@ -33,20 +32,22 @@ import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#postInit()
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
 	 */
-	public void postInit() throws TSPlanActivityExecutionException {
+	public void initialize(TSPlanConfigOption cfgOpt)
+			throws TSPlanActivityExecutionException {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.TSPlanExecutionContext)
 	 */
-	public Map<String, Serializable> execute(Map<String, Serializable> input)
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx)
 			throws TSPlanActivityExecutionException {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 }
