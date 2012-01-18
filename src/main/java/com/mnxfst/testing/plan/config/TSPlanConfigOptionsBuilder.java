@@ -86,7 +86,7 @@ public class TSPlanConfigOptionsBuilder {
 				NodeList valueNodes = cn.getChildNodes();
 				if(valueNodes != null && valueNodes.getLength() > 0) {
 					// fetch the first node by default 
-					// TODO in the future we could maybe handle elements having more than one child elements themselves or CDATA nodes
+					// TODO in the future we could maybe handle elements having more than one child elements themselves
 					Node vn = valueNodes.item(0);
 					
 					if(vn != null) {

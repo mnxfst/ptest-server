@@ -5,24 +5,10 @@
 	<description>sample description</description>
 	<creationDate>2011-12-20</creationDate>
 	<createdBy>mnxfst</createdBy>
-	<initActivity>randomRequestIdGenerator</initActivity>
-	
-	<globalConfiguration>
-
-	</globalConfiguration>
+	<initActivity>initTimestamp</initActivity>
 	
 	<activities>
 	
-		<!-- random value generator activity -->
-		<activity id="randomCtxValueGenerator" name="randomRequestIdGenerator">
-			<description>Generate random variable values and store them under the given variable</description>
-			<class>com.mnxfst.testing.activities.context.RandomCtxVarGenActivity</class>
-			<configuration>
-				<generate.variable.requestId.class>com.mnxfst.testing.activities.context.RandomUUIDValueGenerator</generate.variable.requestId.class>
-			</configuration>
-			<nextActivity>initTimestamp</nextActivity>
-		</activity>			
-		
 		<!-- set init timestamp -->
 		<activity id="timestamp" name="initTimestamp">
 			<description>Sets an initial timestamp stored under the given variable</description>
@@ -32,21 +18,41 @@
 				<timestamp>initTimestamp</timestamp>
 			</contextExportVars>
 			
-			<nextActivity>waitTimer</nextActivity>
+			<nextActivity>httpGETRequest</nextActivity>
 		</activity>
-		
-		<!-- wait timer -->
-		<activity id="waitTimer" name="waitTimer">
-			<description>Simple wait timer which halts the plan execution for a configured time</description>
-			<class>com.mnxfst.testing.activities.timer.WaitTimerActivity</class>
-			<contextExportVars>
-				<waitTime>waitTime</waitTime>
-			</contextExportVars>
-			
-			<nextActivity>finalTimestamp</nextActivity>
-			<configuration>
-				<waitTime>20</waitTime>
+
+		<activity id="httpRequest" name="httpGETRequest">
+			<description>Send request to www.heise.de</description>
+			<class>com.mnxfst.testing.activities.http.HTTPRequestActivity</class>
+
+			<configuration name="httpRequestConfig">
+				<maxConnections>300</maxConnections>
+				<userAgent>ptest.server</userAgent>
+				<httpProtocolVersion>1.1</httpProtocolVersion>
+				<contentCharset>UTF-8</contentCharset>
+				<expectContinue>false</expectContinue>
+				<httpRequestProcessors>org.apache.http.protocol.RequestContent,org.apache.http.protocol.RequestTargetHost,org.apache.http.protocol.RequestConnControl,org.apache.http.protocol.RequestUserAgent,org.apache.http.protocol.RequestExpectContinue</httpRequestProcessors>
+				<method>GET</method>
+				<scheme>http</scheme>
+				<host>www.heise.de</host>
+				<port>80</port>
+				<path>/</path>
+				
+				<request.param.testKey>testValue</request.param.testKey>
+				<request.param.anotherKey>anotherValue</request.param.anotherKey>
+	
+				<proxyUrl>proxy.mnxfst.com</proxyUrl>
+				<proxyPort>4321</proxyPort>
+				<proxyUser>testUser</proxyUser>
+				<proxyPassword>{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd</proxyPassword>				
 			</configuration>
+
+			<contextExportVars>
+				<responseContent>httpRequestInResponse</responseContent>
+			</contextExportVars>
+
+			<nextActivity>finalTimestamp</nextActivity>
+			<!-- reset to responseLogWriter -->
 		</activity>
 		
 		<!-- set end timestamp -->
@@ -60,8 +66,8 @@
 			
 			<nextActivity>ctxVarSub</nextActivity>
 		</activity>
-		
-		<activity id="contextVarSubtraction" name="ctxVarSub">
+
+		<activity id="ctxVarSub" name="ctxVarSub">
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.context.ContextVarSubtractionActivity</class>
 			<configuration>
@@ -79,7 +85,7 @@
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>[start=${initTimestamp}, end=${finalTimestamp}, duration=${sampleTestplanExecutionDuration}, requestId=${requestId}]</logMessage>
+				<logMessage>[duration=${sampleTestplanExecutionDuration}ms]</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
 				<logLevel>WARN</logLevel>

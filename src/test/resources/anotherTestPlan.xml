@@ -24,12 +24,17 @@
 		<!-- global configuration options must be identical to local configuration options -->		
 		<configuration name="httpRequestConfig">
 			<maxConnections>300</maxConnections>
+			<userAgent>ptest.server</userAgent>
+			<httpProtocolVersion>1.1</httpProtocolVersion>
+			<contentCharset>UTF-8</contentCharset>
+			<expectContinue>false</expectContinue>
+			<httpRequestProcessors>org.apache.http.protocol.RequestContent,org.apache.http.protocol.RequestTargetHost,org.apache.http.protocol.RequestConnControl,org.apache.http.protocol.RequestUserAgent,org.apache.http.protocol.RequestExpectContinue</httpRequestProcessors>
 			<method>GET</method>
 			<scheme>http</scheme>
 			<host>localhost</host>
 			<port>8080</port>
 			<path>/examples/servlets/servlet/RequestHeaderExample</path>
-			<parameterEncoding>UTF-8</parameterEncoding>
+			
 			<request.param.testKey>testValue</request.param.testKey>
 			<request.param.anotherKey>anotherValue</request.param.anotherKey>
 
@@ -101,7 +106,10 @@
 		<activity id="httpRequest" name="httpRequestIn" useGlobalConfig="httpRequestConfig">
 			<description>Send request to www.heise.de</description>
 			<class>com.mnxfst.testing.activities.http.HTTPRequestActivity</class>
-			<contextVariable>httpResponse1</contextVariable>
+
+			<contextExportVars>
+				<responseContent>httpRequestInResponse</responseContent>
+			</contextExportVars>
 
 			<nextActivity>soapRequestIn</nextActivity>
 			<!-- reset to responseLogWriter -->

@@ -19,14 +19,16 @@
 
 package com.mnxfst.testing.activities.http;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
@@ -38,80 +40,87 @@ import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
  * @author ckreutzfeldt
  *
  */
-public class SOAPRequestActivity extends AbstractHTTPRequestActivity {
+public class SOAPRequestActivity extends HTTPRequestActivity {
 
 	private static final Logger logger = Logger.getLogger(SOAPRequestActivity.class);	
 	
-	private String soapAction = null;
+	private static final String CFG_OPT_SOAP_ACTION = "soapAction";
+	private static final String CFG_OPT_PAYLOAD_TEMPLATE = "soapPayloadTemplate";
+	private static final String CFG_OPT_PAYLOAD_ENCODING = "soapPayloadEncoding";
 	
-	// holds the payload which might contain dynamic variables denoted by ${varName} 
-	// which will be solved through context lookups
+	private static final String HTTP_REQUEST_HEADER_SOAP_ACTION = "SOAPAction";
+
+	/** holds the name of the soap action to call */
+	private String soapAction = null;
+	/** holds the payload which might contain dynamic variables denoted by ${varName} which will be solved through context lookups */
 	private String payloadTemplate = null;
+	/** holds the payload encoding */
 	private String payloadEncoding = null;
+	/** holds the identified payload variables */
 	private Map<String, String> payloadVariables = new HashMap<String, String>();
 	
 	/**
-	 * @see com.mnxfst.testing.activities.http.AbstractHTTPRequestActivity#activitySpecificPostInit(com.mnxfst.testing.plan.config.TSPlanConfigOption)
+	 * @see com.mnxfst.testing.activities.http.HTTPRequestActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
 	 */
-	protected void activitySpecificPostInit(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException {
+	public void initialize(TSPlanConfigOption cfg) throws TSPlanActivityExecutionException {
+		super.initialize(cfg);
 
 		/////////////////////////////////////////////////////////////////////////
 		// soap specific
-		this.soapAction = new StringBuffer("\"").append((String)cfgOpt.getOption("soapAction")).append("\"").toString();
-		if(soapAction == null || soapAction.isEmpty())
-			throw new TSPlanActivityExecutionException("Required soap action not provided for activity '"+getName()+"'");
 		
-		this.payloadTemplate = (String)cfgOpt.getOption("payloadTemplate");
+		String tmpSoapAction = (String)cfg.getOption(CFG_OPT_SOAP_ACTION);
+		if(tmpSoapAction != null && !tmpSoapAction.isEmpty())
+			this.soapAction = new StringBuffer("\"").append(tmpSoapAction.trim()).append("\"").toString();
+		
+		this.payloadTemplate = (String)cfg.getOption(CFG_OPT_PAYLOAD_TEMPLATE);
 		if(payloadTemplate == null || payloadTemplate.isEmpty())
 			throw new TSPlanActivityExecutionException("Required payload template not provided for activity '"+getName()+"'");
 		
-		// TODO test
-		
-		this.payloadEncoding = (String)cfgOpt.getOption("payloadEncoding");		
+		this.payloadEncoding = (String)cfg.getOption(CFG_OPT_PAYLOAD_ENCODING);		
 		// no payload encoding provided? assume UTF-8 ---  TODO lookup encoding from xml
 		if(this.payloadEncoding == null || this.payloadEncoding.isEmpty()) {
 			this.payloadEncoding = "UTF-8";
 		}		
+		
+		this.payloadVariables = getContextVariablesFromString(payloadTemplate);
+		
+		header.put(HTTP_REQUEST_HEADER_SOAP_ACTION, this.soapAction);
+
 		/////////////////////////////////////////////////////////////////////////
 
-
-		/////////////////////////////////////////////////////////////////////////
-		// extract variables from payload
-		payloadVariables = getContextVariablesFromString(payloadTemplate);
-//
-//		if(logger.isDebugEnabled())
-//			logger.debug("Successfully pre-computet soap request being forwarded to " + httpRequestURI);
-//		
+		
 	}
 
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
 	 */
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
-		
-//		HttpPost httpPostRequest = new HttpPost(this.httpRequestURI);
-//		httpPostRequest.setHeader("SOAPAction", this.soapAction);
-//
-//		// replace payload variables with values fetched from context
-//		String payload = new String(this.payloadTemplate);
-//		for(String contextVariable : payloadVariables.keySet()) {
-//			String payloadVariable = payloadVariables.get(contextVariable);
-//			Serializable contextValue = input.get(contextVariable);
-//			if(contextValue != null)
-//				payload = payload.replaceAll(payloadVariable, contextValue.toString());
-//		}
-//
-//		// convert payload into request entity and assign it 
-//		try {
-//			StringEntity entity = new StringEntity(payload, payloadEncoding);
-//			entity.setContentType("text/xml");
-//			httpPostRequest.setEntity(entity);
-//		} catch(UnsupportedEncodingException e) {
-//			throw new TSPlanActivityExecutionException("Failed to assign configured payload to post request. Error: " + e.getMessage(), e);
-//		}
-//
-//		HttpResponse httpResponse = executeRequest(httpPostRequest);
-//		input.put(getContextVariable(), new String(getResponseContent(httpResponse)));
+
+		// replace payload variables with values fetched from context
+		String payload = new String(this.payloadTemplate);
+		for(String contextVariable : payloadVariables.keySet()) {
+			String payloadVariable = payloadVariables.get(contextVariable);
+			Serializable contextValue = ctx.getTransientVariable(contextVariable);
+			if(contextValue != null)
+				payload = payload.replaceAll(payloadVariable, contextValue.toString());
+		}
+
+		// convert payload into request entity and assign it
+		StringEntity  entity = null;
+		try {
+			entity = new StringEntity(payload, payloadEncoding);
+			entity.setContentType("text/xml");			
+		} catch(UnsupportedEncodingException e) {
+			throw new TSPlanActivityExecutionException("Failed to assign configured payload to post request. Error: " + e.getMessage(), e);
+		}
+		try {
+			HttpResponse response = sendPOSTRequest(entity, header);
+			ctx.addTransientVariable(contextExportVariableResponseContent, EntityUtils.toByteArray(response.getEntity()));
+		} catch (IOException e) {
+			// TODO log errors
+		} catch (HttpException e) {
+			// TODO log errors
+		}
 		
 		return ctx;
 	}
