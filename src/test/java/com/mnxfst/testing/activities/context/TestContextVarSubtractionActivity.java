@@ -19,6 +19,9 @@
 
 package com.mnxfst.testing.activities.context;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -71,7 +74,10 @@ public class TestContextVarSubtractionActivity {
 
 		TSPlanConfigOption cfgOpt = new TSPlanConfigOption();
 		ContextVarSubtractionActivity activity = new ContextVarSubtractionActivity();
-		activity.setContextVariable("result");
+
+		Map<String, String> vars = new HashMap<String, String>();
+		vars.put("subtractionResult", "result");
+		activity.setContextExportVariables(vars);
 		cfgOpt.addOption("leftHandVariable", "left");
 		cfgOpt.addOption("rightHandVariable", "right");
 		activity.initialize(cfgOpt);

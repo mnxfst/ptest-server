@@ -45,6 +45,8 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 	
 	private static Logger logger = Logger.getLogger(ContextLog4jActivity.class);
 
+	private static final String CTX_EXPORT_MESSAGE_VARIABLE = "log4jMsg";
+	
 	/** holds the appender type named in the configuration options. depending of the type, additional options must be present. for more info, see the appender building methods */  
 	private ContextLog4jAppenderType appenderType = ContextLog4jAppenderType.UNKNOWN;
 	
@@ -59,6 +61,9 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 
 	/** contains the variable strings formatted for being used as patterns in String.replaceAll. The contents are being extracted during the init phase and stored as contextVariable/replacePattern */
 	private Map<String, String> logPatternVariables = null;
+	
+	/** holds the name of the context variable to be used for exporting the log message */
+	private String contextExportVariableName = null;
 	
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
@@ -137,6 +142,10 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 			if(logger.isDebugEnabled())
 				logger.debug("Existing context log appender found for activity: " + activityName);
 		}
+		
+		if(getContextExportVariables() != null) {
+			this.contextExportVariableName = getContextExportVariables().get(CTX_EXPORT_MESSAGE_VARIABLE);
+		}
 	
 		if(logPatternVariables == null)
 			logPatternVariables = new HashMap<String, String>();
@@ -178,7 +187,7 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 				}
 			}
 						
-			ctx.addTransientVariable(getContextVariable(), resultMessage);
+			ctx.addTransientVariable(contextExportVariableName, resultMessage);
 
 		} else {
 			throw new TSPlanActivityExecutionException("No context provided to activity '"+getName()+"'");

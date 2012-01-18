@@ -37,7 +37,10 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 
 	private static final Logger logger = Logger.getLogger(WaitTimerActivity.class);
 	
+	private static final String CTX_EXPORT_WAITTIME_VARIABLE= "waitTime";
+	
 	private long waitTime = 0;
+	private String contextExportVariableName = null;
 
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
@@ -63,6 +66,11 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 			if(logger.isDebugEnabled()) 
 				logger.debug("Received wait time value is less than 0 ('"+waitTime+"'). Resetting wait time to 0");
 		}
+		
+		if(getContextExportVariables() != null) {
+			this.contextExportVariableName = getContextExportVariables().get(CTX_EXPORT_WAITTIME_VARIABLE);
+		}
+		
 	}
 
 	/**
@@ -76,7 +84,7 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 			logger.error(WaitTimerActivity.class.getName() + " interrupted. Exception: "  + e.getMessage(), e);
 		}
 		
-		ctx.addTransientVariable(getContextVariable(), Long.valueOf(waitTime));
+		ctx.addTransientVariable(contextExportVariableName, Long.valueOf(waitTime));
 		
 		return ctx;
 	}

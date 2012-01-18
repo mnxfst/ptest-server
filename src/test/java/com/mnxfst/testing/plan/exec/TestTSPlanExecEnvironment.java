@@ -19,6 +19,10 @@
 
 package com.mnxfst.testing.plan.exec;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.Assert;
@@ -94,8 +98,7 @@ public class TestTSPlanExecEnvironment {
 		
 		// TODO valid test  for result
 
-	}
-	
+	}	
 	
 	@Test
 	public void testParallelPlanExecution() throws Exception {
@@ -104,12 +107,16 @@ public class TestTSPlanExecEnvironment {
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 
+		// TODO test for existence
+		Map<String, Serializable> vars = new HashMap<String, Serializable>();
+		vars.put("test", "var");
 		// instantiate environment and execute tests
-		TSPlanExecEnvironment env = new TSPlanExecEnvironment("env-1", plan, 5, TSPlanRecurrenceType.TIMES, 8);
+		TSPlanExecEnvironment env = new TSPlanExecEnvironment("env-1", plan, 5, TSPlanRecurrenceType.TIMES, 8, vars);
 		TSPlanExecEnvironmentResult result = env.execute();
 		
 		Assert.assertNotNull("The overall result must not be null", result);
-		Assert.assertEquals("The number of errors must be 0", 0, result.getErrors());
-		
+		Assert.assertEquals("The number of errors must be 0", 0, result.getErrors());		
 	}
+	
+	
 }

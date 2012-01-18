@@ -35,8 +35,11 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 
 	private static final Logger logger = Logger.getLogger(ContextVarSubtractionActivity.class);
 	
+	private static final String CTX_EXPORT_SUBTRACTION_RESULT_VARIABLE = "subtractionResult";
+	
 	private String leftHandVariable = null;
 	private String rightHandVariable = null;
+	private String contextExportVariableName = null;
 	
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
@@ -55,6 +58,11 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 		if(rightHandVariable == null || rightHandVariable.isEmpty())
 			throw new TSPlanActivityExecutionException("Failed to get variable to read right hand value from");
 
+		if(getContextExportVariables() != null) {
+			this.contextExportVariableName = getContextExportVariables().get(CTX_EXPORT_SUBTRACTION_RESULT_VARIABLE);
+		}
+
+		
 	}
 
 	/**
@@ -76,7 +84,7 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 		if(logger.isDebugEnabled())
 			logger.debug("subtraction["+left+" - "+right+" = " + (left-right)+"]");
 		
-		ctx.addTransientVariable(getContextVariable(), (left-right));
+		ctx.addTransientVariable(contextExportVariableName, (left-right));
 		
 		return ctx;
 	}

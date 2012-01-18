@@ -19,7 +19,9 @@
 
 package com.mnxfst.testing.plan.exec;
 
+import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -55,21 +57,48 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 	private int recurrences = -1;
 	private TSPlanRecurrenceType recurrenceType = TSPlanRecurrenceType.UNKNOWN;
 	private boolean interrupted = false;
+	private TSPlanExecutionContext context = new TSPlanBasicExecutionContext();
 
+	/**
+	 * Initializes the executor
+	 * @param testPlan
+	 * @param executionEnvironmentId
+	 * @param planExecutorId
+	 * @param recurrences
+	 * @param recurrenceType
+	 */
+	public TSPlanExecutor(TSPlan testPlan, String executionEnvironmentId, String planExecutorId, int recurrences, TSPlanRecurrenceType recurrenceType) throws TSPlanMissingException {
+		this(testPlan, executionEnvironmentId, planExecutorId, recurrences, recurrenceType, null);
+	}
 	
 	/**
 	 * Initializes the executor
 	 * @param testPlan
+	 * @param executionEnvironmentId
+	 * @param planExecutorId
+	 * @param recurrences
+	 * @param recurrenceType
+	 * @param context
 	 */
-	public TSPlanExecutor(TSPlan testPlan, String executionEnvironmentId, String planExecutorId, int recurrences, TSPlanRecurrenceType recurrenceType) {
+	public TSPlanExecutor(TSPlan testPlan, String executionEnvironmentId, String planExecutorId, int recurrences, TSPlanRecurrenceType recurrenceType, Map<String, Serializable> preconfiguredDurableContextVariables) throws TSPlanMissingException  {
+		
+		if(testPlan == null)
+			throw new TSPlanMissingException("Missing required test plan");
+		
 		this.testPlan = testPlan;
 		this.executionEnvironmentId = executionEnvironmentId;
 		this.planExecutorId = planExecutorId;
 		this.recurrences = recurrences;
 		this.recurrenceType = recurrenceType;
 		
+		if(preconfiguredDurableContextVariables != null && !preconfiguredDurableContextVariables.isEmpty()) {
+			for(String key : preconfiguredDurableContextVariables.keySet()) {
+				context.addDurableVariable(key, preconfiguredDurableContextVariables.get(key));
+			}
+		}		
+				
 		if(logger.isDebugEnabled())
-			logger.debug("Recurrence type: " + recurrenceType + ", recurrences: " + recurrences);
+			logger.debug("TSPlanExecutor[testPlan="+testPlan.getName()+", execEnvId="+executionEnvironmentId+", executorId="+planExecutorId+", recurrences="+recurrences+", recType="+recurrenceType+", preconfiguredVars="+context.getDurableVariableNames().size()+"]");
 		
 	}
 	
@@ -87,9 +116,6 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		
 		// start timer
 		long overallStart = System.currentTimeMillis();
-		
-		// create empty input
-		TSPlanExecutionContext context = new TSPlanBasicExecutionContext();
 		
 		// TODO support timed recurrences
 		if(recurrenceType != TSPlanRecurrenceType.TIMES)

@@ -32,7 +32,11 @@
 		<activity id="timestamp" name="initTimestamp">
 			<description>Sets an initial timestamp stored under the given variable</description>
 			<class>com.mnxfst.testing.activities.timer.TimestampActivity</class>
-			<contextVariable>initTimestamp</contextVariable>			
+			
+			<contextExportVars>
+				<timestamp>initTimestamp</timestamp>
+			</contextExportVars>
+			
 			<nextActivity>waitTimer</nextActivity>
 		</activity>
 		
@@ -40,7 +44,10 @@
 		<activity id="waitTimer" name="waitTimer">
 			<description>Simple wait timer which halts the plan execution for a configured time</description>
 			<class>com.mnxfst.testing.activities.timer.WaitTimerActivity</class>
-			<contextVariable>waitTime</contextVariable>
+			<contextExportVars>
+				<waitTime>waitTime</waitTime>
+			</contextExportVars>
+			
 			<nextActivity>finalTimestamp</nextActivity>
 			<configuration>
 				<waitTime>20</waitTime>
@@ -51,7 +58,11 @@
 		<activity id="timestamp" name="finalTimestamp">
 			<description>Sets an initial timestamp stored under the given variable</description>
 			<class>com.mnxfst.testing.activities.timer.TimestampActivity</class>
-			<contextVariable>finalTimestamp</contextVariable>			
+			
+			<contextExportVars>
+				<timestamp>finalTimestamp</timestamp>
+			</contextExportVars>
+			
 			<nextActivity>ctxVarSub</nextActivity>
 		</activity>
 		
@@ -62,7 +73,10 @@
 				<leftHandVariable>finalTimestamp</leftHandVariable>
 				<rightHandVariable>initTimestamp</rightHandVariable>
 			</configuration>
-			<contextVariable>sampleTestplanExecutionDuration</contextVariable>
+			
+			<contextExportVars>
+				<subtractionResult>sampleTestplanExecutionDuration</subtractionResult>
+			</contextExportVars>
 			<nextActivity>finish</nextActivity>
 		</activity>		
 		
@@ -77,7 +91,10 @@
 				<logAppender>console</logAppender>
 				<logLevel>WARN</logLevel>
 			</configuration>
-			<contextVariable>ctxLog4jMsg</contextVariable>
+
+			<contextExportVars>
+				<log4jMsg>ctxLog4jMsg</log4jMsg>
+			</contextExportVars>
 			<nextActivity>finish</nextActivity>
 		</activity>		
 		 -->

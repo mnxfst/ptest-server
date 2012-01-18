@@ -19,6 +19,7 @@
 
 package com.mnxfst.testing.activities.log;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -138,7 +139,10 @@ public class TestContextLog4jActivity {
 
 		ContextLog4jActivity activity = new ContextLog4jActivity();
 		activity.setName("test-activity");
-		activity.setContextVariable("ctxLog4jMsg");
+		
+		Map<String, String> vars = new HashMap<String, String>();
+		vars.put("log4jMsg", "ctxLog4jMsg");
+		activity.setContextExportVariables(vars);
 		activity.initialize(cfgOpt);
 		
 		try {

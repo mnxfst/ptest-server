@@ -19,6 +19,8 @@
 
 package com.mnxfst.testing.activities;
 
+import java.util.Map;
+
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
@@ -110,13 +112,13 @@ public interface TSPlanActivity {
 	 * Returns the name of the context variable used for storing results per activity
 	 * @return
 	 */
-	public String getContextVariable();
+	public Map<String, String> getContextExportVariables();
 	
 	/**
 	 * Sets the name of the context variable used for storing results per activity
 	 * @param variable
 	 */
-	public void setContextVariable(String contextVariable);
+	public void setContextExportVariables(Map<String, String> contextExportVariables);
 	
 }
 

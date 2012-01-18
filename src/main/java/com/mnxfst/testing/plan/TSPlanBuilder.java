@@ -70,18 +70,16 @@ public class TSPlanBuilder {
 	
 	private static final String XPATH_EXPRESSION_ALL_GLOBAL_CONFIG_OPTIONS = "/ptestplan/globalConfiguration/*";	
 	private static final String XPATH_EXPRESSION_ALL_ACTIVITIES = "/ptestplan/activities/*";
-	
-	
-	
+		
 	// xpath expressions required for parsing activities
 	private static final String XPATH_EXPRESSION_ACTIVITY_ID_ATTRIBUTE = "@id";
 	private static final String XPATH_EXPRESSION_ACTIVITY_NAME_ATTRIBUTE = "@name";
 	private static final String XPATH_EXPRESSION_ACTIVITY_USE_GLOBAL_CONFIG_ATTRIBUTE = "@useGlobalConfig";
 	private static final String XPATH_EXPRESSION_ACTIVITY_DESCRIPTION_NODE = "description";
 	private static final String XPATH_EXPRESSION_ACTIVITY_CLASS_NODE = "class";
-	private static final String XPATH_EXPRESSION_ACTIVITY_CONTEXT_VARIABLE_NODE = "contextVariable";
 	private static final String XPATH_EXPRESSION_ACTIVITY_CONFIGURATION_NODES = "configuration";
 	private static final String XPATH_EXPRESSION_ACTIVITY_NEXT_ACTIVITY = "nextActivity";
+	private static final String XPATH_EXPRESSION_ACTIVITY_CONTEXT_RESULT_VARIABLES = "contextExportVars";
 
 	/** required date format */
 	private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -287,18 +285,49 @@ public class TSPlanBuilder {
 			throw new TSPlanConfigurationFormatException("Failed to parse provided test plan using a xpath expression. Error: " + e.getMessage(), e);
 		} 
 		
+		// iterate through all activity nodes
 		if(activityNodes != null && activityNodes.getLength() > 0) {
-			
 			for(int i = 0; i < activityNodes.getLength(); i++) {
-
+				
 				try {
+					
 					String activityId = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_ID_ATTRIBUTE, activityNodes.item(i), XPathConstants.STRING);
 					String activityName = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_NAME_ATTRIBUTE, activityNodes.item(i), XPathConstants.STRING);
 					String activityUseGlobalConfig = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_USE_GLOBAL_CONFIG_ATTRIBUTE, activityNodes.item(i), XPathConstants.STRING);
 					String activityClass = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_CLASS_NODE, activityNodes.item(i), XPathConstants.STRING);
 					String activityDescription = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_DESCRIPTION_NODE, activityNodes.item(i), XPathConstants.STRING);
-					String activityContextVariable = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_CONTEXT_VARIABLE_NODE, activityNodes.item(i), XPathConstants.STRING);
+//					String activityContextVariable = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_CONTEXT_VARIABLE_NODE, activityNodes.item(i), XPathConstants.STRING);
 					String activityNextActivity = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_NEXT_ACTIVITY,  activityNodes.item(i), XPathConstants.STRING);
+
+					Map<String, String> activityContextExportVariables = new HashMap<String, String>();
+					// fetch the association of values being exported by the activity and the context variable name to use
+					try {
+						// fetch the context result variables block and iterate through contents if any provided
+						NodeList activityContextResultVars = (NodeList)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_CONTEXT_RESULT_VARIABLES,  activityNodes.item(i), XPathConstants.NODESET);
+						if(activityContextResultVars != null && activityContextResultVars.getLength() == 1 && activityContextResultVars.item(0) != null) {
+							NodeList childNodes = activityContextResultVars.item(0).getChildNodes();
+							if(childNodes != null && childNodes.getLength() > 0) {
+								for(int cnCount = 0; cnCount < childNodes.getLength(); cnCount++) {
+									Node cn = childNodes.item(cnCount);
+									if(cn != null && cn.getNodeType() == Node.ELEMENT_NODE) {
+										String activityVarName = cn.getNodeName();
+										String contextExportVarName = null;
+										NodeList valueNodes = cn.getChildNodes();
+										if(valueNodes != null && valueNodes.getLength() == 1) {
+											Node vn = valueNodes.item(0);
+											if(vn != null && vn.getNodeType() == Node.TEXT_NODE) {
+												contextExportVarName = vn.getNodeValue();
+											}
+										}
+										activityContextExportVariables.put(activityVarName, contextExportVarName);
+									}
+								}
+							}
+						}
+						
+					} catch(XPathExpressionException e) {
+						throw new TSPlanConfigurationFormatException("Failed to parse provided test plan using a xpath expression. Error: " + e.getMessage(), e);
+					}
 
 					TSPlanConfigOption activityConfigOptions = null;
 					
@@ -315,7 +344,7 @@ public class TSPlanBuilder {
 					TSPlanActivity activity = getActivityParserInstance(activityClass);
 					activity.setId(activityId);
 					activity.setClassName(activityClass);
-					activity.setContextVariable(activityContextVariable);
+					activity.setContextExportVariables(activityContextExportVariables);
 					activity.setDescription(activityDescription);
 					activity.setName(activityName);
 					activity.setNextActivity(activityNextActivity);
@@ -330,7 +359,7 @@ public class TSPlanBuilder {
 
 					
 					if(logger.isDebugEnabled())
-						logger.debug("Parsed activity: [id="+activityId+", name="+activityName+", class="+activityClass+", useGlobalCfg="+activityUseGlobalConfig+", ctxVarName="+activityContextVariable+", nextActivity="+activityNextActivity+", description="+activityDescription+"]");
+						logger.debug("Parsed activity: [id="+activityId+", name="+activityName+", class="+activityClass+", useGlobalCfg="+activityUseGlobalConfig+", ctxExportVars="+activityContextExportVariables.size()+", nextActivity="+activityNextActivity+", description="+activityDescription+"]");
 					
 					result.put(activityName, activity);
 						

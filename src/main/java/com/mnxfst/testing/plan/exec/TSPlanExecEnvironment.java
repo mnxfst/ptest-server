@@ -19,8 +19,10 @@
 
 package com.mnxfst.testing.plan.exec;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,6 +62,10 @@ public class TSPlanExecEnvironment {
 	
 	// stores the test plan name
 	private String testPlanName = null;
+
+	public TSPlanExecEnvironment(String executionEnvironmentId, final TSPlan testPlan, int recurrences, TSPlanRecurrenceType recurrenceType, int numOfParallelExecutors) throws TSPlanMissingException, TSPlanInstantiationException {
+		this(executionEnvironmentId, testPlan, recurrences, recurrenceType, numOfParallelExecutors, null);
+	}
 	
 	/**
 	 * Initializes the execution environment
@@ -68,11 +74,11 @@ public class TSPlanExecEnvironment {
 	 * @param recurrences
 	 * @param recurrenceType
 	 * @param numOfParallelExecutors
+	 * @param preconfiguredDurableContextVariables
 	 * @throws TSPlanMissingException
 	 * @throws TSPlanInstantiationException
 	 */
-	public TSPlanExecEnvironment(String executionEnvironmentId, final TSPlan testPlan, int recurrences, TSPlanRecurrenceType recurrenceType, int numOfParallelExecutors) throws TSPlanMissingException, TSPlanInstantiationException {
-
+	public TSPlanExecEnvironment(String executionEnvironmentId, final TSPlan testPlan, int recurrences, TSPlanRecurrenceType recurrenceType, int numOfParallelExecutors, Map<String, Serializable> preconfiguredDurableContextVariables) throws TSPlanMissingException, TSPlanInstantiationException {
 		// ensure that the provided input is valid
 		if(executionEnvironmentId == null || executionEnvironmentId.isEmpty())
 			throw new TSPlanInstantiationException("Failed to instantiate test plan due to missing execution environment identifier");
@@ -97,7 +103,7 @@ public class TSPlanExecEnvironment {
 		
 		// instantiate a configured number of test plan executors
 		for(int i = 0; i < this.numberOfParallelExecutors; i++)
-			testPlanExecutors.add(new TSPlanExecutor(testPlan, executionEnvironmentId, executionEnvironmentId + "-executor-"+i, recurrences, recurrenceType));
+			testPlanExecutors.add(new TSPlanExecutor(testPlan, executionEnvironmentId, executionEnvironmentId + "-executor-"+i, recurrences, recurrenceType, preconfiguredDurableContextVariables));
 		
 		if(logger.isDebugEnabled())
 			logger.debug("New test plan execution environment instantiated: [execEnvId="+executionEnvironmentId+", testPlan="+testPlan.getName()+", numOfParallelExecutors="+testPlanExecutors.size()+", recurrences="+recurrences+", recurrenceType="+recurrenceType+"]");

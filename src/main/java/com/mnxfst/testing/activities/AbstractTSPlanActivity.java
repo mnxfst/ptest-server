@@ -41,30 +41,12 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 	/** name of next activity */
 	public String nextActivity = null;
 	/** variable used for storing results etc */
-	private String contextVariable = null;
+	private Map<String, String> contextExportVariables = null;
 	
 	public AbstractTSPlanActivity() {
 		
 	}
 		
-	/**
-	 * Initializes the instance
-	 * @param id
-	 * @param name
-	 * @param description
-	 * @param className
-	 * @param nextActivity
-	 * @param variable
-	 */
-	public AbstractTSPlanActivity(String id, String name, String description, String className, String nextActivity, String contextVariable) {
-		this.id = id;
-		this.name = name;
-		this.description = description;
-		this.className = className;
-		this.nextActivity = nextActivity;
-		this.contextVariable = contextVariable;
-	}
-	
 	/**
 	 * Returns a map containing the name of context variables associated with their pattern to be applied via String.replaceAll which 
 	 * all show up in the provided input string
@@ -136,13 +118,20 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 		this.nextActivity = nextActivity;
 	}
 
-	public String getContextVariable() {
-		return contextVariable;
+	/**
+	 * @return the contextExportVariables
+	 */
+	public Map<String, String> getContextExportVariables() {
+		return contextExportVariables;
 	}
 
-	public void setContextVariable(String contextVariable) {
-		this.contextVariable = contextVariable;
+	/**
+	 * @param contextExportVariables the contextExportVariables to set
+	 */
+	public void setContextExportVariables(Map<String, String> contextExportVariables) {
+		this.contextExportVariables = contextExportVariables;
 	}
+
 
 	
 }

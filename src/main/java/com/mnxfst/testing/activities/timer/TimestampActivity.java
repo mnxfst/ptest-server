@@ -31,10 +31,19 @@ import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
  */
 public class TimestampActivity extends AbstractTSPlanActivity {
 
+	private static final String CTX_EXPORT_TIMESTAMP_VARIABLE= "timestamp";
+	
+	private String contextExportVariableName = null;
+	
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
 	 */
 	public void initialize(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException {
+		
+		if(getContextExportVariables() != null) {
+			this.contextExportVariableName = getContextExportVariables().get(CTX_EXPORT_TIMESTAMP_VARIABLE);
+		}
+
 	}
 
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
@@ -42,7 +51,7 @@ public class TimestampActivity extends AbstractTSPlanActivity {
 		if(ctx == null)
 			throw new TSPlanActivityExecutionException("Missing required activity context!");
 		
-		ctx.addTransientVariable(getContextVariable(), Long.valueOf(System.currentTimeMillis()));
+		ctx.addTransientVariable(contextExportVariableName, Long.valueOf(System.currentTimeMillis()));
 
 		return ctx;
 	}
