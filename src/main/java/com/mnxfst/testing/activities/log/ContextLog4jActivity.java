@@ -82,7 +82,8 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 		this.logMessage = (String)cfgOpt.getOption("logMessage");
 		if(logMessage == null || logMessage.isEmpty())
 			throw new TSPlanActivityExecutionException("Log message missing for activity '"+activityName+"'");
-	
+
+		
 		// fetch associated log appender - if it exists, skip the remaining initialization
 		Appender activityAppender = logger.getAppender(activityName);
 		if(activityAppender == null) {
@@ -104,13 +105,13 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 					throw new TSPlanActivityExecutionException("Unsupported appender type: " + appenderType);
 				}
 			}
-			logger.addAppender(activityAppender);
+//			logger.addAppender(activityAppender);
 			
 			// fetch an assign log level
 			logLevel = ContextLog4jLevel.fromString((String)cfgOpt.getOption("logLevel"));
 			if(logLevel == null || logLevel == ContextLog4jLevel.UNKNOWN)
 				throw new TSPlanActivityExecutionException("No log level provided or named one is unknown for activity '"+activityName+"'");
-			
+			/*
 			switch(logLevel) {
 				case DEBUG: {
 					logger.setLevel(Level.DEBUG);
@@ -131,7 +132,7 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 				default: {
 					throw new TSPlanActivityExecutionException("Unsupported log level: " + logLevel);
 				}
-			}
+			}*/
 			
 			logPatternVariables = getContextVariablesFromString(logMessage);
 			

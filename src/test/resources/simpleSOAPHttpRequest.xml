@@ -41,16 +41,16 @@
 				<logLevel>INFO</logLevel>
 			</configuration>
 
-			<nextActivity>httpGETRequest</nextActivity>
+			<nextActivity>soapRequest</nextActivity>
 		</activity>		
 		 
 
 
-		<activity id="httpRequest" name="httpGETRequest">
+		<activity id="soapRequest" name="soapRequest">
 			<description>Send request to www.heise.de</description>
-			<class>com.mnxfst.testing.activities.http.HTTPRequestActivity</class>
+			<class>com.mnxfst.testing.activities.http.SOAPRequestActivity</class>
 
-			<configuration name="httpRequestConfig">
+			<configuration name="soapRequestConfig">
 				<maxConnections>300</maxConnections>
 				<userAgent>ptest.server</userAgent>
 				<httpProtocolVersion>1.1</httpProtocolVersion>
@@ -61,10 +61,30 @@
 				<scheme>http</scheme>
 				<host>localhost</host>
 				<port>8080</port>
-				<path>/</path>
+				<path>/address-validation/AddressValidationWS</path>
 				
-				<request.param.testKey>testValue</request.param.testKey>
-				<request.param.anotherKey>anotherValue</request.param.anotherKey>
+				<soapAction></soapAction>
+			<soapPayloadTemplate><![CDATA[
+			<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://ws.addressvalidation.mock.esp.ottogroup.com/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ws:addressValidation>
+         <arg0>${arg0}</arg0>
+         <arg1>${arg1}</arg1>
+         <arg2>${arg2}</arg2>
+         <arg3>${arg3}</arg3>
+         <arg4>${arg4}</arg4>
+         <arg5>${arg5}</arg5>
+         <arg6>${arg6}</arg6>
+         <arg7>${arg7}</arg7>
+         <arg8>${arg8}</arg8>
+         <arg9>${arg9}</arg9>
+      </ws:addressValidation>
+   </soapenv:Body>
+</soapenv:Envelope>
+			]]></soapPayloadTemplate>
+			<soapPayloadEncoding>UTF-8</soapPayloadEncoding>
+				
 	
 				<proxyUrl>proxy.ov.otto.de</proxyUrl>
 				<proxyPort>3128</proxyPort>
@@ -73,7 +93,7 @@
 			</configuration>
 
 			<contextExportVars>
-				<responseContent>httpRequestInResponse</responseContent>
+				<responseContent>soapRequestInResponse</responseContent>
 			</contextExportVars>
 
 			<nextActivity>finalTimestamp</nextActivity>
@@ -97,6 +117,19 @@
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
 				<logMessage>${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${finalTimestamp} ${date} true true</logMessage>
+				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
+				<logAppender>console</logAppender>
+				<logLevel>INFO</logLevel>
+			</configuration>
+
+			<nextActivity>finish</nextActivity>
+		</activity>		
+		
+		<activity id="contextLog4j" name="ctxLog4jSoap">
+			<description>Write out context</description>
+			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
+			<configuration>
+				<logMessage>${soapRequestInResponse}</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
 				<logLevel>INFO</logLevel>

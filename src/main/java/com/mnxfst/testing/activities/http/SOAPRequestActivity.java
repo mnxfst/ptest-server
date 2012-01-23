@@ -118,7 +118,7 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 		}
 		try {
 			HttpResponse response = sendPOSTRequest(entity, header);
-			ctx.addTransientVariable(contextExportVariableResponseContent, EntityUtils.toByteArray(response.getEntity()));
+			ctx.addTransientVariable(contextExportVariableResponseContent, EntityUtils.toString(response.getEntity()));
 		} catch (IOException e) {
 			// TODO log errors
 		}

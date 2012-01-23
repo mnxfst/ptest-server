@@ -67,7 +67,7 @@ public class TestSaturationExec {
 		TSPlanExecEnvironment env = null;
 		TSPlanExecEnvironmentResult result = null;
 		
-		for(threads = 1; threads <= 8;  threads++) {
+		for(threads = 1; threads <= 30;  threads++) {
 			System.out.println("--------------------------------------------------------------------");
 			System.out.println("Threads: " + threads);
 			for(recurrences = 1; recurrences <= 30; recurrences++) {
@@ -86,7 +86,7 @@ public class TestSaturationExec {
 		}
 	}
 	
-	@Test
+	
 	public void doTestCase1() throws Exception {
 
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/simpleHttpRequestTest.xml");		
@@ -96,7 +96,7 @@ public class TestSaturationExec {
 		
 		int threads = 1;
 		int recurrences = 1;
-		int maxRuntime = 21;
+		int maxRuntime = 40;
 		int warmupRuns = 5;
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss,SSS");
@@ -119,7 +119,7 @@ public class TestSaturationExec {
 		
 // ${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${initTimestamp} ${date} ${sampleTestplanExecutionDuration} true true		
 		
-		for(threads = 1; threads <= 2;  threads++) {
+		for(threads = 1; threads <= 8;  threads++) {
 
 			vars.put("threadCount", String.valueOf(threads));
 			vars.put("date", formatter.format(new Date()));
@@ -139,9 +139,64 @@ public class TestSaturationExec {
 			}
 			if(interrupt)
 				break;
-		}
-
+		}	
+	}
+	
+	@Test
+	public void doTestCase2() throws Exception {
 		
+		
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/simpleSOAPHttpRequest.xml");		
+		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
+		
+		boolean interrupt = false;
+		
+		int threads = 1;
+		int recurrences = 1;
+		int maxRuntime = 40;
+		int warmupRuns = 5;
+
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss,SSS");
+
+		// instantiate environment and execute tests
+		TSPlanExecEnvironment env = null;
+		TSPlanExecEnvironmentResult result = null;
+		
+		Map<String, Serializable> vars = new HashMap<String, Serializable>();
+		vars.put("scenarioId", "junitscenario");
+		vars.put("productId", "junittest");
+		vars.put("runId", "junitrun");
+		vars.put("threadCount", String.valueOf(threads));
+		vars.put("waitTime", "0");
+		vars.put("localhostName", "localhost");
+		vars.put("measuringPointId", "TC1");
+		vars.put("date", formatter.format(new Date()));
+		
+		
+		
+// ${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${initTimestamp} ${date} ${sampleTestplanExecutionDuration} true true		
+		
+		for(threads = 1; threads <= 8;  threads++) {
+
+			vars.put("threadCount", String.valueOf(threads));
+			vars.put("date", formatter.format(new Date()));
+
+			System.out.println("--------------------------------------------------------------------");
+			System.out.println("Threads: " + threads);
+			for(recurrences = 1; recurrences <= 30; recurrences++) {
+				env = new TSPlanExecEnvironment("env-"+threads+"-"+recurrences, plan, recurrences, TSPlanRecurrenceType.TIMES, threads, vars);
+				result = env.execute();
+				System.out.println("\tThreads: " + threads + ", recurrences: " + recurrences + ", overallAvg: " + result.getAverageDurationMillis() + ", avgDuration: " + result.getSingleRunExecutionDurationAverage() + ", min: " + result.getSingleRunExecutionDurationMin() + ", max: " + result.getSingleRunExecutionDurationMax());
+				warmupRuns = warmupRuns - 1;
+				
+				if(warmupRuns <= 0 && result.getSingleRunExecutionDurationMax() >= maxRuntime) {
+					interrupt = true;
+					break;
+				}
+			}
+			if(interrupt)
+				break;
+		}	
 	}
 	
 }
