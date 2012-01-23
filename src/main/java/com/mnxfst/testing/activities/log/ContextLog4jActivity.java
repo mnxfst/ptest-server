@@ -163,6 +163,9 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 			for(String ctxVar : logPatternVariables.keySet()) {
 				String replacementPattern = logPatternVariables.get(ctxVar);
 				Serializable ctxValue = ctx.getTransientVariable(ctxVar);
+				
+				if(ctxValue == null)
+					ctxValue = ctx.getDurableVariable(ctxVar);
 	
 				if(ctxValue != null)
 					resultMessage = resultMessage.replaceAll(replacementPattern, ctxValue.toString());			
@@ -187,7 +190,8 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 				}
 			}
 						
-			ctx.addTransientVariable(contextExportVariableName, resultMessage);
+			if(contextExportVariableName != null && !contextExportVariableName.isEmpty())
+				ctx.addTransientVariable(contextExportVariableName, resultMessage);
 
 		} else {
 			throw new TSPlanActivityExecutionException("No context provided to activity '"+getName()+"'");
@@ -204,5 +208,4 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 	private Appender createConsoleAppender(TSPlanConfigOption cfgOpt) {		
 		return new ConsoleAppender(new PatternLayout(conversionPattern));
 	}
-	
 }

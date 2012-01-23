@@ -25,7 +25,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
@@ -101,8 +100,12 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 		for(String contextVariable : payloadVariables.keySet()) {
 			String payloadVariable = payloadVariables.get(contextVariable);
 			Serializable contextValue = ctx.getTransientVariable(contextVariable);
+			if(contextValue == null)
+				contextValue = ctx.getDurableVariable(contextVariable);
+						
 			if(contextValue != null)
 				payload = payload.replaceAll(payloadVariable, contextValue.toString());
+			
 		}
 
 		// convert payload into request entity and assign it
@@ -117,8 +120,6 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 			HttpResponse response = sendPOSTRequest(entity, header);
 			ctx.addTransientVariable(contextExportVariableResponseContent, EntityUtils.toByteArray(response.getEntity()));
 		} catch (IOException e) {
-			// TODO log errors
-		} catch (HttpException e) {
 			// TODO log errors
 		}
 		

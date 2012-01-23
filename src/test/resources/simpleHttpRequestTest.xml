@@ -5,9 +5,19 @@
 	<description>sample description</description>
 	<creationDate>2011-12-20</creationDate>
 	<createdBy>mnxfst</createdBy>
-	<initActivity>initTimestamp</initActivity>
+	<initActivity>randomRequestIdGenerator</initActivity>
 	
 	<activities>
+	
+		<!-- random value generator activity -->
+		<activity id="randomCtxValueGenerator" name="randomRequestIdGenerator">
+			<description>Generate random variable values and store them under the given variable</description>
+			<class>com.mnxfst.testing.activities.context.RandomCtxVarGenActivity</class>
+			<configuration>
+				<generate.variable.uuid.class>com.mnxfst.testing.activities.context.RandomUUIDValueGenerator</generate.variable.uuid.class>
+			</configuration>
+			<nextActivity>initTimestamp</nextActivity>
+		</activity>			
 	
 		<!-- set init timestamp -->
 		<activity id="timestamp" name="initTimestamp">
@@ -18,8 +28,23 @@
 				<timestamp>initTimestamp</timestamp>
 			</contextExportVars>
 			
-			<nextActivity>httpGETRequest</nextActivity>
+			<nextActivity>ctxLog4jStart</nextActivity>
 		</activity>
+
+		<activity id="contextLog4j" name="ctxLog4jStart">
+			<description>Write out context</description>
+			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
+			<configuration>
+				<logMessage>in ${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${initTimestamp} ${date} true true</logMessage>
+				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
+				<logAppender>console</logAppender>
+				<logLevel>INFO</logLevel>
+			</configuration>
+
+			<nextActivity>httpGETRequest</nextActivity>
+		</activity>		
+		 
+
 
 		<activity id="httpRequest" name="httpGETRequest">
 			<description>Send request to www.heise.de</description>
@@ -32,19 +57,19 @@
 				<contentCharset>UTF-8</contentCharset>
 				<expectContinue>false</expectContinue>
 				<httpRequestProcessors>org.apache.http.protocol.RequestContent,org.apache.http.protocol.RequestTargetHost,org.apache.http.protocol.RequestConnControl,org.apache.http.protocol.RequestUserAgent,org.apache.http.protocol.RequestExpectContinue</httpRequestProcessors>
-				<method>GET</method>
+				<method>POST</method>
 				<scheme>http</scheme>
-				<host>www.heise.de</host>
-				<port>80</port>
+				<host>localhost</host>
+				<port>8080</port>
 				<path>/</path>
 				
 				<request.param.testKey>testValue</request.param.testKey>
 				<request.param.anotherKey>anotherValue</request.param.anotherKey>
 	
-				<proxyUrl>proxy.mnxfst.com</proxyUrl>
-				<proxyPort>4321</proxyPort>
-				<proxyUser>testUser</proxyUser>
-				<proxyPassword>{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd</proxyPassword>				
+				<proxyUrl>proxy.ov.otto.de</proxyUrl>
+				<proxyPort>3128</proxyPort>
+				<proxyUser></proxyUser>
+				<proxyPassword></proxyPassword>				
 			</configuration>
 
 			<contextExportVars>
@@ -64,36 +89,19 @@
 				<timestamp>finalTimestamp</timestamp>
 			</contextExportVars>
 			
-			<nextActivity>ctxVarSub</nextActivity>
+			<nextActivity>ctxLog4jEnd</nextActivity>
 		</activity>
-
-		<activity id="ctxVarSub" name="ctxVarSub">
-			<description>Write out context</description>
-			<class>com.mnxfst.testing.activities.context.ContextVarSubtractionActivity</class>
-			<configuration>
-				<leftHandVariable>finalTimestamp</leftHandVariable>
-				<rightHandVariable>initTimestamp</rightHandVariable>
-			</configuration>
-			
-			<contextExportVars>
-				<subtractionResult>sampleTestplanExecutionDuration</subtractionResult>
-			</contextExportVars>
-			<nextActivity>ctxLog4j</nextActivity>
-		</activity>		
 		
-		<activity id="contextLog4j" name="ctxLog4j">
+		<activity id="contextLog4j" name="ctxLog4jEnd">
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>[duration=${sampleTestplanExecutionDuration}ms]</logMessage>
+				<logMessage>out ${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${finalTimestamp} ${date} true true</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
-				<logLevel>WARN</logLevel>
+				<logLevel>INFO</logLevel>
 			</configuration>
 
-			<contextExportVars>
-				<log4jMsg>ctxLog4jMsg</log4jMsg>
-			</contextExportVars>
 			<nextActivity>finish</nextActivity>
 		</activity>		
 		 

@@ -1,5 +1,5 @@
 /*
- *  ptest-server and client provides you with a performance test utility
+ *  ptest-server  and client provides you with a performance test utility
  *  Copyright (C) 2012  Christian Kreutzfeldt <mnxfst@googlemail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -20,15 +20,15 @@
 package com.mnxfst.testing.activities.http;
 
 import java.io.IOException;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Map;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
-import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.util.EntityUtils;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
@@ -55,34 +55,33 @@ public class HTTPRequestActivity extends AbstractHTTPRequestActivity {
 	 */
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
-		// (re-)establish client connection
-		if(!clientConnection.isOpen()) {
-			Socket socket;
-			try {
-				socket = new Socket(httpHost.getHostName(), httpHost.getPort());
-				clientConnection.bind(socket, httpParameters);
-			} catch (UnknownHostException e) {
-				// TODO handle - we should log this instead of throwing an exception
-			} catch (IOException e) {
-				// TODO handle - we should log this instead of throwing an exception
-			}
-		}
-	
-		try {
-			HttpResponse response = null;
-			if(method.equalsIgnoreCase("post")) {
-				response = sendPOSTRequest(null, header);
-			} else {
-				response = sendGETRequest(header);
-			}
+		// receives the http response
+		HttpResponse response = null;
+		try {		
 			
+			if(this.method.equalsIgnoreCase("get")) {
+				response = sendGETRequest(header);
+			} else {
+				// TODO
+				response = sendPOSTRequest(null, header);
+			}
+		} catch(ClientProtocolException e) {
+			throw new TSPlanActivityExecutionException("Failed to execute '"+this.method+"' request. Error: " + e.getMessage(), e);
+		} catch (IOException e) {
+			throw new TSPlanActivityExecutionException("Failed to execute '"+this.method+"' request. Error: " + e.getMessage(), e);
+		}
+		
+		try {
 			String content = EntityUtils.toString(response.getEntity());
 			ctx.addTransientVariable(contextExportVariableResponseContent, content);
-
-		} catch(HttpException e) {
-			// TODO handle - we should log this instead of throwing an exception 
 		} catch(IOException e) {
-			// TODO handle - we should log this instead of throwing an exception
+			e.printStackTrace(); // TODO handle - we should log this instead of throwing an exception
+		} finally {
+			try {
+				clientConnection.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		return ctx;
@@ -94,32 +93,20 @@ public class HTTPRequestActivity extends AbstractHTTPRequestActivity {
 	 * @param header
 	 * @return
 	 * @throws IOException
-	 * @throws HttpException
 	 */
-	protected HttpResponse sendPOSTRequest(HttpEntity entity, Map<String, String> header) throws IOException, HttpException {
+	protected HttpResponse sendPOSTRequest(HttpEntity entity, Map<String, String> header) throws IOException {
 
-		BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", path);
-		request.setEntity(entity);		
-		request.setParams(httpParameters);
+		HttpPost httpPost = new HttpPost(this.destinationURI);
+		httpPost.setParams(httpParameters);
 
 		if(header != null && !header.isEmpty()) {
 			for(String key : header.keySet())
-				request.addHeader(key, header.get(key));
+				httpPost.addHeader(key, header.get(key));
 		}
 		
-		// if the request needs to be pre-processed, execute now
-		if(hasRequestResponseProcessors)
-			httpRequestExecutor.preProcess(request, httpRequestResponseProcessor, httpRequestContext);
+		httpPost.setEntity(entity);
 
-		// execute request on selected client connection
-		HttpResponse response = httpRequestExecutor.execute(request, clientConnection, httpRequestContext);
-		response.setParams(httpParameters);
-			
-		// if the response needs to be post-processed, execute now
-		if(hasRequestResponseProcessors)
-			httpRequestExecutor.postProcess(response, httpRequestResponseProcessor, httpRequestContext);
-		
-		return response;		
+		return httpClient.execute(httpPost);		
 	}
 	
 	/**
@@ -127,31 +114,19 @@ public class HTTPRequestActivity extends AbstractHTTPRequestActivity {
 	 * @param header
 	 * @return
 	 * @throws IOException
-	 * @throws HttpException
 	 */
-	protected HttpResponse sendGETRequest(Map<String, String> header) throws IOException, HttpException {
-	
-		BasicHttpRequest request = new BasicHttpRequest("GET", path);
-		request.setParams(httpParameters);
+	protected HttpResponse sendGETRequest(Map<String, String> header) throws IOException {
+
+		HttpGet httpGet = new HttpGet(this.destinationURI);
+		httpGet.setParams(httpParameters);
 
 		if(header != null && !header.isEmpty()) {
 			for(String key : header.keySet())
-				request.addHeader(key, header.get(key));
+				httpGet.addHeader(key, header.get(key));
 		}
 
-		// if the request needs to be pre-processed, execute now
-		if(hasRequestResponseProcessors)
-			httpRequestExecutor.preProcess(request, httpRequestResponseProcessor, httpRequestContext);
-
 		// execute request on selected client connection
-		HttpResponse response = httpRequestExecutor.execute(request, clientConnection, httpRequestContext);
-		response.setParams(httpParameters);
-			
-		// if the response needs to be post-processed, execute now
-		if(hasRequestResponseProcessors)
-			httpRequestExecutor.postProcess(response, httpRequestResponseProcessor, httpRequestContext);
-
-		return response;
+		return httpClient.execute(httpGet);
 	}
 	
 }

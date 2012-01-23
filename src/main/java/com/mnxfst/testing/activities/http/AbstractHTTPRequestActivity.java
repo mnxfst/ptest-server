@@ -20,6 +20,7 @@
 package com.mnxfst.testing.activities.http;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,9 @@ import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpVersion;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIUtils;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -37,6 +41,7 @@ import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpClientConnection;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.params.SyncBasicHttpParams;
@@ -137,9 +142,9 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 	// variables used for pre-computing required information
 	
 	/** http client used for establishing connection. using concrete implementation in order to have required signature available */
-	private DefaultHttpClient httpClient = null; 
+	protected DefaultHttpClient httpClient = null; 
 	/** URI */
-	private URI destinationURI = null;
+	protected URI destinationURI = null;
 	/** max connections allowed per client */
 	private int maxConnections = 200;
 	/** http request / response processors */
@@ -152,6 +157,8 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 	protected HttpContext httpRequestContext = new BasicHttpContext(null);
 	/** http host information */
 	protected HttpHost httpHost = null;
+	/** http proxy information */
+	protected HttpHost proxyHost = null;
 	/** client connection */
 	protected DefaultHttpClientConnection clientConnection = new DefaultHttpClientConnection();
 	/** connection strategy */
@@ -188,6 +195,9 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 				throw new TSPlanActivityExecutionException("Failed to parse expected numerical value for config option '"+CFG_OPT_PORT+"' for activity '"+getName()+"'");
 			}
 		}
+		
+		if(this.port <= 0)
+			this.port = 80;
 
 		this.path = (String)cfg.getOption(CFG_OPT_PATH);
 		if(this.path == null || this.path.isEmpty())
@@ -202,11 +212,35 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 			}
 		}		
 		
+		
+		
 		// initialize http host and context
-		if(port > 0)
-			this.httpHost = new HttpHost(this.host, this.port);
-		else
-			this.httpHost = new HttpHost(this.host);
+		this.httpHost = new HttpHost(this.host, this.port);
+
+		// URI builder
+		try {
+			
+			// query parameters
+			List<NameValuePair> qParams = new ArrayList<NameValuePair>();
+			for(String key : cfg.getOptions().keySet()) {
+				if(key.startsWith(REQUEST_PARAM_OPTION_PREFIX)) {
+					String value = (String)cfg.getOption(key);
+					String requestParameterName = key.substring(REQUEST_PARAM_OPTION_PREFIX.length(), key.length());				
+					qParams.add(new BasicNameValuePair(requestParameterName, value));
+					
+					if(logger.isDebugEnabled())
+						logger.debug("activity[name="+getName()+", id="+getId()+", requestParameter="+requestParameterName+", value="+value+"]");
+				}
+			}
+
+			this.destinationURI = URIUtils.createURI(this.scheme, this.host, this.port, this.path, URLEncodedUtils.format(qParams, this.contentChartset), null);
+			
+			// TODO handle post values
+			
+		} catch (URISyntaxException e) {
+			throw new TSPlanActivityExecutionException("Failed to initialize uri for [scheme="+this.scheme+", host="+this.host+", port="+this.port+", path="+this.path+"]");
+		}
+		
 		
         httpRequestContext.setAttribute(ExecutionContext.HTTP_CONNECTION, clientConnection);
         httpRequestContext.setAttribute(ExecutionContext.HTTP_TARGET_HOST, httpHost);
@@ -300,26 +334,35 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 		this.proxyUser = (String)cfg.getOption(CFG_OPT_PROXY_USER);		
 		this.proxyPassword = (String)cfg.getOption(CFG_OPT_PROXY_PASSWORD);
 		
+		
+		if(proxyUrl != null && !proxyUrl.isEmpty()) {
+			
+			if(proxyPort > 0)			
+				this.proxyHost = new HttpHost(proxyUrl, proxyPort);
+			else
+				this.proxyHost = new HttpHost(proxyUrl);
+		}
+		
 		if(logger.isDebugEnabled())
 			logger.debug("activity[name="+getName()+", id="+getId()+", proxyUrl="+proxyUrl+", proxyPort="+proxyPort+", proxyUser="+proxyUser+"]");
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 
-		/////////////////////////////////////////////////////////////////////////////////////////
-		// fetch request parameters
-
-		// unfortunately we must step through the whole set of keys ... 
-		for(String key : cfg.getOptions().keySet()) {
-			if(key.startsWith(REQUEST_PARAM_OPTION_PREFIX)) {
-				String value = (String)cfg.getOption(key);
-				String requestParameterName = key.substring(REQUEST_PARAM_OPTION_PREFIX.length(), key.length());				
-				httpParameters.setParameter(requestParameterName, value);				
-				if(logger.isDebugEnabled())
-					logger.debug("activity[name="+getName()+", id="+getId()+", requestParameter="+requestParameterName+", value="+value+"]");
-			}
-		}
-
-		/////////////////////////////////////////////////////////////////////////////////////////
+//		/////////////////////////////////////////////////////////////////////////////////////////
+//		// fetch request parameters
+//
+//		// unfortunately we must step through the whole set of keys ... 
+//		for(String key : cfg.getOptions().keySet()) {
+//			if(key.startsWith(REQUEST_PARAM_OPTION_PREFIX)) {
+//				String value = (String)cfg.getOption(key);
+//				String requestParameterName = key.substring(REQUEST_PARAM_OPTION_PREFIX.length(), key.length());				
+//				httpParameters.setParameter(requestParameterName, value);				
+//				if(logger.isDebugEnabled())
+//					logger.debug("activity[name="+getName()+", id="+getId()+", requestParameter="+requestParameterName+", value="+value+"]");
+//			}
+//		}
+//
+//		/////////////////////////////////////////////////////////////////////////////////////////
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 		// configure scheme registry and initialize http client
@@ -335,7 +378,10 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 		threadSafeClientConnectionManager.setMaxTotal(maxConnections);
 		threadSafeClientConnectionManager.setDefaultMaxPerRoute(maxConnections);
 		this.httpClient = new DefaultHttpClient(threadSafeClientConnectionManager);
-
+//		this.httpClient.setParams(httpParameters);
+		
+		
+		
 		if(logger.isDebugEnabled())
 			logger.debug("activity[name="+getName()+", id="+getId()+", threadSafeClientConnectionManager=initialized]");
 		
