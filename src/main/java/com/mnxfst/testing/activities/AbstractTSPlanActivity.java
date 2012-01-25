@@ -68,6 +68,7 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 						payloadVariable = payloadVariable.replace("$", "\\$");
 						payloadVariable = payloadVariable.replace("{", "\\{");
 						payloadVariable = payloadVariable.replace("}", "\\}");
+						
 						variables.put(contextVariableName, payloadVariable);
 					}
 					index = index + 1;

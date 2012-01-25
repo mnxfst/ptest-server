@@ -23,6 +23,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
+
 /**
  * Test case for {@link TSPlanBasicExecutionContext}
  * @author mnxfst
@@ -66,6 +68,24 @@ public class TestTSPlanBasicExecutionContext {
 		Assert.assertEquals("The size of the set of durable variable names must be 1", 1, ctx.getDurableVariableNames().size());
 		Assert.assertEquals("The value for test-var must be test-value", "test-value", ctx.getDurableVariable("test-var"));
 
+	}
+	
+	@Test
+	public void testEvaluate() throws TSVariableEvaluationFailedException {
+		
+		TSPlanBasicExecutionContext ctx = new TSPlanBasicExecutionContext();
+		Assert.assertEquals("The result must be an integer showing the value 100", new Integer(100), (Integer)ctx.evaluate(new Integer(100), null));
+		Assert.assertEquals("The result must be an integer showing the value 100", new Integer(100), (Integer)ctx.evaluate(new Integer(100), ""));
+		Assert.assertEquals("The result must be an integer showing the value 100", new Integer(100), (Integer)ctx.evaluate(new Integer(100), "obj"));
+		Assert.assertEquals("The result must be " + Integer.class.getName(), Integer.class.getName(), (String)ctx.evaluate(new Integer(100), "obj.class.name"));
+				
+		try {		
+			ctx.evaluate(new Integer(100), "obj.class.name.unknown");
+			Assert.fail("Invalid attribute name");
+		} catch(TSVariableEvaluationFailedException e) {
+			//
+		}
+		
 	}
 	
 }

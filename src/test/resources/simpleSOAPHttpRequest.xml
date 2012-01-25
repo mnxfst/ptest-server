@@ -15,6 +15,7 @@
 			<class>com.mnxfst.testing.activities.context.RandomCtxVarGenActivity</class>
 			<configuration>
 				<generate.variable.uuid.class>com.mnxfst.testing.activities.context.RandomUUIDValueGenerator</generate.variable.uuid.class>
+				<generate.variable.arg0.class>com.mnxfst.testing.activities.context.RandomIntValueGenerator</generate.variable.arg0.class>
 			</configuration>
 			<nextActivity>initTimestamp</nextActivity>
 		</activity>			
@@ -60,7 +61,7 @@
 				<method>POST</method>
 				<scheme>http</scheme>
 				<host>localhost</host>
-				<port>8080</port>
+				<port>9090</port>
 				<path>/address-validation/AddressValidationWS</path>
 				
 				<soapAction></soapAction>
@@ -116,7 +117,7 @@
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${finalTimestamp} ${date} true true</logMessage>
+				<logMessage>${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid};${localhostName};${measuringPointId};${finalTimestamp};${date};true;true</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
 				<logLevel>INFO</logLevel>

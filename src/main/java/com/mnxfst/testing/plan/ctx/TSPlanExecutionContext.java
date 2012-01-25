@@ -22,6 +22,7 @@ package com.mnxfst.testing.plan.ctx;
 import java.io.Serializable;
 import java.util.Set;
 
+import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 import com.mnxfst.testing.plan.TSPlan;
 
 /**
@@ -31,6 +32,12 @@ import com.mnxfst.testing.plan.TSPlan;
  */
 public interface TSPlanExecutionContext extends Serializable {
 
+	public enum ContextVariableType implements Serializable {		
+		TRANSIENT,
+		DURABLE,
+		BOTH		
+	}
+	
 	/**
 	 * Adds the provided key/value pair to the stack of transient variables
 	 * which is at least available during a single {@link TSPlan test plan} run 
@@ -105,4 +112,25 @@ public interface TSPlanExecutionContext extends Serializable {
 	 * @return
 	 */
 	public Set<String> getDurableVariableNames();
+	
+	/**
+	 * Evaluates the given path on the provided object. The path expression starts with the object name
+	 * thus the first getter to be called is found right after the first dot, eg. objName.street returns
+	 * obj.getStreet and objName returns obj
+	 * @param obj
+	 * @param pathExpression
+	 * @return
+	 * @throws TSVariableEvaluationFailedException
+	 */
+	public Object evaluate(Object obj, String pathExpression) throws TSVariableEvaluationFailedException;
+		
+	/**
+	 * Returns the value for the referenced context variable. Depending on the given type the method either returns
+	 * a value from the transient or the durable storage. In case the type is set to both, the method first looks
+	 * up the transient storage followed by the durable storage in case the first lookup return null 
+	 * @param contextVariable
+	 * @param type
+	 * @return
+	 */
+	public Serializable findContextVariable(String contextVariable, ContextVariableType type);
 }

@@ -19,6 +19,7 @@
 
 package com.mnxfst.testing.server.handler;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -46,10 +47,13 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#messageReceived(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.MessageEvent)
 	 */
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent event) throws Exception {
-		
+				
 		HttpRequest httpRequest = (HttpRequest)event.getMessage();
 		
 		boolean keepAlive = HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(httpRequest.getHeader(HttpHeaders.Names.CONNECTION));
+		
+		ChannelBuffer b = httpRequest.getContent();
+		System.out.println(event.getMessage());
 		
 		HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 		httpResponse.setContent(ChannelBuffers.copiedBuffer("HELLO WORLD", CharsetUtil.UTF_8));

@@ -20,9 +20,12 @@
 package com.mnxfst.testing.plan.ctx;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 
 /**
  * Provides a very basic {@link TSPlanExecutionContext context} implementation which simply keeps
@@ -115,6 +118,61 @@ public class TSPlanBasicExecutionContext implements TSPlanExecutionContext {
 	 */
 	public Set<String> getDurableVariableNames() {
 		return this.durableVariables.keySet();
+	}
+
+	/**
+	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#evaluate(java.lang.Object, java.lang.String)
+	 */
+	public Object evaluate(Object obj, String pathExpression) throws TSVariableEvaluationFailedException {
+		
+		
+		if(pathExpression == null || pathExpression.isEmpty() || pathExpression.indexOf(".") == -1)
+			return obj;
+		
+		String[] exprParts = pathExpression.split("\\.");
+		if(exprParts.length > 1) {
+			String attrName = exprParts[1];
+			attrName = "get" + attrName.substring(0, 1).toUpperCase() + attrName.substring(1);
+			
+			try {
+				Object objResult = obj.getClass().getMethod(attrName, null).invoke(obj, null);
+				return evaluate(objResult, pathExpression.substring(pathExpression.indexOf(".")+1));
+			} catch (IllegalArgumentException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate " + pathExpression + " on " + obj + ". Error: " + e.getMessage());
+			} catch (SecurityException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate " + pathExpression + " on " + obj + ". Error: " + e.getMessage());
+			} catch (IllegalAccessException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate " + pathExpression + " on " + obj + ". Error: " + e.getMessage());
+			} catch (InvocationTargetException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate " + pathExpression + " on " + obj + ". Error: " + e.getMessage());
+			} catch (NoSuchMethodException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate " + pathExpression + " on " + obj + ". Error: " + e.getMessage());
+			}
+						
+		}
+		return obj;
+	}
+	
+	/**
+	 * Returns the value of the referenced context variable
+	 * @param contextVariable
+	 * @param type
+	 * @return
+	 */
+	public Serializable findContextVariable(String contextVariable, ContextVariableType type) {
+
+		if(type != null) {
+			if(type == ContextVariableType.DURABLE)
+				return getDurableVariable(contextVariable);
+			else if(type == ContextVariableType.TRANSIENT)
+				return getTransientVariable(contextVariable);
+		}
+		
+		Serializable contextValue = getTransientVariable(contextVariable);
+		if(contextValue == null)
+			return getDurableVariable(contextVariable);
+		
+		return contextValue;
 	}
 
 }

@@ -176,14 +176,14 @@ public class TestSaturationExec {
 		
 // ${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${initTimestamp} ${date} ${sampleTestplanExecutionDuration} true true		
 		
-		for(threads = 1; threads <= 8;  threads++) {
+		for(threads = 1; threads <= 1;  threads++) {
 
 			vars.put("threadCount", String.valueOf(threads));
 			vars.put("date", formatter.format(new Date()));
 
 			System.out.println("--------------------------------------------------------------------");
 			System.out.println("Threads: " + threads);
-			for(recurrences = 1; recurrences <= 30; recurrences++) {
+			for(recurrences = 1; recurrences <= 1; recurrences++) {
 				env = new TSPlanExecEnvironment("env-"+threads+"-"+recurrences, plan, recurrences, TSPlanRecurrenceType.TIMES, threads, vars);
 				result = env.execute();
 				System.out.println("\tThreads: " + threads + ", recurrences: " + recurrences + ", overallAvg: " + result.getAverageDurationMillis() + ", avgDuration: " + result.getSingleRunExecutionDurationAverage() + ", min: " + result.getSingleRunExecutionDurationMin() + ", max: " + result.getSingleRunExecutionDurationMax());

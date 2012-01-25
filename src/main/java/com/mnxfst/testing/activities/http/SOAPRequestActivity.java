@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext.ContextVariableType;
 
 /**
  * Sends a SOAP request to a configured destination using a previously defined payload
@@ -99,9 +100,7 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 		String payload = new String(this.payloadTemplate);
 		for(String contextVariable : payloadVariables.keySet()) {
 			String payloadVariable = payloadVariables.get(contextVariable);
-			Serializable contextValue = ctx.getTransientVariable(contextVariable);
-			if(contextValue == null)
-				contextValue = ctx.getDurableVariable(contextVariable);
+			Serializable contextValue = ctx.findContextVariable(contextVariable, ContextVariableType.BOTH);
 						
 			if(contextValue != null)
 				payload = payload.replaceAll(payloadVariable, contextValue.toString());
