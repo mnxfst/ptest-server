@@ -32,8 +32,8 @@ import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext.ContextVariableType;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext.ContextVariableType;
 
 /**
  * Sends a SOAP request to a configured destination using a previously defined payload
@@ -94,7 +94,7 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
 	 */
-	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 
 		// replace payload variables with values fetched from context
 		String payload = new String(this.payloadTemplate);

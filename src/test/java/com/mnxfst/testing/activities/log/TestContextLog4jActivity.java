@@ -29,7 +29,7 @@ import org.junit.Test;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Test case for {@link ContextLog4jActivity}
@@ -152,7 +152,7 @@ public class TestContextLog4jActivity {
 			
 		}
 		
-		TSPlanExecutionContext ctx = new TSPlanBasicExecutionContext();
+		ITSPlanExecutionContext ctx = new TSPlanBasicExecutionContext();
 		activity.execute(ctx);
 		
 		ctx.addTransientVariable("initTimestamp", Long.valueOf(1234));

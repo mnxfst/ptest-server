@@ -27,7 +27,7 @@ import org.apache.log4j.Logger;
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Generates random values and stores in the test plan context using the given names 
@@ -84,9 +84,9 @@ public class RandomCtxVarGenActivity extends AbstractTSPlanActivity {
 	}
 
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.TSPlanExecutionContext)
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext)
 	 */
-	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
 		// iterate through context variable names, generate values and write them back into the contxt
 		for(String varName : valueGenerators.keySet()) {

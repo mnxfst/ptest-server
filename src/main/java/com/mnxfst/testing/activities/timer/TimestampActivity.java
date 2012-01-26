@@ -22,7 +22,7 @@ package com.mnxfst.testing.activities.timer;
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Creates or updates a time stamp stored in the variable defined through <i>variable</i>. 
@@ -46,7 +46,7 @@ public class TimestampActivity extends AbstractTSPlanActivity {
 
 	}
 
-	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 
 		if(ctx == null)
 			throw new TSPlanActivityExecutionException("Missing required activity context!");

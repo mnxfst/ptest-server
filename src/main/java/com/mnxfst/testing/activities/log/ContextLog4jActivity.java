@@ -32,7 +32,7 @@ import org.apache.log4j.PatternLayout;
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Configurable logging activity which uses the log4j subsystem as destination. 
@@ -154,9 +154,9 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 	}
 
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.TSPlanExecutionContext)
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext)
 	 */
-	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 
 		String resultMessage = new String(logMessage);
 		

@@ -22,7 +22,7 @@ package com.mnxfst.testing.activities.jms;
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Activity implementation for sending requests to a jms destination 
@@ -41,9 +41,9 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 	}
 
 	/**
-	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.TSPlanExecutionContext)
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext)
 	 */
-	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx)
+	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx)
 			throws TSPlanActivityExecutionException {
 		// TODO Auto-generated method stub
 		return null;

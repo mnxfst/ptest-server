@@ -26,7 +26,7 @@ import org.junit.Test;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Test case for {@link RandomCtxVarGenActivity}
@@ -96,7 +96,7 @@ public class TestRandomCtxVarGenActivity {
 		cfgOpt.addOption("generate.variable.arg0.maxValue", "10");
 		activity.initialize(cfgOpt);
 
-		TSPlanExecutionContext ctx = activity.execute(new TSPlanBasicExecutionContext());
+		ITSPlanExecutionContext ctx = activity.execute(new TSPlanBasicExecutionContext());
 		Assert.assertNotNull("The context must not be null", ctx);
 		Assert.assertEquals("The context must contain one element", 1, ctx.getTransientVariableNames().size());
 		Assert.assertTrue("The value of arg0 must be available", (ctx.getTransientVariable("arg0") != null));

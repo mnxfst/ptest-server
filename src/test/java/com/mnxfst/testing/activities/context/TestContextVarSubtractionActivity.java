@@ -29,7 +29,7 @@ import org.junit.Test;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Test case for {@link ContextVarSubtractionActivity}
@@ -96,7 +96,7 @@ public class TestContextVarSubtractionActivity {
 			//
 		}
 		
-		TSPlanExecutionContext ctx = new TSPlanBasicExecutionContext();
+		ITSPlanExecutionContext ctx = new TSPlanBasicExecutionContext();
 		ctx.addDurableVariable("left", Long.valueOf(2));
 		try {
 			activity.execute(ctx);

@@ -34,7 +34,7 @@ import com.mnxfst.testing.exception.TSPlanMissingException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.TSPlanExecutorResult;
 import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Provides a closed runtime environment for a {@link TSPlan}. The results are returned following the {@link TSPlanExecutorResult} structure. 
@@ -57,7 +57,7 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 	private int recurrences = -1;
 	private TSPlanRecurrenceType recurrenceType = TSPlanRecurrenceType.UNKNOWN;
 	private boolean interrupted = false;
-	private TSPlanExecutionContext context = new TSPlanBasicExecutionContext();
+	private ITSPlanExecutionContext context = new TSPlanBasicExecutionContext();
 
 	/**
 	 * Initializes the executor

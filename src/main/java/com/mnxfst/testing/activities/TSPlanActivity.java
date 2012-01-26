@@ -23,7 +23,7 @@ import java.util.Map;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Defines a common interface to all activitíes
@@ -40,13 +40,13 @@ public interface TSPlanActivity {
 	public abstract void initialize(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException;
 	
 	/**
-	 * Executes the action implemented by the current activity. The provided {@link TSPlanExecutionContext context} provides
+	 * Executes the action implemented by the current activity. The provided {@link ITSPlanExecutionContext context} provides
 	 * all necessary and available information. The method returns the (un)modified context
 	 * @param 
 	 * @return 
 	 * @throws TSPlanActivityExecutionException thrown in case the activity execution failed for some reason
 	 */
-	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException;
+	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException;
 	
 	/**
 	 * Fetch the activity identifier which must be unique throughout the whole system

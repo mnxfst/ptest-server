@@ -20,117 +20,140 @@
 package com.mnxfst.testing.plan.ctx;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 import com.mnxfst.testing.plan.TSPlan;
+import com.mnxfst.testing.plan.exec.TSPlanExecutor;
 
 /**
- * Provides an interface description for all context implementations
+ * Holds all information and data required for executing a {@link TSPlan test plan}
  * @author mnxfst
- * @since 17.01.2012
+ * @since 26.01.2012
  */
-public interface TSPlanExecutionContext extends Serializable {
+public class TSPlanExecutionContext implements Serializable {
 
-	public enum ContextVariableType implements Serializable {		
-		TRANSIENT,
-		DURABLE,
-		BOTH		
+	private static final long serialVersionUID = -8239932328234778246L;
+	private static final String REPLACEMENT_PATTERN_PREFIX_GLOBAL = "${global.";
+	private static final String REPLACEMENT_PATTERN_PREFIX_RUN = "${run.";
+	
+	/** keeps all values exported by the executed activities in a durable store which is kept throughout the test plan execution */
+	private Map<String, Serializable> globalValues = new HashMap<String, Serializable>();
+	
+	/** keeps all values exported by the executed activities in a transient store which is cleared after each test plan run by the {@link TSPlanExecutor} */
+	private Map<String, Serializable> transientRunValues = new HashMap<String, Serializable>();
+	
+	/** keeps a mapping of all evaluated patterns for global variables to the chain of methods to be executed along the evaluation path */
+	private Map<String, List<Method>> globalValueReplacementPatternEvaluationPath = new HashMap<String, List<Method>>();
+	
+	/** keeps a mapping of all evaluated patterns for transient variables to the chain of methods to be executed along the evaluation path */
+	private Map<String, List<Method>> transientValueReplacementPatternEvaluationPath = new HashMap<String, List<Method>>();
+	
+	
+	/**
+	 * Adds the provided key/value pair to the referenced store type. If no type is provided,
+	 * the default (run/transient) is assumed
+	 * @param key
+	 * @param value
+	 * @param type
+	 */
+	public void addContextValue(String key, Serializable value, ExecutionContextValueType type) {
+		if(type != null && type == ExecutionContextValueType.GLOBAL)
+			this.globalValues.put(key, value);
+		else
+			this.transientRunValues.put(key, value);
 	}
 	
 	/**
-	 * Adds the provided key/value pair to the stack of transient variables
-	 * which is at least available during a single {@link TSPlan test plan} run 
-	 * @param variableName
-	 * @param value
-	 */
-	public void addTransientVariable(String variableName, Serializable value);
-
-	/**
-	 * Returns the value for the named transient variable. If there is no such variable,
-	 * the method returns null.
-	 * @param variableName
-	 * @return
-	 */
-	public Serializable getTransientVariable(String variableName);
-	
-	/**
-	 * Removes the referenced transient variable
-	 * @param variableName
-	 */
-	public void removeTransientVariable(String variableName);
-	
-	/**
-	 * Returns true in case a mapping for the given name exists
-	 * @param variableName
-	 * @return
-	 */
-	public boolean hasTransientVariable(String variableName);
-	
-	/**
-	 * Returns the names of all transient variables
-	 * @return
-	 */
-	public Set<String> getTransientVariableNames();
-	
-	/**
-	 * Refreshes the transient variable cache
-	 */
-	public void refreshTransientVariables();
-	
-	/**
-	 * Adds the provided key/value pair to the stack of durable variables which is
-	 * available during a whole {@link TSPlan test plan} execution (including all reiterations).
-	 * @param variableName
-	 * @param value
-	 */
-	public void addDurableVariable(String variableName, Serializable value);
-	
-	/**
-	 * Returns the value for the named durable variable. If there is no such variable,
-	 * the method returns null.
-	 * @param variableName
-	 * @return
-	 */
-	public Serializable getDurableVariable(String variableName);
-	
-	/**
-	 * Removes the referenced durable variable
-	 * @param variableName
-	 */
-	public void removeDurableVariable(String variableName);
-	
-	/**
-	 * Returns true in case a mapping for the given name exists
-	 * @param variableName
-	 * @return
-	 */
-	public boolean hasDurableVariable(String variableName);
-	
-	/**
-	 * Returns the names of all durable variables
-	 * @return
-	 */
-	public Set<String> getDurableVariableNames();
-	
-	/**
-	 * Evaluates the given path on the provided object. The path expression starts with the object name
-	 * thus the first getter to be called is found right after the first dot, eg. objName.street returns
-	 * obj.getStreet and objName returns obj
-	 * @param obj
-	 * @param pathExpression
-	 * @return
-	 * @throws TSVariableEvaluationFailedException
-	 */
-	public Object evaluate(Object obj, String pathExpression) throws TSVariableEvaluationFailedException;
-		
-	/**
-	 * Returns the value for the referenced context variable. Depending on the given type the method either returns
-	 * a value from the transient or the durable storage. In case the type is set to both, the method first looks
-	 * up the transient storage followed by the durable storage in case the first lookup return null 
-	 * @param contextVariable
+	 * Looks up the value associated with the given key from the referenced store. If no store type
+	 * is provided the lookup will be directed to the default (run/transient) store. 
+	 * @param key
 	 * @param type
 	 * @return
 	 */
-	public Serializable findContextVariable(String contextVariable, ContextVariableType type);
+	public Serializable getContextValue(String key, ExecutionContextValueType type) {
+		if(type != null && type == ExecutionContextValueType.GLOBAL)
+			return globalValues.get(key);
+		return transientRunValues.get(key);
+	}
+	
+	/**
+	 * Removes the value associated with the given key from the referenced store. If no store type
+	 * is provided the default (run/transient) store will be assumed and receive the deletion order
+	 * @param key
+	 * @param type
+	 */
+	public void removeContextValue(String key, ExecutionContextValueType type) {
+		if(type != null && type == ExecutionContextValueType.GLOBAL)
+			this.globalValues.remove(key);
+		else
+			this.transientRunValues.remove(key);
+	}
+	
+	/**
+	 * Clears the run/transient store
+	 */
+	public void clearTransientValueStore() {
+		this.transientRunValues.clear();
+	}
+
+	/**
+	 * Evaluates the provided replacement pattern for the referenced variable. The replacement pattern must
+	 * look like: ${global.person.firstname} or ${run.logMessage.timestamp}. If the replacement pattern does
+	 * not follow the rule ${<global or run>.<context variable>.<attribute getter>} an {@link TSVariableEvaluationFailedException}
+	 * will be thrown. In case the path either contains an attribute having no associated getter or the path 
+	 * cannot be evaluated, the method throws an {@link TSVariableEvaluationFailedException exception} as well.
+	 * @param contextVariable
+	 * @param replacementPattern
+	 * @return
+	 * @throws TSVariableEvaluationFailedException thrown in case either the replacement pattern is invalid or the evaluation failed in any other way
+	 */
+	public Object evaluate(String contextVariable, String replacementPattern) throws TSVariableEvaluationFailedException {
+		
+		// validate the input parameter values
+		if(contextVariable == null || contextVariable.isEmpty())
+			throw new TSVariableEvaluationFailedException("No context variable name provided");
+		
+		if(replacementPattern == null || replacementPattern.isEmpty())
+			throw new TSVariableEvaluationFailedException("No replacement pattern provided");
+		
+		// continue here if the replacement pattern starts with ${global. 
+		if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_GLOBAL)) {
+
+			List<Method> globalEvalPath = globalValueReplacementPatternEvaluationPath.get(replacementPattern);
+			
+		} else if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_RUN)) {
+			
+			// continue here if the replacement pattern starts with ${run.
+			List<Method> transientEvalPath = transientValueReplacementPatternEvaluationPath.get(replacementPattern);
+			
+		} else {
+			throw new TSVariableEvaluationFailedException("Invalid replacement pattern: " + replacementPattern + ". Expected prefix: ${global||run...");
+		}
+		
+		return null;
+		
+	}
+	
+	/**
+	 * Extracts the getter method names that needs to be executed along the expression path for evaluate
+	 * an objects value. The provided prefix helps to speed-up stripping down the storage dependent prefix, eg. ${global.
+	 * @param replacementPattern
+	 * @param storageDependentPrefix
+	 * @return
+	 */
+	protected String[] extractGetterMethodNames(String replacementPattern, String storageDependentPrefix) {
+	
+		// strip out the named prefix and the closing brackts
+		String[] splittedPath = replacementPattern.substring(storageDependentPrefix.length(), replacementPattern.length() - 1).split(".");
+		
+			
+		
+		return null;
+		
+	}
+	
 }

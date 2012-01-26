@@ -21,6 +21,7 @@ package com.mnxfst.testing.plan.ctx;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,12 +29,12 @@ import java.util.Set;
 import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 
 /**
- * Provides a very basic {@link TSPlanExecutionContext context} implementation which simply keeps
+ * Provides a very basic {@link ITSPlanExecutionContext context} implementation which simply keeps
  * all variable values stored in {@link Map maps}. This implementation is by far not thread-safe.
  * @author mnxfst
  * @since 17.01.2012
  */
-public class TSPlanBasicExecutionContext implements TSPlanExecutionContext {
+public class TSPlanBasicExecutionContext implements ITSPlanExecutionContext {
 
 	private static final long serialVersionUID = 4045809931388824809L;
 	
@@ -44,84 +45,84 @@ public class TSPlanBasicExecutionContext implements TSPlanExecutionContext {
 	private Map<String, Serializable> durableVariables = new HashMap<String, Serializable>();
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#addTransientVariable(java.lang.String, java.io.Serializable)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#addTransientVariable(java.lang.String, java.io.Serializable)
 	 */
 	public void addTransientVariable(String variableName, Serializable value) {
 		this.transientVariables.put(variableName, value);
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#getTransientVariable(java.lang.String)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#getTransientVariable(java.lang.String)
 	 */
 	public Serializable getTransientVariable(String variableName) {
 		return this.transientVariables.get(variableName);
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#removeTransientVariable(java.lang.String)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#removeTransientVariable(java.lang.String)
 	 */
 	public void removeTransientVariable(String variableName) {
 		this.transientVariables.remove(variableName);
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#hasTransientVariable(java.lang.String)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#hasTransientVariable(java.lang.String)
 	 */
 	public boolean hasTransientVariable(String variableName) {
 		return this.transientVariables.containsKey(variableName);
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#getTransientVariableNames()
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#getTransientVariableNames()
 	 */
 	public Set<String> getTransientVariableNames() {
 		return this.transientVariables.keySet();
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#refreshTransientVariables()
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#refreshTransientVariables()
 	 */
 	public void refreshTransientVariables() {
 		this.transientVariables.clear();
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#addDurableVariable(java.lang.String, java.io.Serializable)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#addDurableVariable(java.lang.String, java.io.Serializable)
 	 */
 	public void addDurableVariable(String variableName, Serializable value) {
 		this.durableVariables.put(variableName, value);
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#getDurableVariable(java.lang.String)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#getDurableVariable(java.lang.String)
 	 */
 	public Serializable getDurableVariable(String variableName) {
 		return this.durableVariables.get(variableName);
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#removeDurableVariable(java.lang.String)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#removeDurableVariable(java.lang.String)
 	 */
 	public void removeDurableVariable(String variableName) {
 		this.durableVariables.remove(variableName);
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#hasDurableVariable(java.lang.String)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#hasDurableVariable(java.lang.String)
 	 */
 	public boolean hasDurableVariable(String variableName) {
 		return this.durableVariables.containsKey(variableName);
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#getDurableVariableNames()
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#getDurableVariableNames()
 	 */
 	public Set<String> getDurableVariableNames() {
 		return this.durableVariables.keySet();
 	}
 
 	/**
-	 * @see com.mnxfst.testing.plan.ctx.TSPlanExecutionContext#evaluate(java.lang.Object, java.lang.String)
+	 * @see com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext#evaluate(java.lang.Object, java.lang.String)
 	 */
 	public Object evaluate(Object obj, String pathExpression) throws TSVariableEvaluationFailedException {
 		

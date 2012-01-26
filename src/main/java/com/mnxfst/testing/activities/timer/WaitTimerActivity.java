@@ -25,7 +25,7 @@ import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
 
 /**
  * Implements a simple timer that halts the {@link TSPlan} execution for a configured time (in millis). The wait time will be written
@@ -76,7 +76,7 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
 	 */
-	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
 		try {
 			Thread.sleep(waitTime);
