@@ -20,10 +20,15 @@
 package com.mnxfst.testing.plan.ctx;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang.ArrayUtils;
 
 import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 import com.mnxfst.testing.plan.TSPlan;
@@ -37,8 +42,12 @@ import com.mnxfst.testing.plan.exec.TSPlanExecutor;
 public class TSPlanExecutionContext implements Serializable {
 
 	private static final long serialVersionUID = -8239932328234778246L;
+	
+	private static final String[] EMPTY_STRING_ARRAY = new String[0];
+	
 	private static final String REPLACEMENT_PATTERN_PREFIX_GLOBAL = "${global.";
 	private static final String REPLACEMENT_PATTERN_PREFIX_RUN = "${run.";
+	
 	
 	/** keeps all values exported by the executed activities in a durable store which is kept throughout the test plan execution */
 	private Map<String, Serializable> globalValues = new HashMap<String, Serializable>();
@@ -121,38 +130,133 @@ public class TSPlanExecutionContext implements Serializable {
 			throw new TSVariableEvaluationFailedException("No replacement pattern provided");
 		
 		// continue here if the replacement pattern starts with ${global. 
-		if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_GLOBAL)) {
+		if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_GLOBAL) && replacementPattern.endsWith("}")) {
 
 			List<Method> globalEvalPath = globalValueReplacementPatternEvaluationPath.get(replacementPattern);
 			
-		} else if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_RUN)) {
+			
+		} else if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_RUN) && replacementPattern.endsWith("}")) {
 			
 			// continue here if the replacement pattern starts with ${run.
 			List<Method> transientEvalPath = transientValueReplacementPatternEvaluationPath.get(replacementPattern);
 			
 		} else {
-			throw new TSVariableEvaluationFailedException("Invalid replacement pattern: " + replacementPattern + ". Expected prefix: ${global||run...");
+			throw new TSVariableEvaluationFailedException("Invalid replacement pattern: " + replacementPattern + ". Expected prefix: ${global||run...}");
 		}
 		
 		return null;
 		
 	}
-	
+		
 	/**
 	 * Extracts the getter method names that needs to be executed along the expression path for evaluate
 	 * an objects value. The provided prefix helps to speed-up stripping down the storage dependent prefix, eg. ${global.
-	 * @param replacementPattern
-	 * @param storageDependentPrefix
+	 * @param replacementPattern the provided input is assumed to be not null and must contain the provided prefix
+	 * @param storageDependentPrefix the provided input is assumed to be not null and not empty
 	 * @return
 	 */
 	protected String[] extractGetterMethodNames(String replacementPattern, String storageDependentPrefix) {
-	
+
 		// strip out the named prefix and the closing brackts
-		String[] splittedPath = replacementPattern.substring(storageDependentPrefix.length(), replacementPattern.length() - 1).split(".");
+		String[] splittedPath = replacementPattern.substring(storageDependentPrefix.length(), replacementPattern.length() - 1).split("\\.");
 		
+		if(splittedPath != null && splittedPath.length > 1) {			
 			
+			List<String> result = new ArrayList<String>();
+			
+			// iterate through path elements starting with the 2nd element since the first names the variable whereas the second references the first attribute
+			// to be accessed via an assigned getter
+			for(int i = 1; i < splittedPath.length; i++) {				
+				String attrName = splittedPath[i];
+				if(attrName != null && !attrName.isEmpty()) {
+					result.add("get" + attrName.substring(0, 1).toUpperCase() + attrName.substring(1));					
+				}
+			}
+			
+			return (String[])result.toArray(EMPTY_STRING_ARRAY);
+		}
 		
-		return null;
+		return EMPTY_STRING_ARRAY;		
+	}
+	
+	/**
+	 * Evaluates the provided array of getter methods on the given input object. Next to the value
+	 * evaluation the method writes all {@link Method} instances extracted into a provided output list.
+	 * @param input
+	 * @param getterMethodNames
+	 * @param outputMethodsList
+	 * @return
+	 * @throws TSVariableEvaluationFailedException
+	 */
+	protected Object evaluateObject(Object input, String[] getterMethodNames, List<Method> outputMethodsList) throws TSVariableEvaluationFailedException {
+
+		if(input == null)
+			return null;
+		
+		if(getterMethodNames != null && getterMethodNames.length > 0) {
+			String nextGetter = getterMethodNames[0];
+			Method nextGetterMethod = null;			
+			Object result = null;
+
+			try {
+				nextGetterMethod = input.getClass().getMethod(nextGetter, null);
+				result = nextGetterMethod.invoke(input, null);				
+			} catch (IllegalArgumentException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+			} catch (IllegalAccessException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+			} catch (InvocationTargetException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+			} catch (SecurityException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+			} catch (NoSuchMethodException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+			}
+			
+			outputMethodsList.add(nextGetterMethod);
+			if(getterMethodNames.length > 1 && result != null)
+				return evaluateObject(result, (String[])ArrayUtils.subarray(getterMethodNames, 1, getterMethodNames.length), outputMethodsList);
+			return result;
+			
+		}
+		
+		return input;
+	}
+	
+	/**
+	 * Evaluates the provided list of methods on the given object and the results of the getter recursively 
+	 * @param input
+	 * @param getterMethods
+	 * @return
+	 * @throws TSVariableEvaluationFailedException
+	 */
+	protected Object evaluateObject(Object input, List<Method> getterMethods) throws TSVariableEvaluationFailedException {
+		
+		if(input == null)
+			return null;
+		
+		if(getterMethods != null && !getterMethods.isEmpty()) {
+			
+			Method nextGetterMethod = getterMethods.get(0);
+			Object result = null;
+			
+			try {
+				result = nextGetterMethod.invoke(input, null);
+			} catch (IllegalArgumentException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetterMethod.getName()+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+			} catch (IllegalAccessException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetterMethod.getName()+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+			} catch (InvocationTargetException e) {
+				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetterMethod.getName()+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+			}
+			
+			if(getterMethods.size() > 1 && result != null)
+				return evaluateObject(result, getterMethods.subList(1, getterMethods.size()));
+			
+			return result;
+		}
+		
+		return input;
 		
 	}
 	

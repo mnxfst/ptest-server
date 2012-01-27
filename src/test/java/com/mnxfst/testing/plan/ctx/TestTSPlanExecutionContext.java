@@ -19,6 +19,10 @@
 
 package com.mnxfst.testing.plan.ctx;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -78,13 +82,62 @@ public class TestTSPlanExecutionContext {
 		} catch(TSVariableEvaluationFailedException e) {
 			//
 		}
+
 		try {
 			ctx.evaluate("test", "${global.");
 			Assert.fail("Invalid replacement pattern");
 		} catch(TSVariableEvaluationFailedException e) {
 			//
 		}
+
+	}
+	
+	@Test
+	public void testExtractGetterMethodNames() {
 		
+		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
+		
+		try {
+			ctx.extractGetterMethodNames(null,  null);
+			Assert.fail("Must throw an NPE");
+		} catch(NullPointerException e) {
+			//
+		}
+		
+		try {
+			ctx.extractGetterMethodNames("",  null);
+			Assert.fail("Must throw an NPE");
+		} catch(NullPointerException e) {
+			//
+		}
+		
+		String[] result = ctx.extractGetterMethodNames("${global.var.}",  "${global.");
+		Assert.assertNotNull("The result must not be null", result);
+		Assert.assertEquals("The size must be 0", 0, result.length);
+		
+		result = ctx.extractGetterMethodNames("${global.var.attr1.attr2}",  "${global.");
+		System.out.println(result.length);
+		for(int i = 0; i < result.length; i++)
+			Assert.assertEquals("The getter must be named getAttr"+(i+1), "getAttr"+(i+1), result[i]);
+		
+		// TODO more testing
+	}
+	
+	@Test
+	public void testFindGetterMethodsForNames() throws Exception {
+		
+		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
+		String[] getterMethodNames = ctx.extractGetterMethodNames("${global.var.class.name}",  "${global.");
+		List<Method> methods = new ArrayList<Method>();
+		Object result = ctx.evaluateObject(new String("100"), getterMethodNames, methods);
+		Assert.assertNotNull("The result must not be null", result);
+		Assert.assertEquals("The result must be " + String.class.getName(), String.class.getName(), result);
+		Assert.assertNotNull("The methods list must not be null", methods);
+		Assert.assertEquals("The list of methods must contain 2 elements", 2, methods.size());
+		
+		result = ctx.evaluateObject(new String("100"), methods);
+		Assert.assertNotNull("The result must not be null", result);
+		Assert.assertEquals("The result must be " + String.class.getName(), String.class.getName(), result);
 	}
 	
 }
