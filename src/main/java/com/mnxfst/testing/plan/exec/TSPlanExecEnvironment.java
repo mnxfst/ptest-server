@@ -158,6 +158,8 @@ public class TSPlanExecEnvironment {
 					logger.error("Failed to retrieve results from a " + TSPlanExecutor.class.getName());
 				} else {
 					
+					System.out.println(executorResult);
+					
 					// add plan exec duration to overall duration for calculating the average duration
 					averageDuration = averageDuration + executorResult.getDurationMillis();
 					numOfValidResults = numOfValidResults + 1;

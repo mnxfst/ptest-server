@@ -22,6 +22,8 @@ package com.mnxfst.testing.activities.http;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Assert;
 
@@ -104,6 +106,9 @@ public class TestHTTPRequestActivity {
 		cfg.addOption("port", "8080");
 		cfg.addOption("maxConnections", "");
 		cfg.addOption("responseContent", "test");
+		Map<String, String> exportVars = new HashMap<String, String>();
+		exportVars.put("responseContent", "exportReponseContent");
+		activity.setContextExportVariables(exportVars);
 		activity.initialize(cfg);
 
 		cfg.addOption("maxConnections", "dd");

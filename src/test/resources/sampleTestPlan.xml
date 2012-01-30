@@ -9,7 +9,12 @@
 	
 	<globalConfiguration>
 
+		<configuration name="rndCtxValGenCfg">
+			<key>value</key>
+		</configuration>
+
 	</globalConfiguration>
+
 	
 	<activities>
 	
@@ -79,7 +84,7 @@
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>[start=${initTimestamp}, end=${finalTimestamp}, duration=${sampleTestplanExecutionDuration}, requestId=${requestId}]</logMessage>
+				<logMessage>[start=${run.initTimestamp}, end=${run.finalTimestamp}, duration=${run.sampleTestplanExecutionDuration}, requestId=${run.requestId}]</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
 				<logLevel>WARN</logLevel>

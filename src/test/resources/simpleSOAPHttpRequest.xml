@@ -16,6 +16,8 @@
 			<configuration>
 				<generate.variable.uuid.class>com.mnxfst.testing.activities.context.RandomUUIDValueGenerator</generate.variable.uuid.class>
 				<generate.variable.arg0.class>com.mnxfst.testing.activities.context.RandomIntValueGenerator</generate.variable.arg0.class>
+				<generate.variable.arg0.minValue>10</generate.variable.arg0.minValue>
+				<generate.variable.arg0.maxValue>100</generate.variable.arg0.maxValue>
 			</configuration>
 			<nextActivity>initTimestamp</nextActivity>
 		</activity>			
