@@ -21,9 +21,10 @@
 		<!-- random value generator activity -->
 		<activity id="randomCtxValueGenerator" name="randomRequestIdGenerator">
 			<description>Generate random variable values and store them under the given variable</description>
-			<class>com.mnxfst.testing.activities.context.RandomCtxVarGenActivity</class>
+			<class>com.mnxfst.testing.activities.context.random.RandomCtxVarGenActivity</class>
 			<configuration>
-				<generate.variable.requestId.class>com.mnxfst.testing.activities.context.RandomUUIDValueGenerator</generate.variable.requestId.class>
+				<generate.variable.requestId.class>com.mnxfst.testing.activities.context.random.RandomUUIDValueGenerator</generate.variable.requestId.class>
+				<generate.variable.address.class>com.mnxfst.testing.activities.context.random.RandomAddressGenerator</generate.variable.address.class>
 			</configuration>
 			<nextActivity>initTimestamp</nextActivity>
 		</activity>			
@@ -84,7 +85,7 @@
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>[start=${run.initTimestamp}, end=${run.finalTimestamp}, duration=${run.sampleTestplanExecutionDuration}, requestId=${run.requestId}]</logMessage>
+				<logMessage>[start=${run.initTimestamp}, end=${run.finalTimestamp}, duration=${run.sampleTestplanExecutionDuration}, requestId=${run.requestId}, ${run.address.city}]</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
 				<logLevel>WARN</logLevel>

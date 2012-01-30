@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.activities.context;
+package com.mnxfst.testing.activities.context.random;
 
 import java.util.Random;
 
@@ -33,13 +33,13 @@ public class RandomAddressGenerator implements IRandomCtxVarValueGenerator<Addre
 
 	private Random randomNumberGenerator = new Random();
 	/**
-	 * @see com.mnxfst.testing.activities.context.IRandomCtxVarValueGenerator#init(com.mnxfst.testing.plan.config.TSPlanConfigOption, java.lang.String)
+	 * @see com.mnxfst.testing.activities.context.random.IRandomCtxVarValueGenerator#init(com.mnxfst.testing.plan.config.TSPlanConfigOption, java.lang.String)
 	 */
 	public void init(TSPlanConfigOption cfgOpt, String generatorCfgOptPrefix) throws TSPlanActivityExecutionException {
 	}
 
 	/**
-	 * @see com.mnxfst.testing.activities.context.IRandomCtxVarValueGenerator#generate()
+	 * @see com.mnxfst.testing.activities.context.random.IRandomCtxVarValueGenerator#generate()
 	 */
 	public Address generate() {
 				

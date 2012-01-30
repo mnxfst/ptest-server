@@ -23,6 +23,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.mnxfst.testing.activities.context.random.IRandomCtxVarValueGenerator;
+import com.mnxfst.testing.activities.context.random.RandomIntValueGenerator;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 

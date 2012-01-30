@@ -50,8 +50,8 @@ public class TestTSPlanExecutor {
 			//
 		}
 		
-//		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/simpleHttpRequestTest.xml");
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
+//		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/simpleHttpRequestTest.xml");
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 		TSPlanExecutorResult result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.TIMES).call();
 		Assert.assertNotNull("The result must not be null", result);

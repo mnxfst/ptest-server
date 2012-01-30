@@ -17,32 +17,36 @@
  *
  */
 
-package com.mnxfst.testing.activities.context;
+package com.mnxfst.testing.activities.context.random;
 
-import java.util.UUID;
+import java.io.Serializable;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 
 /**
- * Provides a random {@link UUID} generator 
+ * Common interface to all random value generators 
  * @author ckreutzfeldt
- * @since 11.01.2012
+ *
+ * @param <E>
  */
-public class RandomUUIDValueGenerator implements IRandomCtxVarValueGenerator<UUID> {
+public interface IRandomCtxVarValueGenerator<E extends Serializable> {
+
+	/** config options prefix used for identifying relevant settings */
+	public static final String GENERATE_VARIABLE_NAME_PREFIX = "generate.variable.";
 
 	/**
-	 * @see com.mnxfst.testing.activities.context.IRandomCtxVarValueGenerator#init(com.mnxfst.testing.plan.config.TSPlanConfigOption, java.lang.String)
+	 * Initializes the value generator. This method is being called after automatic instantiation by {@link RandomCtxVarGenActivity}
+	 * @param cfgOpt
+	 * @param generatorCfgOptPrefix
+	 * @throws TSPlanActivityExecutionException
 	 */
-	public void init(TSPlanConfigOption cfgOpt, String generatorCfgOptPrefix) throws TSPlanActivityExecutionException {
-		// do nothing
-	}
-
+	public void init(TSPlanConfigOption cfgOpt, String generatorCfgOptPrefix) throws TSPlanActivityExecutionException;
+	
 	/**
-	 * @see com.mnxfst.testing.activities.context.IRandomCtxVarValueGenerator#generate()
+	 * Generates a value
+	 * @return
 	 */
-	public UUID generate() {
-		return UUID.randomUUID();
-	}
-
+	public E generate();
+	
 }

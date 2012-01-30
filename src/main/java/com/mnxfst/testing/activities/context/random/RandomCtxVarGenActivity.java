@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.activities.context;
+package com.mnxfst.testing.activities.context.random;
 
 import java.util.HashMap;
 import java.util.Map;

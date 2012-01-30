@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.activities.context;
+package com.mnxfst.testing.activities.context.random;
 
 import java.util.Random;
 
@@ -46,7 +46,7 @@ public class RandomIntValueGenerator implements IRandomCtxVarValueGenerator<Inte
 	}
 
 	/**
-	 * @see com.mnxfst.testing.activities.context.IRandomCtxVarValueGenerator#init(com.mnxfst.testing.plan.config.TSPlanConfigOption, java.lang.String)
+	 * @see com.mnxfst.testing.activities.context.random.IRandomCtxVarValueGenerator#init(com.mnxfst.testing.plan.config.TSPlanConfigOption, java.lang.String)
 	 */
 	public void init(TSPlanConfigOption cfgOpt, String generatorCfgPrefix) throws TSPlanActivityExecutionException {
 		
@@ -80,7 +80,7 @@ public class RandomIntValueGenerator implements IRandomCtxVarValueGenerator<Inte
 	}
 	
 	/**
-	 * @see com.mnxfst.testing.activities.context.IRandomCtxVarValueGenerator#generate()
+	 * @see com.mnxfst.testing.activities.context.random.IRandomCtxVarValueGenerator#generate()
 	 */
 	public Integer generate() {
 		return randomGenerator.nextInt(maxValue) + minValue;
