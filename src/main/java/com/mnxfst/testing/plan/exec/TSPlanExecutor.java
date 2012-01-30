@@ -118,7 +118,7 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		long overallStart = System.currentTimeMillis();
 		
 		// TODO support timed recurrences
-		if(recurrenceType != TSPlanRecurrenceType.TIMES)
+		if(recurrenceType == TSPlanRecurrenceType.INFINITE || recurrenceType == TSPlanRecurrenceType.UNKNOWN)
 			throw new TSPlanExecutionFailedException("Unsupported recurrence type: " + recurrenceType);
 
 		// counts the errors which occur while executing an activity
@@ -135,6 +135,42 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		long singleRunMin = Long.MAX_VALUE;
 		long singleRunMax = 0;		
 		long singleRunDuration = 0;
+		
+		boolean keepRunning = true;
+		long loopExecutionStart = System.currentTimeMillis();
+		do {
+			
+			switch(recurrenceType) {
+				case DAYS: {
+					break;
+				}
+				case HOURS: {
+					if((System.currentTimeMillis() - loopExecutionStart) / 3600000 >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case MINUTES: {
+					if((System.currentTimeMillis() - loopExecutionStart) / 60000 >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case SECONDS: {
+					if((System.currentTimeMillis() - loopExecutionStart) / 1000 >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case MILLIS: {
+					if((System.currentTimeMillis() - loopExecutionStart) >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case TIMES: {
+					break;
+				}
+
+			}
+			
+		} while(keepRunning);
 		
 		for(int i = 0; i < recurrences; i++) {
 								
