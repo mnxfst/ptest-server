@@ -53,7 +53,7 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 	 * @param input
 	 * @return
 	 */
-	public Map<String, String> getContextVariablesFromString(String input) {
+	public Map<String, String> getContextVariablesFromString2(String input) {
 		
 		Map<String, String> variables = new HashMap<String, String>();
 		
@@ -77,6 +77,33 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 		}
 		
 		return variables;
+	}
+	
+	public Map<String, String> getContextVariablesFromString(String input) {
+		
+		Map<String, String> variables = new HashMap<String, String>();
+		
+		if(input != null && !input.isEmpty()) {
+			int index = 0;
+			while((index < input.length()) && (index != -1)) {
+				index = input.indexOf("${", index);
+				if(index != -1 && index < input.length()) {
+					String payloadVariable = input.substring(index, input.indexOf("}", index+1) + 1);
+					if(payloadVariable != null && !payloadVariable.isEmpty()) {
+						String pattern = new String(payloadVariable);
+						pattern = pattern.replace("$", "\\$");
+						pattern = pattern.replace("{", "\\{");
+						pattern = pattern.replace("}", "\\}");
+						
+						variables.put(payloadVariable, pattern);
+					}
+					index = index + 1;
+				}			
+			}
+		}
+		
+		return variables;
+		
 	}
 	
 	public String getId() {

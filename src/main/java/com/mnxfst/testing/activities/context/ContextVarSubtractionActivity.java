@@ -24,7 +24,8 @@ import org.apache.log4j.Logger;
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * This activity takes two numerical context values and subtracts them from each other  
@@ -68,13 +69,13 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext)
 	 */
-	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
 		if(ctx == null)
 			throw new TSPlanActivityExecutionException("Required activity context missing");
 		
-		Long left = (Long)ctx.getTransientVariable(leftHandVariable);
-		Long right = (Long)ctx.getTransientVariable(rightHandVariable);
+		Long left = (Long)ctx.getContextValue(leftHandVariable, ExecutionContextValueType.RUN);
+		Long right = (Long)ctx.getContextValue(rightHandVariable, ExecutionContextValueType.RUN);
 
 		if(left == null)
 			throw new TSPlanActivityExecutionException("Failed to read left hand value from context varibale '"+left+"'");
@@ -84,7 +85,7 @@ public class ContextVarSubtractionActivity extends AbstractTSPlanActivity {
 		if(logger.isDebugEnabled())
 			logger.debug("subtraction["+left+" - "+right+" = " + (left-right)+"]");
 		
-		ctx.addTransientVariable(contextExportVariableName, (left-right));
+		ctx.addContextValue(contextExportVariableName, (left-right), ExecutionContextValueType.RUN);
 		
 		return ctx;
 	}

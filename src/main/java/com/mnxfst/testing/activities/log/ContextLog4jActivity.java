@@ -19,20 +19,20 @@
 
 package com.mnxfst.testing.activities.log;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
+import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Configurable logging activity which uses the log4j subsystem as destination. 
@@ -156,18 +156,21 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext)
 	 */
-	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 
 		String resultMessage = new String(logMessage);
 		
 		if(ctx != null) {
-			for(String ctxVar : logPatternVariables.keySet()) {
-				String replacementPattern = logPatternVariables.get(ctxVar);
-				Serializable ctxValue = ctx.getTransientVariable(ctxVar);
-				
-				if(ctxValue == null)
-					ctxValue = ctx.getDurableVariable(ctxVar);
-	
+			for(String logPattern : logPatternVariables.keySet()) {
+				String replacementPattern = logPatternVariables.get(logPattern);
+				Object ctxValue = null;
+				try {
+					ctxValue = ctx.evaluate(logPattern);
+				} catch(TSVariableEvaluationFailedException e) {
+					e.printStackTrace();
+					throw new TSPlanActivityExecutionException("Failed to evaluate " + logPattern);
+				}
+
 				if(ctxValue != null)
 					resultMessage = resultMessage.replaceAll(replacementPattern, ctxValue.toString());			
 			}
@@ -192,7 +195,7 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 			}
 						
 			if(contextExportVariableName != null && !contextExportVariableName.isEmpty())
-				ctx.addTransientVariable(contextExportVariableName, resultMessage);
+				ctx.addContextValue(contextExportVariableName, resultMessage, ExecutionContextValueType.RUN);
 
 		} else {
 			throw new TSPlanActivityExecutionException("No context provided to activity '"+getName()+"'");

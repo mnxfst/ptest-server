@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Test case for {@link WaitTimerActivity}
@@ -65,7 +65,7 @@ public class TestWaitTimerActivity {
 		cfgOpt.addOption("waitTime", "20");
 		activity.initialize(cfgOpt);
 		long start = System.currentTimeMillis();
-		activity.execute(new TSPlanBasicExecutionContext());
+		activity.execute(new TSPlanExecutionContext());
 		long end = System.currentTimeMillis();
 		System.out.println((end-start));
 		Assert.assertTrue("The duration must be longer than 20ms", (20 <= (end-start)));

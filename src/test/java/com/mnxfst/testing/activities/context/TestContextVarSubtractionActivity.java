@@ -28,8 +28,8 @@ import org.junit.Test;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
-import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Test case for {@link ContextVarSubtractionActivity}
@@ -90,14 +90,14 @@ public class TestContextVarSubtractionActivity {
 		}
 
 		try {
-			activity.execute(new TSPlanBasicExecutionContext());
+			activity.execute(new TSPlanExecutionContext());
 			Assert.fail("Left hand variable missing");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
-		ITSPlanExecutionContext ctx = new TSPlanBasicExecutionContext();
-		ctx.addDurableVariable("left", Long.valueOf(2));
+		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
+		ctx.addContextValue("left", Long.valueOf(2), ExecutionContextValueType.GLOBAL);
 		try {
 			activity.execute(ctx);
 			Assert.fail("Invalid variable storage: durable");
@@ -107,7 +107,7 @@ public class TestContextVarSubtractionActivity {
 		
 		
 		
-		ctx.addTransientVariable("left", Long.valueOf(2));
+		ctx.addContextValue("left", Long.valueOf(2), ExecutionContextValueType.RUN);
 		try {
 			activity.execute(ctx);
 			Assert.fail("Right hand variable missing");
@@ -115,13 +115,13 @@ public class TestContextVarSubtractionActivity {
 			//
 		}
 			
-		ctx.addTransientVariable("right", Long.valueOf(3));
+		ctx.addContextValue("right", Long.valueOf(3), ExecutionContextValueType.RUN);
 		ctx = activity.execute(ctx);
 		Assert.assertNotNull("The context must not be null", ctx);
-		Assert.assertEquals("The number of variables within the context must be 3", 3, ctx.getTransientVariableNames().size());
-		Assert.assertEquals("The left hand variable value must be 2", Long.valueOf(2), (Long)ctx.getTransientVariable("left"));
-		Assert.assertEquals("The left hand variable value must be 3", Long.valueOf(3), (Long)ctx.getTransientVariable("right"));
-		Assert.assertEquals("The subtraction result must be -1", Long.valueOf(-1), (Long)ctx.getTransientVariable("result"));
+		Assert.assertEquals("The number of variables within the context must be 3", 3, ctx.getContextValueNames(ExecutionContextValueType.RUN).size());
+		Assert.assertEquals("The left hand variable value must be 2", Long.valueOf(2), (Long)ctx.getContextValue("left", ExecutionContextValueType.RUN));
+		Assert.assertEquals("The left hand variable value must be 3", Long.valueOf(3), (Long)ctx.getContextValue("right", ExecutionContextValueType.RUN));
+		Assert.assertEquals("The subtraction result must be -1", Long.valueOf(-1), (Long)ctx.getContextValue("result", ExecutionContextValueType.RUN));
 	}
 	
 }

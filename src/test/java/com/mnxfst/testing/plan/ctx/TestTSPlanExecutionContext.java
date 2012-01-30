@@ -19,6 +19,7 @@
 
 package com.mnxfst.testing.plan.ctx;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,55 +42,73 @@ public class TestTSPlanExecutionContext {
 		
 		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
 		try {
-			ctx.evaluate(null, null);
+			ctx.evaluate(null);
 			Assert.fail("Invalid input values");
 		} catch(TSVariableEvaluationFailedException e) {
 			//
 		}
 		try {
-			ctx.evaluate("", null);
+			ctx.evaluate("");
 			Assert.fail("Invalid input values");
 		} catch(TSVariableEvaluationFailedException e) {
 			//
 		}
 		try {
-			ctx.evaluate("test", null);
+			ctx.evaluate("test");
 			Assert.fail("Invalid input values");
 		} catch(TSVariableEvaluationFailedException e) {
 			//
 		}
 		try {
-			ctx.evaluate("test", "");
-			Assert.fail("Invalid input values");
-		} catch(TSVariableEvaluationFailedException e) {
-			//
-		}
-		try {
-			ctx.evaluate("test", "test");
+			ctx.evaluate("${global");
 			Assert.fail("Invalid replacement pattern");
 		} catch(TSVariableEvaluationFailedException e) {
 			//
 		}
 		try {
-			ctx.evaluate("test", "${global");
-			Assert.fail("Invalid replacement pattern");
-		} catch(TSVariableEvaluationFailedException e) {
-			//
-		}
-		try {
-			ctx.evaluate("test", "${run");
+			ctx.evaluate("${run");
 			Assert.fail("Invalid replacement pattern");
 		} catch(TSVariableEvaluationFailedException e) {
 			//
 		}
 
 		try {
-			ctx.evaluate("test", "${global.");
+			ctx.evaluate("${global.");
 			Assert.fail("Invalid replacement pattern");
 		} catch(TSVariableEvaluationFailedException e) {
 			//
 		}
 
+		try {
+			ctx.evaluate("${run.");
+			Assert.fail("Invalid replacement pattern");
+		} catch(TSVariableEvaluationFailedException e) {
+			//
+		}
+
+		// no such context variable
+		Assert.assertNull(ctx.evaluate("${global.}"));
+		Assert.assertNull(ctx.evaluate("${global.test.class.name}"));
+		
+		ctx.addContextValue("test", "test-string", ExecutionContextValueType.GLOBAL);
+		
+		long start = System.currentTimeMillis();
+		Assert.assertEquals("The value must be " + String.class.getName(), String.class.getName(), ctx.evaluate("${global.test.class.name}"));
+		long end = System.currentTimeMillis();
+		long duration = (end-start);
+		
+		start = System.currentTimeMillis();
+		Assert.assertEquals("The value must be " + String.class.getName(), String.class.getName(), ctx.evaluate("${global.test.class.name}"));
+		end = System.currentTimeMillis();
+		long cachedResultDuration = (end-start);
+		Assert.assertTrue("The duration for the first run must be either equal or larger than the second value", (duration >= cachedResultDuration));
+		
+//		ctx.addContextValue("test", "testvalue", ExecutionContextValueType.GLOBAL);
+//		Assert.assertNotNull(ctx.evaluate("test", "${global.}"));
+//		Assert.assertEquals("The result must be 'testvalue'", "testvalue", ctx.evaluate("test", "${global.}"));
+//		Assert.assertEquals("The result must be 'testvalue'", "testvalue", ctx.evaluate("test", "${global.test}"));
+		
+		
 	}
 	
 	@Test
@@ -115,8 +134,7 @@ public class TestTSPlanExecutionContext {
 		Assert.assertNotNull("The result must not be null", result);
 		Assert.assertEquals("The size must be 0", 0, result.length);
 		
-		result = ctx.extractGetterMethodNames("${global.var.attr1.attr2}",  "${global.");
-		System.out.println(result.length);
+		result = ctx.extractGetterMethodNames("${global.var.attr1.attr2}",  "${global.");		
 		for(int i = 0; i < result.length; i++)
 			Assert.assertEquals("The getter must be named getAttr"+(i+1), "getAttr"+(i+1), result[i]);
 		
@@ -124,20 +142,60 @@ public class TestTSPlanExecutionContext {
 	}
 	
 	@Test
-	public void testFindGetterMethodsForNames() throws Exception {
+	public void testExtractContextVariableName() {
+		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
+		
+		Assert.assertNotNull("The result must not be null", ctx.extractContextVariableName("${global.variable.test}", "${global."));		
+		Assert.assertEquals("The result must be 'variable'", "variable", ctx.extractContextVariableName("${global.variable.test}", "${global."));		
+		Assert.assertEquals("The result must be 'variable'", "variable", ctx.extractContextVariableName("${global.variable}", "${global."));		
+
+	}
+	
+	@Test
+	public void testExtractGetterMethods() throws TSVariableEvaluationFailedException {
 		
 		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
-		String[] getterMethodNames = ctx.extractGetterMethodNames("${global.var.class.name}",  "${global.");
 		List<Method> methods = new ArrayList<Method>();
-		Object result = ctx.evaluateObject(new String("100"), getterMethodNames, methods);
-		Assert.assertNotNull("The result must not be null", result);
-		Assert.assertEquals("The result must be " + String.class.getName(), String.class.getName(), result);
-		Assert.assertNotNull("The methods list must not be null", methods);
-		Assert.assertEquals("The list of methods must contain 2 elements", 2, methods.size());
+		Serializable type = new String("test");
+		ctx.extractGetterMethods(type.getClass(), new String[]{"getClass","getName"}, methods);
+		methods.clear();
 		
-		result = ctx.evaluateObject(new String("100"), methods);
-		Assert.assertNotNull("The result must not be null", result);
-		Assert.assertEquals("The result must be " + String.class.getName(), String.class.getName(), result);
+		ctx.extractGetterMethods(null, null,  methods);
+		Assert.assertNotNull("The methods list not null", methods);
+		Assert.assertTrue("The methods list is empty", methods.isEmpty());
+		
+		ctx.extractGetterMethods(String.class, null,  methods);
+		Assert.assertNotNull("The methods list not null", methods);
+		Assert.assertTrue("The methods list is empty", methods.isEmpty());
+		
+		ctx.extractGetterMethods(String.class, new String[0],  methods);
+		Assert.assertNotNull("The methods list not null", methods);
+		Assert.assertTrue("The methods list is empty", methods.isEmpty());
+		
+		try {
+			ctx.extractGetterMethods(String.class, new String[]{"nosuchmethod"},  methods);
+			Assert.fail("No such method");
+		} catch(TSVariableEvaluationFailedException e) {
+			//
+		}
 	}
+	
+//	@Test
+//	public void testFindGetterMethodsForNames() throws TSVariableEvaluationFailedException  {
+//		
+//		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
+//		String[] getterMethodNames = ctx.extractGetterMethodNames("${global.var.class.name}",  "${global.");
+//		List<Method> methods = new ArrayList<Method>();
+//		Object result = ctx.evaluateObject(new String("100"), getterMethodNames, methods);
+//		Assert.assertNotNull("The result must not be null", result);
+//		Assert.assertEquals("The result must be " + String.class.getName(), String.class.getName(), result);
+//		Assert.assertNotNull("The methods list must not be null", methods);
+//		Assert.assertEquals("The list of methods must contain 2 elements", 2, methods.size());
+//		
+//		result = ctx.evaluateObject(new String("100"), methods);
+//		Assert.assertNotNull("The result must not be null", result);
+//		Assert.assertEquals("The result must be " + String.class.getName(), String.class.getName(), result);
+//	}
+	
 	
 }

@@ -23,10 +23,10 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
 
@@ -47,21 +47,16 @@ public class TSPlanExecutionContext implements Serializable {
 	
 	private static final String REPLACEMENT_PATTERN_PREFIX_GLOBAL = "${global.";
 	private static final String REPLACEMENT_PATTERN_PREFIX_RUN = "${run.";
-	
-	
+
 	/** keeps all values exported by the executed activities in a durable store which is kept throughout the test plan execution */
 	private Map<String, Serializable> globalValues = new HashMap<String, Serializable>();
 	
 	/** keeps all values exported by the executed activities in a transient store which is cleared after each test plan run by the {@link TSPlanExecutor} */
 	private Map<String, Serializable> transientRunValues = new HashMap<String, Serializable>();
-	
-	/** keeps a mapping of all evaluated patterns for global variables to the chain of methods to be executed along the evaluation path */
-	private Map<String, List<Method>> globalValueReplacementPatternEvaluationPath = new HashMap<String, List<Method>>();
-	
-	/** keeps a mapping of all evaluated patterns for transient variables to the chain of methods to be executed along the evaluation path */
-	private Map<String, List<Method>> transientValueReplacementPatternEvaluationPath = new HashMap<String, List<Method>>();
-	
-	
+
+	/** contains all replacement patterns available through this context implementation */
+	private Map<String, TSPlanExecutionReplacementPattern> replacementPatternMapping = new HashMap<String, TSPlanExecutionReplacementPattern>();
+
 	/**
 	 * Adds the provided key/value pair to the referenced store type. If no type is provided,
 	 * the default (run/transient) is assumed
@@ -103,51 +98,124 @@ public class TSPlanExecutionContext implements Serializable {
 	}
 	
 	/**
+	 * Returns the set of keys for the given storage type
+	 * @param type
+	 * @return
+	 */
+	public Set<String> getContextValueNames(ExecutionContextValueType type) {
+		if(type != null && type == ExecutionContextValueType.GLOBAL)
+			return globalValues.keySet();
+		return transientRunValues.keySet();
+	}
+	
+	/**
 	 * Clears the run/transient store
 	 */
 	public void clearTransientValueStore() {
 		this.transientRunValues.clear();
 	}
-
+	
 	/**
-	 * Evaluates the provided replacement pattern for the referenced variable. The replacement pattern must
-	 * look like: ${global.person.firstname} or ${run.logMessage.timestamp}. If the replacement pattern does
-	 * not follow the rule ${<global or run>.<context variable>.<attribute getter>} an {@link TSVariableEvaluationFailedException}
-	 * will be thrown. In case the path either contains an attribute having no associated getter or the path 
-	 * cannot be evaluated, the method throws an {@link TSVariableEvaluationFailedException exception} as well.
-	 * @param contextVariable
-	 * @param replacementPattern
+	 * Returns true in case the given key is contained in the referenced store
+	 * @param key
+	 * @param type
 	 * @return
-	 * @throws TSVariableEvaluationFailedException thrown in case either the replacement pattern is invalid or the evaluation failed in any other way
 	 */
-	public Object evaluate(String contextVariable, String replacementPattern) throws TSVariableEvaluationFailedException {
-		
-		// validate the input parameter values
-		if(contextVariable == null || contextVariable.isEmpty())
-			throw new TSVariableEvaluationFailedException("No context variable name provided");
-		
-		if(replacementPattern == null || replacementPattern.isEmpty())
-			throw new TSVariableEvaluationFailedException("No replacement pattern provided");
-		
-		// continue here if the replacement pattern starts with ${global. 
-		if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_GLOBAL) && replacementPattern.endsWith("}")) {
-
-			List<Method> globalEvalPath = globalValueReplacementPatternEvaluationPath.get(replacementPattern);
-			
-			
-		} else if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_RUN) && replacementPattern.endsWith("}")) {
-			
-			// continue here if the replacement pattern starts with ${run.
-			List<Method> transientEvalPath = transientValueReplacementPatternEvaluationPath.get(replacementPattern);
-			
-		} else {
-			throw new TSVariableEvaluationFailedException("Invalid replacement pattern: " + replacementPattern + ". Expected prefix: ${global||run...}");
-		}
-		
-		return null;
+	public boolean hasContextVariable(String key, ExecutionContextValueType type) {
+		if(type != null && type == ExecutionContextValueType.GLOBAL)
+			return globalValues.containsKey(key);
+		return transientRunValues.containsKey(key);
 		
 	}
+	
+	
+	/**
+	 * Evaluates the given pattern which either starts with ${global.} or ${run.}. If there is no context variable
+	 * that matches the named contained in the pattern, the pattern itself will be returned.
+	 * @param replacementPattern
+	 * @return
+	 * @throws TSVariableEvaluationFailedException
+	 */
+	public Object evaluate(String replacementPattern) throws TSVariableEvaluationFailedException {
+
+		// validate the replacement pattern
+		if(replacementPattern == null || replacementPattern.isEmpty())
+			throw new TSVariableEvaluationFailedException("No replacement pattern provided");
+
+		// find replacement pattern in map of previously computed pattern
+		TSPlanExecutionReplacementPattern pattern = replacementPatternMapping.get(replacementPattern);
+		if(pattern != null) {
+			switch(pattern.getVariableStoreType()) {
+				case GLOBAL: {
+					Serializable variable = globalValues.get(pattern.getName());
+					return evaluateObject(variable, pattern.getAccessMethods());
+				}
+				case RUN: {
+					Serializable variable = transientRunValues.get(pattern.getName());
+					return evaluateObject(variable, pattern.getAccessMethods());
+				}
+				default:
+					throw new TSVariableEvaluationFailedException("Invalid variable storage type ('"+pattern.getVariableStoreType()+"') found for pattern: " + replacementPattern);
+			}
+		}
 		
+		// if the pattern is not contained in the mentioned map, figure out how to evaluate it: for global or transient run variables
+		if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_GLOBAL) && replacementPattern.endsWith("}")) {
+			
+			// extract the name of the context variable and try to fetch the associated value. if there is no value, return null
+			String ctxVar = extractContextVariableName(replacementPattern, REPLACEMENT_PATTERN_PREFIX_GLOBAL);
+			Serializable variable = globalValues.get(ctxVar);
+			if(variable == null)
+				return null;
+			
+			// if the variable has been found, try to extract the getter method names along the path described
+			String[] getterMethodNames = extractGetterMethodNames(replacementPattern, REPLACEMENT_PATTERN_PREFIX_GLOBAL);
+			if(getterMethodNames == null || getterMethodNames.length < 1)
+				return variable;
+			
+			// convert the getter names into method representations
+			List<Method> getterMethods = new ArrayList<Method>();
+			extractGetterMethods(variable.getClass(), getterMethodNames, getterMethods);
+			
+			// create entity for previously mentioned association map for pattern information and insert it
+			TSPlanExecutionReplacementPattern patternMapping = new TSPlanExecutionReplacementPattern(replacementPattern, ctxVar, ExecutionContextValueType.GLOBAL);
+			for(Method m : getterMethods)
+				patternMapping.addAccessMethod(m);
+			replacementPatternMapping.put(replacementPattern, patternMapping);
+			
+			// evaluate the getter methods against the variable value
+			return evaluateObject(variable, getterMethods);
+		} else if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_RUN) && replacementPattern.endsWith("}")) {
+			
+			// extract the name of the context variable and try to fetch the associated value. if there is no value, return null
+			String ctxVar = extractContextVariableName(replacementPattern, REPLACEMENT_PATTERN_PREFIX_RUN);
+			Serializable variable = transientRunValues.get(ctxVar);
+			if(variable == null)
+				return null;			
+			
+			// if the variable has been found, try to extract the getter method names along the path described
+			String[] getterMethodNames = extractGetterMethodNames(replacementPattern, REPLACEMENT_PATTERN_PREFIX_RUN);
+			if(getterMethodNames == null || getterMethodNames.length < 1)
+				return variable;
+			
+			// convert the getter names into method representations
+			List<Method> getterMethods = new ArrayList<Method>();
+			extractGetterMethods(variable.getClass(), getterMethodNames, getterMethods);
+
+			// create entity for previously mentioned association map for pattern information and insert it
+			TSPlanExecutionReplacementPattern patternMapping = new TSPlanExecutionReplacementPattern(replacementPattern, ctxVar, ExecutionContextValueType.GLOBAL);
+			for(Method m : getterMethods)
+				patternMapping.addAccessMethod(m);
+			replacementPatternMapping.put(replacementPattern, patternMapping);
+
+			// evaluate the getter methods against the variable value
+			return evaluateObject(variable, getterMethods);
+		}
+
+		throw new TSVariableEvaluationFailedException("Invalid replacement pattern: " + replacementPattern + ". Expected prefix: ${global||run...}");
+
+	}
+
 	/**
 	 * Extracts the getter method names that needs to be executed along the expression path for evaluate
 	 * an objects value. The provided prefix helps to speed-up stripping down the storage dependent prefix, eg. ${global.
@@ -178,51 +246,31 @@ public class TSPlanExecutionContext implements Serializable {
 		
 		return EMPTY_STRING_ARRAY;		
 	}
-	
+
 	/**
-	 * Evaluates the provided array of getter methods on the given input object. Next to the value
-	 * evaluation the method writes all {@link Method} instances extracted into a provided output list.
-	 * @param input
+	 * Extracts the  {@link Method method representations} for the given path of getter methods 
+	 * @param varType
 	 * @param getterMethodNames
-	 * @param outputMethodsList
-	 * @return
+	 * @param result
 	 * @throws TSVariableEvaluationFailedException
 	 */
-	protected Object evaluateObject(Object input, String[] getterMethodNames, List<Method> outputMethodsList) throws TSVariableEvaluationFailedException {
-
-		if(input == null)
-			return null;
+	protected void extractGetterMethods(Class<?> varType, String[] getterMethodNames, List<Method> result) throws TSVariableEvaluationFailedException {
 		
-		if(getterMethodNames != null && getterMethodNames.length > 0) {
-			String nextGetter = getterMethodNames[0];
-			Method nextGetterMethod = null;			
-			Object result = null;
+		if(varType != null && getterMethodNames != null && getterMethodNames.length > 0) {
 
+			String nextGetter = getterMethodNames[0];
 			try {
-				nextGetterMethod = input.getClass().getMethod(nextGetter, null);
-				result = nextGetterMethod.invoke(input, null);				
-			} catch (IllegalArgumentException e) {
-				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
-			} catch (IllegalAccessException e) {
-				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
-			} catch (InvocationTargetException e) {
-				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
-			} catch (SecurityException e) {
-				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
-			} catch (NoSuchMethodException e) {
-				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetter+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
+				Method getterMethod = varType.getMethod(nextGetter, null);
+				result.add(getterMethod);
+				extractGetterMethods(getterMethod.getReturnType(), (String[])ArrayUtils.subarray(getterMethodNames, 1, getterMethodNames.length), result);
+			} catch(NoSuchMethodException e) {
+				throw new TSVariableEvaluationFailedException("No such getter '"+nextGetter+"' for class " + varType.getName());
 			}
 			
-			outputMethodsList.add(nextGetterMethod);
-			if(getterMethodNames.length > 1 && result != null)
-				return evaluateObject(result, (String[])ArrayUtils.subarray(getterMethodNames, 1, getterMethodNames.length), outputMethodsList);
-			return result;
-			
 		}
-		
-		return input;
+
 	}
-	
+
 	/**
 	 * Evaluates the provided list of methods on the given object and the results of the getter recursively 
 	 * @param input
@@ -259,5 +307,20 @@ public class TSPlanExecutionContext implements Serializable {
 		return input;
 		
 	}
-	
+	/**
+	 * Extracts the context variable name from the given replacement pattern. The provided prefix helps to speed up the
+	 * stripping and must be contained in the replacement pattern
+	 * @param replacementPattern
+	 * @param storageDependentPrefix
+	 * @return
+	 */
+	protected String extractContextVariableName(String replacementPattern, String storageDependentPrefix) {
+		
+		String tmp = replacementPattern.substring(storageDependentPrefix.length());
+		if(tmp.indexOf(".") == -1)
+			return tmp.substring(0, tmp.length() - 1);
+		return tmp.substring(0, tmp.indexOf('.'));
+
+		
+	}
 }

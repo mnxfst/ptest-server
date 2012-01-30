@@ -33,8 +33,8 @@ import com.mnxfst.testing.exception.TSPlanExecutionFailedException;
 import com.mnxfst.testing.exception.TSPlanMissingException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.TSPlanExecutorResult;
-import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
-import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Provides a closed runtime environment for a {@link TSPlan}. The results are returned following the {@link TSPlanExecutorResult} structure. 
@@ -57,7 +57,7 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 	private int recurrences = -1;
 	private TSPlanRecurrenceType recurrenceType = TSPlanRecurrenceType.UNKNOWN;
 	private boolean interrupted = false;
-	private ITSPlanExecutionContext context = new TSPlanBasicExecutionContext();
+	private TSPlanExecutionContext context = new TSPlanExecutionContext();
 
 	/**
 	 * Initializes the executor
@@ -93,12 +93,12 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		
 		if(preconfiguredDurableContextVariables != null && !preconfiguredDurableContextVariables.isEmpty()) {
 			for(String key : preconfiguredDurableContextVariables.keySet()) {
-				context.addDurableVariable(key, preconfiguredDurableContextVariables.get(key));
+				context.addContextValue(key, preconfiguredDurableContextVariables.get(key), ExecutionContextValueType.GLOBAL);
 			}
 		}		
 				
 		if(logger.isDebugEnabled())
-			logger.debug("TSPlanExecutor[testPlan="+testPlan.getName()+", execEnvId="+executionEnvironmentId+", executorId="+planExecutorId+", recurrences="+recurrences+", recType="+recurrenceType+", preconfiguredVars="+context.getDurableVariableNames().size()+"]");
+			logger.debug("TSPlanExecutor[testPlan="+testPlan.getName()+", execEnvId="+executionEnvironmentId+", executorId="+planExecutorId+", recurrences="+recurrences+", recType="+recurrenceType+", preconfiguredVars="+context.getContextValueNames(ExecutionContextValueType.GLOBAL).size()+"]");
 		
 	}
 	
@@ -139,7 +139,7 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		for(int i = 0; i < recurrences; i++) {
 								
 			// clear context for each plan execution run
-			context.refreshTransientVariables();
+			context.clearTransientValueStore();
 			
 			// clear set of already visited activities for each execution run
 			alreadyVisitedActivities.clear();
@@ -174,9 +174,9 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 	
 				// if the context has a special marker indicating that the "next activity" attribute must be ignored and
 				// the additionally provided activity must be executed, fetch the name and remove the special marker
-				if(context.hasTransientVariable(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE)) {
-					nextActivityName = (String)context.getTransientVariable(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
-					context.removeTransientVariable(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE);
+				if(context.hasContextVariable(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE, ExecutionContextValueType.RUN)) {
+					nextActivityName = (String)context.getContextValue(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE, ExecutionContextValueType.RUN);
+					context.removeContextValue(NEXT_ACTIVITY_OVERRIDE_ATTRIBUTE, ExecutionContextValueType.RUN);
 					// otherwise: fetch the name of the next activity
 				} else {
 					nextActivityName = currentActivity.getNextActivity();

@@ -28,8 +28,8 @@ import org.junit.Test;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.TSPlanBasicExecutionContext;
-import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Test case for {@link ContextLog4jActivity}
@@ -135,7 +135,7 @@ public class TestContextLog4jActivity {
 		cfgOpt.addOption("logAppender", "console");
 		cfgOpt.addOption("logLevel", "warn");
 		cfgOpt.addOption("conversionPattern", "%d [%t] %-5p %c - %m%n");
-		cfgOpt.addOption("logMessage", "[start=${initTimestamp}, end=${finalTimestamp}]");
+		cfgOpt.addOption("logMessage", "[start=${run.initTimestamp}, end=${run.finalTimestamp}]");
 
 		ContextLog4jActivity activity = new ContextLog4jActivity();
 		activity.setName("test-activity");
@@ -152,14 +152,14 @@ public class TestContextLog4jActivity {
 			
 		}
 		
-		ITSPlanExecutionContext ctx = new TSPlanBasicExecutionContext();
+		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
 		activity.execute(ctx);
 		
-		ctx.addTransientVariable("initTimestamp", Long.valueOf(1234));
-		ctx.addTransientVariable("finalTimestamp", "5678");
+		ctx.addContextValue("initTimestamp", Long.valueOf(1234), ExecutionContextValueType.RUN);
+		ctx.addContextValue("finalTimestamp", "5678", ExecutionContextValueType.RUN);
 		ctx = activity.execute(ctx);
 		Assert.assertNotNull("The result must not be null", ctx);
-		Assert.assertEquals("The log message must be equal to '[start=1234, end=5678'", "[start=1234, end=5678]", ctx.getTransientVariable("ctxLog4jMsg"));
+		Assert.assertEquals("The log message must be equal to '[start=1234, end=5678'", "[start=1234, end=5678]", ctx.getContextValue("ctxLog4jMsg", ExecutionContextValueType.RUN));
 	}
 	
 	@Test
@@ -168,9 +168,10 @@ public class TestContextLog4jActivity {
 		String logPattern = "[start=${initTimestamp}, end=${finalTimestamp}]";
 		Map<String, String> vars = (new ContextLog4jActivity()).getContextVariablesFromString(logPattern);
 		Assert.assertNotNull("The result map must not be null", vars);
-		Assert.assertEquals("The result must contain 2 elements", 2, vars.size());		
-		Assert.assertEquals("The variable pattern must be '\\$\\{initTimestamp\\}'", "\\$\\{initTimestamp\\}", vars.get("initTimestamp"));
-		Assert.assertEquals("The variable pattern must be '\\$\\{finalTimestamp\\}'", "\\$\\{finalTimestamp\\}", vars.get("finalTimestamp"));
+		Assert.assertEquals("The result must contain 2 elements", 2, vars.size());
+		
+		Assert.assertEquals("The variable pattern must be '\\$\\{initTimestamp\\}'", "\\$\\{initTimestamp\\}", vars.get("${initTimestamp}"));
+		Assert.assertEquals("The variable pattern must be '\\$\\{finalTimestamp\\}'", "\\$\\{finalTimestamp\\}", vars.get("${finalTimestamp}"));
 		Assert.assertNull("No such variable pattern", vars.get("\\$\\{FINALTIMESTAMP\\}"));
 	}
 	

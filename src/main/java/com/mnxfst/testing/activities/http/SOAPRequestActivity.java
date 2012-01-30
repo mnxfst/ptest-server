@@ -20,7 +20,6 @@
 package com.mnxfst.testing.activities.http;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,9 +30,10 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
+import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
-import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext.ContextVariableType;
+import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
  * Sends a SOAP request to a configured destination using a previously defined payload
@@ -94,17 +94,23 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(java.util.Map)
 	 */
-	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
-
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+		
 		// replace payload variables with values fetched from context
 		String payload = new String(this.payloadTemplate);
-		for(String contextVariable : payloadVariables.keySet()) {
-			String payloadVariable = payloadVariables.get(contextVariable);
-			Serializable contextValue = ctx.findContextVariable(contextVariable, ContextVariableType.BOTH);
-						
-			if(contextValue != null)
-				payload = payload.replaceAll(payloadVariable, contextValue.toString());
-			
+		
+		for(String logPattern : payloadVariables.keySet()) {
+			String replacementPattern = payloadVariables.get(logPattern);
+			Object ctxValue = null;
+			try {
+				ctxValue = ctx.evaluate(logPattern);
+			} catch(TSVariableEvaluationFailedException e) {
+				e.printStackTrace();
+				throw new TSPlanActivityExecutionException("Failed to evaluate " + logPattern);
+			}
+
+			if(ctxValue != null)
+				payload = payload.replaceAll(replacementPattern, ctxValue.toString());			
 		}
 
 		// convert payload into request entity and assign it
@@ -117,7 +123,7 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 		}
 		try {
 			HttpResponse response = sendPOSTRequest(entity, header);
-			ctx.addTransientVariable(contextExportVariableResponseContent, EntityUtils.toString(response.getEntity()));
+			ctx.addContextValue(contextExportVariableResponseContent, EntityUtils.toString(response.getEntity()), ExecutionContextValueType.RUN);
 		} catch (IOException e) {
 			// TODO log errors
 		}

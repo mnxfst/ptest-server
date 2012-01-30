@@ -23,17 +23,16 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.util.EntityUtils;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
-import com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext;
+import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
+import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 public class HTTPRequestActivity extends AbstractHTTPRequestActivity {
 
@@ -53,7 +52,7 @@ public class HTTPRequestActivity extends AbstractHTTPRequestActivity {
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext)
 	 */
-	public ITSPlanExecutionContext execute(ITSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
+	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
 		// receives the http response
 		HttpResponse response = null;
@@ -73,7 +72,7 @@ public class HTTPRequestActivity extends AbstractHTTPRequestActivity {
 		
 		try {
 			String content = EntityUtils.toString(response.getEntity());
-			ctx.addTransientVariable(contextExportVariableResponseContent, content);
+			ctx.addContextValue(contextExportVariableResponseContent, content, ExecutionContextValueType.RUN);
 		} catch(IOException e) {
 			e.printStackTrace(); // TODO handle - we should log this instead of throwing an exception
 		} finally {
