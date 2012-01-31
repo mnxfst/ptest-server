@@ -19,6 +19,10 @@
 
 package com.mnxfst.testing.activities.context.random;
 
+
+
+import java.io.Serializable;
+import java.util.Random;
 import java.util.UUID;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
@@ -31,18 +35,43 @@ import com.mnxfst.testing.plan.config.TSPlanConfigOption;
  */
 public class RandomUUIDValueGenerator implements IRandomCtxVarValueGenerator<UUID> {
 
+	private static final String CFG_OPT_UUID_TYPE = ".uuidType";
+	
+	private enum UUIDGeneratorType implements Serializable {
+		TIME_BASED_GENERATOR,
+		DCE_SECURITY_BASED
+	}
+	
+	private UUIDGeneratorType uuidGeneratorType = UUIDGeneratorType.TIME_BASED_GENERATOR;
+	
 	/**
 	 * @see com.mnxfst.testing.activities.context.random.IRandomCtxVarValueGenerator#init(com.mnxfst.testing.plan.config.TSPlanConfigOption, java.lang.String)
 	 */
 	public void init(TSPlanConfigOption cfgOpt, String generatorCfgOptPrefix) throws TSPlanActivityExecutionException {
-		// do nothing
+	
+		if(cfgOpt != null) {			
+			String tmp = (String)cfgOpt.getOption(generatorCfgOptPrefix + CFG_OPT_UUID_TYPE);
+			if(tmp != null && !tmp.isEmpty()) {
+				
+				if(tmp.equalsIgnoreCase("time"))
+					uuidGeneratorType = UUIDGeneratorType.TIME_BASED_GENERATOR;
+				else if(tmp.equalsIgnoreCase("dce"))
+					uuidGeneratorType = UUIDGeneratorType.DCE_SECURITY_BASED;
+				else
+					throw new TSPlanActivityExecutionException("Unknown uuid type: " + tmp);				
+			} else {
+				throw new TSPlanActivityExecutionException("Unknown uuid type: " + tmp);
+			}
+		}
 	}
 
 	/**
 	 * @see com.mnxfst.testing.activities.context.random.IRandomCtxVarValueGenerator#generate()
 	 */
 	public UUID generate() {
-		return UUID.randomUUID();
+		if(uuidGeneratorType == UUIDGeneratorType.TIME_BASED_GENERATOR)
+			return UUID.randomUUID();
+		return UUID.fromString(new com.eaio.uuid.UUID().toString());
 	}
 
 }

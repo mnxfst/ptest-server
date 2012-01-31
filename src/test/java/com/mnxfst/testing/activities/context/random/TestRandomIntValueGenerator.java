@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.activities.context;
+package com.mnxfst.testing.activities.context.random;
 
 import junit.framework.Assert;
 

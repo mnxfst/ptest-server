@@ -138,42 +138,10 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		
 		boolean keepRunning = true;
 		long loopExecutionStart = System.currentTimeMillis();
+		long loopCounter = 0;
 		do {
 			
-			switch(recurrenceType) {
-				case DAYS: {
-					break;
-				}
-				case HOURS: {
-					if((System.currentTimeMillis() - loopExecutionStart) / 3600000 >= recurrences)
-						keepRunning = false;
-					break;
-				}
-				case MINUTES: {
-					if((System.currentTimeMillis() - loopExecutionStart) / 60000 >= recurrences)
-						keepRunning = false;
-					break;
-				}
-				case SECONDS: {
-					if((System.currentTimeMillis() - loopExecutionStart) / 1000 >= recurrences)
-						keepRunning = false;
-					break;
-				}
-				case MILLIS: {
-					if((System.currentTimeMillis() - loopExecutionStart) >= recurrences)
-						keepRunning = false;
-					break;
-				}
-				case TIMES: {
-					break;
-				}
-
-			}
 			
-		} while(keepRunning);
-		
-		for(int i = 0; i < recurrences; i++) {
-								
 			// clear context for each plan execution run
 			context.clearTransientValueStore();
 			
@@ -238,7 +206,63 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 			
 			if(interrupted)
 				break;
-		}
+
+			// loop interruption
+			switch(recurrenceType) {
+				case DAYS: {
+					long duration = System.currentTimeMillis() - loopExecutionStart;
+					duration = duration / 1000; // millis > sec
+					duration = duration / 60; // sec > min					
+					duration = duration / 60; // min > hours
+					duration = duration / 24; // hours > days
+					
+					if(duration >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case HOURS: {
+					long duration = System.currentTimeMillis() - loopExecutionStart;
+					duration = duration / 1000; // millis > sec
+					duration = duration / 60; // sec > min					
+					duration = duration / 60; // min > hours
+					
+					if(duration >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case MINUTES: {
+					long duration = System.currentTimeMillis() - loopExecutionStart;
+					duration = duration / 1000; // millis > sec
+					duration = duration / 60; // sec > min					
+					
+					if(duration >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case SECONDS: {
+					long duration = System.currentTimeMillis() - loopExecutionStart;
+					duration = duration / 1000; // millis > sec
+					
+					if(duration >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case MILLIS: {
+					if((System.currentTimeMillis() - loopExecutionStart) >= recurrences)
+						keepRunning = false;
+					break;
+				}
+				case TIMES: {
+					loopCounter = loopCounter + 1;
+					if(loopCounter >= recurrences)
+						keepRunning = false;
+					break;
+				}
+
+			}
+			
+		} while(keepRunning);
+		
 		
 		// set end timer for whole test run
 		long overallEnd = System.currentTimeMillis();

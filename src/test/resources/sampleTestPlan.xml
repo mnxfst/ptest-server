@@ -24,6 +24,7 @@
 			<class>com.mnxfst.testing.activities.context.random.RandomCtxVarGenActivity</class>
 			<configuration>
 				<generate.variable.requestId.class>com.mnxfst.testing.activities.context.random.RandomUUIDValueGenerator</generate.variable.requestId.class>
+				<generate.variable.requestId.uuidType>TIME</generate.variable.requestId.uuidType>
 				<generate.variable.address.class>com.mnxfst.testing.activities.context.random.RandomAddressGenerator</generate.variable.address.class>
 			</configuration>
 			<nextActivity>initTimestamp</nextActivity>

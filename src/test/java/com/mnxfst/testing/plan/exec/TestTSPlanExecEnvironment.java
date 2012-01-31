@@ -96,6 +96,16 @@ public class TestTSPlanExecEnvironment {
 		TSPlanExecEnvironmentResult results = env.execute();
 		Assert.assertNotNull("The result set must not be null", results);
 		
+		env = new TSPlanExecEnvironment("test-env", plan, 100, TSPlanRecurrenceType.MILLIS, 2);
+		results = env.execute();
+		Assert.assertNotNull("The result must not be null", results);
+		Assert.assertTrue("The execution time must be greater than 100ms", 100 <= (results.getEndMillis() - results.getStartMillis()));
+		
+		env = new TSPlanExecEnvironment("test-env", plan, 1, TSPlanRecurrenceType.SECONDS, 2);
+		results = env.execute();
+		Assert.assertNotNull("The result must not be null", results);
+		Assert.assertTrue("The execution time must be greater than 1000ms", 1000 <= (results.getEndMillis() - results.getStartMillis()));
+		
 		// TODO valid test  for result
 
 	}	
