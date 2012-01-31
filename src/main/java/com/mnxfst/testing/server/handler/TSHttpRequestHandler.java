@@ -19,6 +19,7 @@
 
 package com.mnxfst.testing.server.handler;
 
+import org.apache.log4j.Logger;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
@@ -53,7 +54,9 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		boolean keepAlive = HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(httpRequest.getHeader(HttpHeaders.Names.CONNECTION));
 		
 		ChannelBuffer b = httpRequest.getContent();
-		System.out.println(event.getMessage());
+		System.out.println(event.getMessage().getClass());
+		
+
 		
 		HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 		httpResponse.setContent(ChannelBuffers.copiedBuffer("HELLO WORLD", CharsetUtil.UTF_8));

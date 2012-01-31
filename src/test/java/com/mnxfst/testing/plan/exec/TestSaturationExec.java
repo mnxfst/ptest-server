@@ -142,7 +142,6 @@ public class TestSaturationExec {
 		}	
 	}
 	
-	@Test
 	public void doTestCase2() throws Exception {
 		
 		
@@ -197,6 +196,16 @@ public class TestSaturationExec {
 			if(interrupt)
 				break;
 		}	
+	}
+	
+	@Test
+	public void testTestCase3() throws Exception {
+		
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleHTTPTestPlan.xml");
+		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
+		
+		TSPlanExecEnvironment env = new TSPlanExecEnvironment("exec-1", plan, 10, TSPlanRecurrenceType.TIMES, 1);
+		env.execute();
 	}
 	
 }

@@ -12,10 +12,11 @@
 		<!-- random value generator activity -->
 		<activity id="randomCtxValueGenerator" name="randomRequestIdGenerator">
 			<description>Generate random variable values and store them under the given variable</description>
-			<class>com.mnxfst.testing.activities.context.RandomCtxVarGenActivity</class>
+			<class>com.mnxfst.testing.activities.context.random.RandomCtxVarGenActivity</class>
 			<configuration>
-				<generate.variable.uuid.class>com.mnxfst.testing.activities.context.RandomUUIDValueGenerator</generate.variable.uuid.class>
-				<generate.variable.arg0.class>com.mnxfst.testing.activities.context.RandomIntValueGenerator</generate.variable.arg0.class>
+				<generate.variable.uuid.class>com.mnxfst.testing.activities.context.random.RandomUUIDValueGenerator</generate.variable.uuid.class>
+				<generate.variable.uuid.uuidType>mac</generate.variable.uuid.uuidType>
+				<generate.variable.arg0.class>com.mnxfst.testing.activities.context.random.RandomIntValueGenerator</generate.variable.arg0.class>
 				<generate.variable.arg0.minValue>10</generate.variable.arg0.minValue>
 				<generate.variable.arg0.maxValue>100</generate.variable.arg0.maxValue>
 			</configuration>
@@ -72,16 +73,16 @@
    <soapenv:Header/>
    <soapenv:Body>
       <ws:addressValidation>
-         <arg0>${arg0}</arg0>
-         <arg1>${arg1}</arg1>
-         <arg2>${arg2}</arg2>
-         <arg3>${arg3}</arg3>
-         <arg4>${arg4}</arg4>
-         <arg5>${arg5}</arg5>
-         <arg6>${arg6}</arg6>
-         <arg7>${arg7}</arg7>
-         <arg8>${arg8}</arg8>
-         <arg9>${arg9}</arg9>
+         <arg0>${run.arg0}</arg0>
+         <arg1>${run.arg1}</arg1>
+         <arg2>${run.arg2}</arg2>
+         <arg3>${run.arg3}</arg3>
+         <arg4>${run.arg4}</arg4>
+         <arg5>${run.arg5}</arg5>
+         <arg6>${run.arg6}</arg6>
+         <arg7>${run.arg7}</arg7>
+         <arg8>${run.arg8}</arg8>
+         <arg9>${run.arg9}</arg9>
       </ws:addressValidation>
    </soapenv:Body>
 </soapenv:Envelope>
@@ -119,7 +120,7 @@
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid};${localhostName};${measuringPointId};${finalTimestamp};${date};true;true</logMessage>
+				<logMessage>${global.scenarioId}-${global.productId}-${global.runId}-${global.threadCount}-${global.waitTime}-${run.uuid};${global.localhostName};${global.measuringPointId};${run.finalTimestamp};${run.date};true;true</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
 				<logLevel>INFO</logLevel>

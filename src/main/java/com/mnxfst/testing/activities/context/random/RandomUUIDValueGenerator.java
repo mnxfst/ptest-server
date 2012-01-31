@@ -39,7 +39,7 @@ public class RandomUUIDValueGenerator implements IRandomCtxVarValueGenerator<UUI
 	
 	private enum UUIDGeneratorType implements Serializable {
 		TIME_BASED_GENERATOR,
-		DCE_SECURITY_BASED
+		MAC_BASED
 	}
 	
 	private UUIDGeneratorType uuidGeneratorType = UUIDGeneratorType.TIME_BASED_GENERATOR;
@@ -55,8 +55,8 @@ public class RandomUUIDValueGenerator implements IRandomCtxVarValueGenerator<UUI
 				
 				if(tmp.equalsIgnoreCase("time"))
 					uuidGeneratorType = UUIDGeneratorType.TIME_BASED_GENERATOR;
-				else if(tmp.equalsIgnoreCase("dce"))
-					uuidGeneratorType = UUIDGeneratorType.DCE_SECURITY_BASED;
+				else if(tmp.equalsIgnoreCase("mac"))
+					uuidGeneratorType = UUIDGeneratorType.MAC_BASED;
 				else
 					throw new TSPlanActivityExecutionException("Unknown uuid type: " + tmp);				
 			} else {

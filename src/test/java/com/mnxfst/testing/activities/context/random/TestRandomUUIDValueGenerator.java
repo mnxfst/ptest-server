@@ -69,7 +69,7 @@ public class TestRandomUUIDValueGenerator {
 		cfgOpt.addOption("generate.variable.arg0.uuidType", "time");
 		gen.init(cfgOpt, "generate.variable.arg0");
 		
-		cfgOpt.addOption("generate.variable.arg0.uuidType", "dce");
+		cfgOpt.addOption("generate.variable.arg0.uuidType", "mac");
 		gen.init(cfgOpt, "generate.variable.arg0");
 		
 		UUID[] uuids = new UUID[10];

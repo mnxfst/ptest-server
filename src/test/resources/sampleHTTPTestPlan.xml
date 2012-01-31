@@ -1,24 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <ptestplan>
-	<name>sample test plan name</name>
-	<description>sample description</description>
-	<creationDate>2011-12-20</creationDate>
+	<name>Sample HTTP Testplan</name>
+	<description>Sample HTTP testplan</description>
+	<creationDate>2012-01-31</creationDate>
 	<createdBy>mnxfst</createdBy>
-	<initActivity>randomRequestIdGenerator</initActivity>
+	<initActivity>randomCtxValueGenerator</initActivity>
 	
 	<activities>
 	
 		<!-- random value generator activity -->
-		<activity id="randomCtxValueGenerator" name="randomRequestIdGenerator">
+		<activity id="randomCtxValueGenerator" name="randomCtxValueGenerator">
 			<description>Generate random variable values and store them under the given variable</description>
-			<class>com.mnxfst.testing.activities.context.RandomCtxVarGenActivity</class>
+			<class>com.mnxfst.testing.activities.context.random.RandomCtxVarGenActivity</class>
 			<configuration>
-				<generate.variable.uuid.class>com.mnxfst.testing.activities.context.RandomUUIDValueGenerator</generate.variable.uuid.class>
+				<generate.variable.requestId.class>com.mnxfst.testing.activities.context.random.RandomUUIDValueGenerator</generate.variable.requestId.class>
+				<generate.variable.requestId.uuidType>TIME</generate.variable.requestId.uuidType>
+				<generate.variable.address.class>com.mnxfst.testing.activities.context.random.RandomAddressGenerator</generate.variable.address.class>
 			</configuration>
 			<nextActivity>initTimestamp</nextActivity>
 		</activity>			
-	
+		
 		<!-- set init timestamp -->
 		<activity id="timestamp" name="initTimestamp">
 			<description>Sets an initial timestamp stored under the given variable</description>
@@ -28,23 +30,10 @@
 				<timestamp>initTimestamp</timestamp>
 			</contextExportVars>
 			
-			<nextActivity>ctxLog4jStart</nextActivity>
+			<nextActivity>httpRequest</nextActivity>
 		</activity>
-
-		<activity id="contextLog4j" name="ctxLog4jStart">
-			<description>Write out context</description>
-			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
-			<configuration>
-				<logMessage>${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${initTimestamp} ${date} true true</logMessage>
-				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
-				<logAppender>console</logAppender>
-				<logLevel>INFO</logLevel>
-			</configuration>
-
-			<nextActivity>httpGETRequest</nextActivity>
-		</activity>		
-		 
-		<activity id="httpRequest" name="httpGETRequest">
+		
+		<activity id="httpRequest" name="httpRequest">
 			<description>Send request to www.heise.de</description>
 			<class>com.mnxfst.testing.activities.http.HTTPRequestActivity</class>
 
@@ -58,11 +47,13 @@
 				<method>POST</method>
 				<scheme>http</scheme>
 				<host>localhost</host>
-				<port>8080</port>
+				<port>9090</port>
 				<path>/</path>
 				
 				<request.param.testKey>testValue</request.param.testKey>
 				<request.param.anotherKey>anotherValue</request.param.anotherKey>
+				
+				<request.param.street>${run.address.street}</request.param.street>
 	
 				<proxyUrl>proxy.ov.otto.de</proxyUrl>
 				<proxyPort>3128</proxyPort>
@@ -87,19 +78,22 @@
 				<timestamp>finalTimestamp</timestamp>
 			</contextExportVars>
 			
-			<nextActivity>ctxLog4jEnd</nextActivity>
+			<nextActivity>ctxLog4j</nextActivity>
 		</activity>
 		
-		<activity id="contextLog4j" name="ctxLog4jEnd">
+		<activity id="contextLog4j" name="ctxLog4j">
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>${scenarioId}-${productId}-${runId}-${threadCount}-${waitTime}-${uuid} ${localhostName} ${measuringPointId} ${finalTimestamp} ${date} true true</logMessage>
+				<logMessage>[start=${run.initTimestamp}, end=${run.finalTimestamp}, requestId=${run.requestId}]</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
-				<logLevel>INFO</logLevel>
+				<logLevel>WARN</logLevel>
 			</configuration>
 
+			<contextExportVars>
+				<log4jMsg>ctxLog4jMsg</log4jMsg>
+			</contextExportVars>
 			<nextActivity>finish</nextActivity>
 		</activity>		
 		 
