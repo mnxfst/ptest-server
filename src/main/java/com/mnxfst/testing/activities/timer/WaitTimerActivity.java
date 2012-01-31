@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
+import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
@@ -40,6 +41,8 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 	
 	private static final String CTX_EXPORT_WAITTIME_VARIABLE= "waitTime";
 	
+	private boolean fetchWaitTimeFromContext = false;
+	private String waitTimeCtxPattern = null;
 	private long waitTime = 0;
 	private String contextExportVariableName = null;
 
@@ -55,17 +58,24 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 		if(str == null || str.isEmpty())
 			throw new TSPlanActivityExecutionException("Failed to initialize activity '" + WaitTimerActivity.class.getName() + "' due to a missing wait time configuration");
 		
-		try {
-			waitTime = Long.parseLong(str);
-		} catch(NumberFormatException e) {
-			throw new TSPlanActivityExecutionException("Failed to initialize activity '" + WaitTimerActivity.class.getName() + "' due to an invalid value ('"+str+"') being passed to the waitTime configuration");
+		if((str.startsWith("${global.") || str.startsWith("${run.")) && str.endsWith("}")) {
+			this.waitTimeCtxPattern = str.trim();
+			this.fetchWaitTimeFromContext = true;
 		}
-		
-		if(waitTime < 0) {
-			waitTime = 0;
 			
-			if(logger.isDebugEnabled()) 
-				logger.debug("Received wait time value is less than 0 ('"+waitTime+"'). Resetting wait time to 0");
+		if(!fetchWaitTimeFromContext) {
+			try {
+				waitTime = Long.parseLong(str);
+			} catch(NumberFormatException e) {
+				throw new TSPlanActivityExecutionException("Failed to initialize activity '" + WaitTimerActivity.class.getName() + "' due to an invalid value ('"+str+"') being passed to the waitTime configuration");
+			}
+		
+			if(waitTime < 0) {
+				waitTime = 0;
+				
+				if(logger.isDebugEnabled()) 
+					logger.debug("Received wait time value is less than 0 ('"+waitTime+"'). Resetting wait time to 0");
+			}
 		}
 		
 		if(getContextExportVariables() != null) {
@@ -80,6 +90,18 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
 		try {
+			if(fetchWaitTimeFromContext)
+				this.waitTime = (Long)ctx.evaluate(this.waitTimeCtxPattern);
+		} catch(TSVariableEvaluationFailedException e) {
+			throw new TSPlanActivityExecutionException("Failed to evaluate pattern '"+this.waitTimeCtxPattern+"' in order to set wait time");
+		} catch(ClassCastException e) {
+			throw new TSPlanActivityExecutionException("Expected to find a " + Long.class.getName() + " value while evaluating '"+this.waitTimeCtxPattern+"'. Error: " + e.getMessage());
+		}
+		
+		if(waitTime < 0)
+			waitTime = 0;
+		
+		try {
 			Thread.sleep(waitTime);
 		} catch(InterruptedException e) {
 			logger.error(WaitTimerActivity.class.getName() + " interrupted. Exception: "  + e.getMessage(), e);
@@ -88,6 +110,34 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 		ctx.addContextValue(contextExportVariableName, Long.valueOf(waitTime), ExecutionContextValueType.RUN);
 		
 		return ctx;
+	}
+
+	/**
+	 * @return the fetchWaitTimeFromContext
+	 */
+	public boolean isFetchWaitTimeFromContext() {
+		return fetchWaitTimeFromContext;
+	}
+
+	/**
+	 * @return the waitTimeCtxPattern
+	 */
+	public String getWaitTimeCtxPattern() {
+		return waitTimeCtxPattern;
+	}
+
+	/**
+	 * @return the waitTime
+	 */
+	public long getWaitTime() {
+		return waitTime;
+	}
+
+	/**
+	 * @return the contextExportVariableName
+	 */
+	public String getContextExportVariableName() {
+		return contextExportVariableName;
 	}
 
 }

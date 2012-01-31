@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
+import com.mnxfst.testing.plan.ctx.ExecutionContextValueType;
 import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
 /**
@@ -62,14 +63,70 @@ public class TestWaitTimerActivity {
 			//
 		}
 		
+		cfgOpt.addOption("waitTime", "");
+		try {
+			activity.initialize(cfgOpt);
+			Assert.fail("Invalid config options");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+
+		
 		cfgOpt.addOption("waitTime", "20");
 		activity.initialize(cfgOpt);
 		long start = System.currentTimeMillis();
 		activity.execute(new TSPlanExecutionContext());
 		long end = System.currentTimeMillis();
-		System.out.println((end-start));
 		Assert.assertTrue("The duration must be longer than 20ms", (20 <= (end-start)));
 		
+	}
+	
+	@Test
+	public void testInitialize() throws TSPlanActivityExecutionException {
+		
+		WaitTimerActivity activity = new WaitTimerActivity();
+		TSPlanConfigOption cfg = new TSPlanConfigOption();
+		
+		cfg.addOption("waitTime", "${global.test");
+		try {
+			activity.initialize(cfg);
+			Assert.fail("Invalid config options");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+
+		cfg.addOption("waitTime", "${run.test");
+		try {
+			activity.initialize(cfg);
+			Assert.fail("Invalid config options");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		
+		cfg.addOption("waitTime", "${global.test}");
+		activity.initialize(cfg);
+		Assert.assertTrue("The wait time must be fetched through the context", activity.isFetchWaitTimeFromContext());
+		
+		cfg.addOption("waitTime", "${run.test}");
+		activity.initialize(cfg);
+		Assert.assertTrue("The wait time must be fetched through the context", activity.isFetchWaitTimeFromContext());
+		
+		TSPlanExecutionContext ctx = new TSPlanExecutionContext();
+		ctx.addContextValue("test", "test", ExecutionContextValueType.RUN);
+		try {
+			activity.execute(ctx);
+			Assert.fail("Invalid value type");
+		} catch(TSPlanActivityExecutionException e) {
+			
+		}
+
+		ctx.addContextValue("test", Long.valueOf(-1), ExecutionContextValueType.RUN);
+		activity.execute(ctx);
+		Assert.assertEquals("The wait time will be recalculated to 0 althoug -1 has been provided", 0, activity.getWaitTime());
+
+		ctx.addContextValue("test", Long.valueOf(100), ExecutionContextValueType.RUN);
+		activity.execute(ctx);
+		Assert.assertEquals("The wait time must be 100", 100, activity.getWaitTime());
 	}
 	
 }
