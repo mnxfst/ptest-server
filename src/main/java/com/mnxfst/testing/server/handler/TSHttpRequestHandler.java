@@ -19,7 +19,9 @@
 
 package com.mnxfst.testing.server.handler;
 
-import org.apache.log4j.Logger;
+import java.util.List;
+import java.util.Map;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
@@ -34,6 +36,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jboss.netty.util.CharsetUtil;
 
 /**
@@ -54,9 +57,14 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		boolean keepAlive = HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(httpRequest.getHeader(HttpHeaders.Names.CONNECTION));
 		
 		ChannelBuffer b = httpRequest.getContent();
-		System.out.println(event.getMessage().getClass());
-		
-
+		QueryStringDecoder decoder = new QueryStringDecoder(httpRequest.getUri());
+		Map<String, List<String>> params = decoder.getParameters();
+		for(String param : params.keySet()) {
+			List<String> vals = params.get(param);
+			System.out.println(param + ": ");
+			for(String v : vals)
+				System.out.println("\t"+v);
+		}
 		
 		HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 		httpResponse.setContent(ChannelBuffers.copiedBuffer("HELLO WORLD", CharsetUtil.UTF_8));
