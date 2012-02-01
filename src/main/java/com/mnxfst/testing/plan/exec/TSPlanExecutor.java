@@ -168,6 +168,9 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 				if(currentActivity == null)
 					throw new TSPlanExecutionFailedException("Test plan execution failed. Unknown activity: " + nextActivityName);
 					
+				if(context == null)
+					throw new TSPlanActivityExecutionException("Found invalid runtime context. Please check your setup and code");
+				
 				try {
 					// execute the activity and get the context back
 					context = currentActivity.execute(context);
