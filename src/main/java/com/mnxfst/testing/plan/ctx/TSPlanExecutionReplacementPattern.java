@@ -24,6 +24,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 /**
  * Holds a mapping from a replacement pattern towards a context variable
  * @author mnxfst
@@ -114,6 +116,15 @@ public class TSPlanExecutionReplacementPattern implements Serializable {
 		this.variableStoreType = variableStoreType;
 	}
 	
-	
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("replacementPattern", this.replacementPattern)
+				.append("name", this.name)
+				.append("variableStoreType", this.variableStoreType)
+				.append("accessMethods", this.accessMethods).toString();
+	}
 	
 }

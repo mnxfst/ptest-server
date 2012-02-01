@@ -91,7 +91,7 @@ public class RandomCtxVarGenActivity extends AbstractTSPlanActivity {
 		
 		// iterate through context variable names, generate values and write them back into the contxt
 		for(String varName : valueGenerators.keySet()) {
-			IRandomCtxVarValueGenerator<?> generator = valueGenerators.get(varName);
+			IRandomCtxVarValueGenerator<?> generator = valueGenerators.get(varName);			
 			ctx.addContextValue(varName, generator.generate(), ExecutionContextValueType.RUN);
 			
 			if(logger.isDebugEnabled())

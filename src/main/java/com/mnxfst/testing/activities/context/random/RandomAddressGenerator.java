@@ -51,7 +51,7 @@ public class RandomAddressGenerator implements IRandomCtxVarValueGenerator<Addre
 				return new Address("Neuer Jungfernstieg", "20354", "Hamburg", "DEU");				
 			} else {
 				// Berlin
-				return new Address("Alexanderplatz", "10178", "Berlin", "DEU");
+				return new Address("Schöneberger Straße", "10963", "Berlin", "DEU");
 			}
 			
 		} else {

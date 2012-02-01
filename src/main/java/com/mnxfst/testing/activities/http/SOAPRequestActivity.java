@@ -105,14 +105,14 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 			try {
 				ctxValue = ctx.evaluate(logPattern);
 			} catch(TSVariableEvaluationFailedException e) {
-				e.printStackTrace();
 				throw new TSPlanActivityExecutionException("Failed to evaluate " + logPattern);
 			}
-
+			
 			if(ctxValue != null)
 				payload = payload.replaceAll(replacementPattern, ctxValue.toString());			
+			
 		}
-
+		
 		// convert payload into request entity and assign it
 		StringEntity  entity = null;
 		try {

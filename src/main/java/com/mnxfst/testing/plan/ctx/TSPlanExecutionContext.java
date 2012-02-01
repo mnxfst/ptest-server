@@ -158,9 +158,10 @@ public class TSPlanExecutionContext implements Serializable {
 					throw new TSVariableEvaluationFailedException("Invalid variable storage type ('"+pattern.getVariableStoreType()+"') found for pattern: " + replacementPattern);
 			}
 		}
-		
+
 		// if the pattern is not contained in the mentioned map, figure out how to evaluate it: for global or transient run variables
 		if(replacementPattern.startsWith(REPLACEMENT_PATTERN_PREFIX_GLOBAL) && replacementPattern.endsWith("}")) {
+			
 			
 			// extract the name of the context variable and try to fetch the associated value. if there is no value, return null
 			String ctxVar = extractContextVariableName(replacementPattern, REPLACEMENT_PATTERN_PREFIX_GLOBAL);
@@ -190,6 +191,7 @@ public class TSPlanExecutionContext implements Serializable {
 			// extract the name of the context variable and try to fetch the associated value. if there is no value, return null
 			String ctxVar = extractContextVariableName(replacementPattern, REPLACEMENT_PATTERN_PREFIX_RUN);
 			Serializable variable = transientRunValues.get(ctxVar);
+			
 			if(variable == null)
 				return null;			
 			
@@ -203,11 +205,11 @@ public class TSPlanExecutionContext implements Serializable {
 			extractGetterMethods(variable.getClass(), getterMethodNames, getterMethods);
 
 			// create entity for previously mentioned association map for pattern information and insert it
-			TSPlanExecutionReplacementPattern patternMapping = new TSPlanExecutionReplacementPattern(replacementPattern, ctxVar, ExecutionContextValueType.GLOBAL);
+			TSPlanExecutionReplacementPattern patternMapping = new TSPlanExecutionReplacementPattern(replacementPattern, ctxVar, ExecutionContextValueType.RUN);
 			for(Method m : getterMethods)
 				patternMapping.addAccessMethod(m);
 			replacementPatternMapping.put(replacementPattern, patternMapping);
-
+			
 			// evaluate the getter methods against the variable value
 			return evaluateObject(variable, getterMethods);
 		}
@@ -282,7 +284,7 @@ public class TSPlanExecutionContext implements Serializable {
 		
 		if(input == null)
 			return null;
-		
+
 		if(getterMethods != null && !getterMethods.isEmpty()) {
 			
 			Method nextGetterMethod = getterMethods.get(0);
@@ -297,7 +299,7 @@ public class TSPlanExecutionContext implements Serializable {
 			} catch (InvocationTargetException e) {
 				throw new TSVariableEvaluationFailedException("Failed to evaluate method '"+nextGetterMethod.getName()+"' on entity of type " + input.getClass().getName() + ". Error: " + e.getMessage());
 			}
-			
+
 			if(getterMethods.size() > 1 && result != null)
 				return evaluateObject(result, getterMethods.subList(1, getterMethods.size()));
 			
@@ -322,5 +324,17 @@ public class TSPlanExecutionContext implements Serializable {
 		return tmp.substring(0, tmp.indexOf('.'));
 
 		
+	}
+
+	public Map<String, Serializable> getGlobalValues() {
+		return globalValues;
+	}
+
+	public Map<String, Serializable> getTransientRunValues() {
+		return transientRunValues;
+	}
+
+	public Map<String, TSPlanExecutionReplacementPattern> getReplacementPatternMapping() {
+		return replacementPatternMapping;
 	}
 }

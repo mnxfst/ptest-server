@@ -153,13 +153,13 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 			
 			// fetch the name of the next activity to visit - which is in this case the initial activity
 			String nextActivityName = testPlan.getInitActivityName();
-		
+			
 			// set start timer
 			singleExecStart = System.currentTimeMillis();
 			
 			// as long as the name of the next activity does not equal 'finish' and is not null, execute the next activity
 			while(nextActivityName != null && !nextActivityName.equalsIgnoreCase(FINAL_ACTIVITY_NAME)) {
-					
+				
 				// add the activity to the set of already visited one to raise a base for finding loops
 				alreadyVisitedActivities.add(nextActivityName);
 					

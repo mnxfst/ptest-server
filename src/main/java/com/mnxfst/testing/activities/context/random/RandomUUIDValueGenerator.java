@@ -51,6 +51,9 @@ public class RandomUUIDValueGenerator implements IRandomCtxVarValueGenerator<UUI
 	
 		if(cfgOpt != null) {			
 			String tmp = (String)cfgOpt.getOption(generatorCfgOptPrefix + CFG_OPT_UUID_TYPE);
+			for(String k : cfgOpt.getOptions().keySet()) {
+				System.out.println(k + "=" + cfgOpt.getOption(k));
+			}
 			if(tmp != null && !tmp.isEmpty()) {
 				
 				if(tmp.equalsIgnoreCase("time"))

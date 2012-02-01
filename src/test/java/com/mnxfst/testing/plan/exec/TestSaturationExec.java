@@ -198,7 +198,6 @@ public class TestSaturationExec {
 		}	
 	}
 	
-	@Test
 	public void testTestCase3() throws Exception {
 		
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleHTTPTestPlan.xml");
@@ -206,6 +205,35 @@ public class TestSaturationExec {
 		
 		TSPlanExecEnvironment env = new TSPlanExecEnvironment("exec-1", plan, 10, TSPlanRecurrenceType.TIMES, 1);
 		env.execute();
+	}
+	
+	@Test
+	public void testCase4() throws Exception {
+
+		
+		int threads = 1;
+		int recurrences = 1;
+		int maxRuntime = 40;
+		int warmupRuns = 5;
+
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss,SSS");
+
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/placeOrderTestPlan_noTimeouts.xml");
+		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
+		
+		Map<String, Serializable> vars = new HashMap<String, Serializable>();
+		vars.put("scenarioId", "junitscenario");
+		vars.put("productId", "junittest");
+		vars.put("runId", "junitrun");
+		vars.put("threadCount", String.valueOf(threads));
+		vars.put("waitTime", "0");
+		vars.put("localhostName", "localhost");
+		vars.put("measuringPointId", "TC1");
+		vars.put("date", formatter.format(new Date()));
+		
+		TSPlanExecEnvironment env = new TSPlanExecEnvironment("exec-1", plan, 10, TSPlanRecurrenceType.TIMES, 1, vars);
+		env.execute();
+		
 	}
 	
 }

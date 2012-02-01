@@ -289,10 +289,11 @@ public class TSPlanBuilder {
 		if(activityNodes != null && activityNodes.getLength() > 0) {
 			for(int i = 0; i < activityNodes.getLength(); i++) {
 				
+				String activityName = null;
 				try {
 					
 					String activityId = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_ID_ATTRIBUTE, activityNodes.item(i), XPathConstants.STRING);
-					String activityName = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_NAME_ATTRIBUTE, activityNodes.item(i), XPathConstants.STRING);
+					activityName = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_NAME_ATTRIBUTE, activityNodes.item(i), XPathConstants.STRING);
 					String activityUseGlobalConfig = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_USE_GLOBAL_CONFIG_ATTRIBUTE, activityNodes.item(i), XPathConstants.STRING);
 					String activityClass = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_CLASS_NODE, activityNodes.item(i), XPathConstants.STRING);
 					String activityDescription = (String)xpath.evaluate(XPATH_EXPRESSION_ACTIVITY_DESCRIPTION_NODE, activityNodes.item(i), XPathConstants.STRING);
@@ -368,7 +369,7 @@ public class TSPlanBuilder {
 				} catch (TSPlanInstantiationException e) {
 					throw new TSPlanConfigurationFormatException("Failed to instantiate a referenced activity. Error: " + e.getMessage(), e);				
 				} catch (TSPlanActivityExecutionException e) {
-					throw new TSPlanConfigurationFormatException("Failed to post initialize activity instance. Error: " + e.getMessage(), e);
+					throw new TSPlanConfigurationFormatException("Failed to post initialize activity instance ('"+activityName+"'). Error: " + e.getMessage(), e);
 				}
 				
 			}

@@ -28,6 +28,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.mnxfst.testing.activities.context.random.RandomAddressGenerator;
 import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 
 /**
@@ -89,21 +90,24 @@ public class TestTSPlanExecutionContext {
 		// no such context variable
 		Assert.assertNull(ctx.evaluate("${global.}"));
 		Assert.assertNull(ctx.evaluate("${global.test.class.name}"));
-		
+		Assert.assertNull(ctx.evaluate("${global.test.class.name}"));
 		ctx.addContextValue("test", "test-string", ExecutionContextValueType.GLOBAL);
 		
+		Assert.assertTrue("The pattern mapping cache must be empty", ctx.getReplacementPatternMapping().isEmpty());
 		long start = System.currentTimeMillis();
-		Assert.assertEquals("The value must be " + String.class.getName(), String.class.getName(), ctx.evaluate("${global.test.class.name}"));
+		Assert.assertEquals("The value must be " + String.class.getName(), String.class.getName(), ctx.evaluate("${global.test.class.name}"));		
 		long end = System.currentTimeMillis();
 		long duration = (end-start);
+		Assert.assertFalse("The pattern mapping cache must not be empty", ctx.getReplacementPatternMapping().isEmpty());
+		Assert.assertNotNull("There must be an element for ${global.test.class.name}", ctx.getReplacementPatternMapping().get("${global.test.class.name}"));
 		
 		start = System.currentTimeMillis();
 		Assert.assertEquals("The value must be " + String.class.getName(), String.class.getName(), ctx.evaluate("${global.test.class.name}"));
 		end = System.currentTimeMillis();
 		long cachedResultDuration = (end-start);
 		Assert.assertTrue("The duration for the first run must be either equal or larger than the second value", (duration >= cachedResultDuration));
-		
-//		ctx.addContextValue("test", "testvalue", ExecutionContextValueType.GLOBAL);
+
+		//		ctx.addContextValue("test", "testvalue", ExecutionContextValueType.GLOBAL);
 //		Assert.assertNotNull(ctx.evaluate("test", "${global.}"));
 //		Assert.assertEquals("The result must be 'testvalue'", "testvalue", ctx.evaluate("test", "${global.}"));
 //		Assert.assertEquals("The result must be 'testvalue'", "testvalue", ctx.evaluate("test", "${global.test}"));
