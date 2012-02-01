@@ -19,19 +19,9 @@
 
 package com.mnxfst.testing.activities.jms;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
-import javax.jms.MessageProducer;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-
 import junit.framework.Assert;
 
 import org.junit.Test;
-import org.junit.runner.Describable;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
@@ -63,22 +53,6 @@ public class TestJMSDestinationRequestActivity {
 		}
 		
 		TSPlanConfigOption cfgOpt = new TSPlanConfigOption();
-		cfgOpt.addOption("connectiontype", "test");
-		try {
-			activity.initialize(cfgOpt);
-			Assert.fail("Missing required connection type option");
-		}  catch(TSPlanActivityExecutionException e) {
-			//
-		}
-		cfgOpt.addOption("connectionType", "test");
-		try {
-			activity.initialize(cfgOpt);
-			Assert.fail("Invalid connection type");
-		}  catch(TSPlanActivityExecutionException e) {
-			//
-		}
-
-		cfgOpt.addOption("connectionType", "queue");
 		try {
 			activity.initialize(cfgOpt);
 			Assert.fail("Destination name missing");
@@ -86,13 +60,16 @@ public class TestJMSDestinationRequestActivity {
 			//
 		}
 		
-		cfgOpt.addOption("destinationName", "esptopic");
-		activity.initialize(cfgOpt);
-
-		cfgOpt.addOption("connectionType", "topic");
-		activity.initialize(cfgOpt);
-		for(int i = 0; i < 100; i++) 
-			activity.execute(null);
-		activity.shutdown();
+		cfgOpt.addOption("destinationName", "espTestTopic");
+		
+		try {
+			activity.initialize(cfgOpt);
+			Assert.fail("Payload missing");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		
+		cfgOpt.addOption("jmsPayloadTemplate", "content");		
+//		activity.initialize(cfgOpt); TODO MOCK!
 	}
 }

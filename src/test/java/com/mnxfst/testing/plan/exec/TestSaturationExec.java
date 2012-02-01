@@ -24,7 +24,9 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -211,14 +213,14 @@ public class TestSaturationExec {
 	public void testCase4() throws Exception {
 
 		
-		int threads = 1;
-		int recurrences = 1;
+		int threads = 8;
+		int recurrences = 100;
 		int maxRuntime = 40;
 		int warmupRuns = 5;
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss,SSS");
 
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/placeOrderTestPlan_withTimeouts.xml");
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/AddressIntTestPlan.xml");
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 		
 		Map<String, Serializable> vars = new HashMap<String, Serializable>();
@@ -231,9 +233,20 @@ public class TestSaturationExec {
 		vars.put("measuringPointId", "TC1");
 		vars.put("date", formatter.format(new Date()));
 		
-		TSPlanExecEnvironment env = new TSPlanExecEnvironment("exec-1", plan, 10, TSPlanRecurrenceType.TIMES, 1, vars);
-		env.execute();
+		TSPlanExecEnvironment env = new TSPlanExecEnvironment("exec-1", plan, recurrences, TSPlanRecurrenceType.TIMES, threads, vars);
+		TSPlanExecEnvironmentResult e = env.execute();
+		
+		System.out.println("Test plan: " + e.getTestPlanName());
+		System.out.println("Execution environment: " + e.getExecutionEnvironmentId());
+		System.out.println("Start: " + new Date(e.getStartMillis()));
+		System.out.println("End: " + new Date(e.getEndMillis()));
+		System.out.println("Duration: " + (e.getEndMillis() - e.getStartMillis()) + "ms");
+		System.out.println("Average duration: " + e.getAverageDurationMillis() + "ms");
+		System.out.println("Max. duration (single run): " + e.getSingleRunExecutionDurationMax() + "ms");
+		System.out.println("Min. duration (single run): " + e.getSingleRunExecutionDurationMin() + "ms");
+		System.out.println("Avg. duration (single run): " + e.getSingleRunExecutionDurationAverage() + "ms");
+		System.out.println("Errors: " + e.getErrors());
 		
 	}
-	
+
 }

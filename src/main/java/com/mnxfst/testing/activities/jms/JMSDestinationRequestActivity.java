@@ -20,6 +20,8 @@
 package com.mnxfst.testing.activities.jms;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -42,6 +44,7 @@ import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.activities.AbstractTSPlanActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
+import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 
@@ -54,13 +57,9 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 
 	private static final Logger logger = Logger.getLogger(JMSDestinationRequestActivity.class);
 	
-	private enum ConnectionType implements Serializable {
-		QUEUE,
-		TOPIC
-	}
+	private static final String CFG_OPT_PAYLOAD_TEMPLATE = "jmsPayloadTemplate";
+	private static final String CFG_OPT_DESTINATION_NAME = "destinationName";
 	
-	/** connection type: queue or topic */
-	private ConnectionType connectionType = ConnectionType.QUEUE;
 	/** destination name, eg. myTopic or myQueue */
 	private String destinationName = null;
 	/** jnid context */
@@ -75,6 +74,10 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 	private Destination jmsDestination = null;
 	/** message producer */
 	private MessageProducer jmsMessageProducer = null;
+	/** payload template */
+	private String jmsMessageTemplate = null;
+	/** holds the identified payload variables */
+	private Map<String, String> jmsPayloadVariables = new HashMap<String, String>();
 	
 	
 	/**
@@ -84,24 +87,14 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 
 		if(cfgOpt == null)
 			throw new TSPlanActivityExecutionException("Missing required configuration options for activity '"+getName()+"'");
-
-		String tmp = (String)cfgOpt.getOption("connectionType");
-		if(tmp != null && !tmp.isEmpty()) {
-			 
-			if(tmp.equalsIgnoreCase("queue"))
-				this.connectionType = ConnectionType.QUEUE;
-			else if(tmp.equalsIgnoreCase("topic"))
-				this.connectionType = ConnectionType.TOPIC;
-			else
-				throw new TSPlanActivityExecutionException("Found invalid connection type ('"+tmp+"') for activity '"+getName()+"'");
-			
-		} else {
-			throw new TSPlanActivityExecutionException("Missing required connection type for activity '"+getName()+"'");
-		}
 		
-		this.destinationName = (String)cfgOpt.getOption("destinationName");
+		this.destinationName = (String)cfgOpt.getOption(CFG_OPT_DESTINATION_NAME);
 		if(this.destinationName == null || this.destinationName.isEmpty())
 			throw new TSPlanActivityExecutionException("Missing required destination name for activity '"+getName()+"'");
+		
+		this.jmsMessageTemplate = (String)cfgOpt.getOption(CFG_OPT_PAYLOAD_TEMPLATE);
+		if(jmsMessageTemplate == null || jmsMessageTemplate.isEmpty())
+			throw new TSPlanActivityExecutionException("Required payload template not provided for activity '"+getName()+"'");		
 		
 		try {
 			// fetches the settings provided via jndi.properties from classpath
@@ -124,9 +117,23 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 	 */
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 
+		// replace payload variables with values fetched from context
+		String payload = new String(this.jmsMessageTemplate);		
+		for(String logPattern : jmsPayloadVariables.keySet()) {
+			String replacementPattern = jmsPayloadVariables.get(logPattern);
+			Object ctxValue = null;
+			try {
+				ctxValue = ctx.evaluate(logPattern);
+			} catch(TSVariableEvaluationFailedException e) {
+				throw new TSPlanActivityExecutionException("Failed to evaluate " + logPattern);
+			}
+			
+			if(ctxValue != null)
+				payload = payload.replaceAll(replacementPattern, ctxValue.toString());			
+		}
+		
 		try {
 			TextMessage jmsMessage = this.jmsSession.createTextMessage("this is a sample text message");
-			System.out.println("Sending..");
 			this.jmsMessageProducer.send(jmsMessage);
 		} catch (JMSException e) {
 			throw new TSPlanActivityExecutionException("Failed to send jms message to topic '"+this.destinationName+"'. Error: " + e.getMessage(), e);
