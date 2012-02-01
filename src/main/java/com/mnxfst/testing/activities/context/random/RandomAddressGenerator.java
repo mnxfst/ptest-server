@@ -61,7 +61,7 @@ public class RandomAddressGenerator implements IRandomCtxVarValueGenerator<Addre
 			if(randomNumberGenerator.nextInt(2) == 0) {
 				return new Address("Trafalgar Square", "WC2N 5DN", "London", "GBR");
 			} else {
-				return new Address("Monks Way", "MK8 8AA", "Milton Keynes", "GBR");
+				return new Address("Champs Élysées", "MK8 8AA", "Paris", "FR");
 			}
 		}
 		
