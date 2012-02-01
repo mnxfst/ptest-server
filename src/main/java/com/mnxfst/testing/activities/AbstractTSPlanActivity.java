@@ -78,7 +78,15 @@ public abstract class AbstractTSPlanActivity implements TSPlanActivity {
 		
 		return variables;
 	}
-	
+		
+	/**
+	 * @see com.mnxfst.testing.activities.TSPlanActivity#shutdown()
+	 */
+	public void shutdown() {
+		// TODO Auto-generated method stub
+		
+	}
+
 	public Map<String, String> getContextVariablesFromString(String input) {
 		
 		Map<String, String> variables = new HashMap<String, String>();

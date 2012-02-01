@@ -218,7 +218,7 @@ public class TestSaturationExec {
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss,SSS");
 
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/placeOrderTestPlan_noTimeouts.xml");
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/placeOrderTestPlan_withTimeouts.xml");
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 		
 		Map<String, Serializable> vars = new HashMap<String, Serializable>();

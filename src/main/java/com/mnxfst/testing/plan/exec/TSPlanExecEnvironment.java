@@ -158,8 +158,6 @@ public class TSPlanExecEnvironment {
 					logger.error("Failed to retrieve results from a " + TSPlanExecutor.class.getName());
 				} else {
 					
-					System.out.println(executorResult);
-					
 					// add plan exec duration to overall duration for calculating the average duration
 					averageDuration = averageDuration + executorResult.getDurationMillis();
 					numOfValidResults = numOfValidResults + 1;
@@ -199,6 +197,11 @@ public class TSPlanExecEnvironment {
 		result.setSingleRunExecutionDurationAverage(singleRunAvg / numOfValidResults);
 		result.setSingleRunExecutionDurationMax(singleRunMax);
 		result.setSingleRunExecutionDurationMin(singleRunMin);
+		
+		for(TSPlanExecutor e : testPlanExecutors) {
+			e.shutdown();
+		}
+			
 		
 		if(logger.isDebugEnabled())
 			logger.debug("[execEnv: " + result.getExecutionEnvironmentId() + ", testPlan: " + result.getTestPlanName() + ", executors: " + result.getExecutorIds().size() + ", avgDuration: " + result.getAverageDurationMillis() + ", minDuration: " + result.getMinDurationMillis()+ ", maxDuration: " + result.getMaxDurationMillis()+", singleRunAvg: " + result.getSingleRunExecutionDurationAverage() + ", singleRunMin: " + result.getSingleRunExecutionDurationMin() + ", singleRunMax: " + result.getSingleRunExecutionDurationMax() + "]");

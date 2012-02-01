@@ -48,6 +48,8 @@ public interface TSPlanActivity {
 	 */
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException;
 	
+	public void shutdown();
+	
 	/**
 	 * Fetch the activity identifier which must be unique throughout the whole system
 	 * @return

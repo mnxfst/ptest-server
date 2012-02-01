@@ -286,4 +286,19 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		this.interrupted = true;
 	}
 	
+	/**
+	 * Shuts down the executor as well as the contained {@link TSPlanActivity activities}
+	 */
+	public void shutdown() {
+		for(TSPlanActivity activity : testPlan.getActivities().values()) {
+			try {
+				activity.shutdown();
+				logger.info("Activity '"+activity.getName()+"' successfully shutdown");
+			} catch(Exception e) {
+				logger.error("Failed to shutdown activity '"+activity.getName()+"'. Error: " + e.getMessage(), e);
+			}
+		}
+			
+	}
+	
 }
