@@ -125,7 +125,7 @@ public class TSPlanBuilder {
 		// check for any document provided
 		if(testPlanConfiguration == null)
 			throw new TSPlanConfigurationFormatException("No test plan configuration provided");
-		
+
 		// find root node
 		Node rootNode = testPlanConfiguration.getFirstChild();
 		if(rootNode == null)

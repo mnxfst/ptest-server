@@ -210,4 +210,12 @@ public class TSPlanExecEnvironment {
 		return result;
 	}
 
+	public String getExecutionEnvironmentId() {
+		return executionEnvironmentId;
+	}
+
+	public String getTestPlanName() {
+		return testPlanName;
+	}
+
 }

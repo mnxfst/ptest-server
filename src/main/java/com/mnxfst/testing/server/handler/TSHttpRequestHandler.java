@@ -19,24 +19,20 @@
 
 package com.mnxfst.testing.server.handler;
 
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
 
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpPost;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
@@ -44,13 +40,12 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpServerCodec;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jboss.netty.util.CharsetUtil;
+import org.jboss.netty.util.internal.ConcurrentHashMap;
 import org.w3c.dom.Document;
 
-import com.mnxfst.testing.exception.TSPlanServerConfigurationException;
 import com.mnxfst.testing.plan.TSPlan;
 import com.mnxfst.testing.plan.TSPlanBuilder;
 import com.mnxfst.testing.plan.TSPlanExecEnvironmentResult;
@@ -64,126 +59,267 @@ import com.mnxfst.testing.plan.exec.TSPlanRecurrenceType;
  */
 public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 
+	private static ConcurrentMap<String, TSPlanExecEnvironmentResult> testPlanExecutionResultCache = new ConcurrentHashMap<String, TSPlanExecEnvironmentResult>();
+	
+	private static ExecutorService testPlanExecutorService = Executors.newCachedThreadPool();
+	
+	private static final String REQUEST_PARAM_EXECUTE_TESTPLAN = "execute";
+	private static final String REQUEST_PARAM_COLLECT_EXECUTION_RESULTS = "collect";
+	private static final String REQUEST_PARAM_THREADS = "threads";
+	private static final String REQUEST_PARAM_RECURRENCES = "recurrences";
+	private static final String REQUEST_PARAM_RECURRENCE_TYPE = "recurrencetype";
+	private static final String REQUEST_PARAM_TESTPLAN = "testplan";
+	private static final String REQUEST_PARAM_TESTPLAN_RESULT_ID = "resultIdentifier";
+	
+	
+	private static final int RESPONSE_CODE_EXECUTION_STARTED = 1;
+	private static final int RESPONSE_CODE_EXECUTION_RESULTS_CONTAINED = 2;
+	private static final int RESPONSE_CODE_EXECUTION_RESULTS_PENDING = 3;
+	private static final int RESPONSE_CODE_ERROR = 4;	
+	private static final int ERROR_CODE_INVALID_OPTION_CODE = 1;
+	private static final int ERROR_CODE_THREADS_MISSING_OR_INVALID = 2; 
+	private static final int ERROR_CODE_RECURRENCES_MISSING_OR_INVALID = 3; 
+	private static final int ERROR_CODE_RECURRENCE_TYPE_MISSING_OR_INVALID = 4; 
+	private static final int ERROR_CODE_TESTPLAN_MISSING = 5; 
+	private static final int ERROR_CODE_TESTPLAN_PROCESSING_ERROR = 6;
+	private static final int ERROR_CODE_RESULT_ID_MISSING = 7;
+	
 	/**
-	 * Executed for every incoming HTTP request
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#messageReceived(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.MessageEvent)
 	 */
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent event) throws Exception {
-				
-		HttpRequest httpRequest = (HttpRequest)event.getMessage();		
+
+		// extract http request from incoming message, get keep alive attribute as it will be transferred to response and decode query string 		
+		HttpRequest httpRequest = (HttpRequest)event.getMessage();
 		boolean keepAlive = HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(httpRequest.getHeader(HttpHeaders.Names.CONNECTION));		
 		QueryStringDecoder decoder = new QueryStringDecoder(httpRequest.getUri());	
-		
-		Map<String, List<String>> params = decoder.getParameters();
 
-		int threads = -1;
-		int recurrences = -1;
-		TSPlanRecurrenceType recurrenceType = TSPlanRecurrenceType.TIMES;
-		String testPlanPath = null;
-		HttpResponseStatus status = HttpResponseStatus.OK;
-		String responseMessage = "OK";
-		Map<String, String> testPlanVars = new HashMap<String, String>();
-
-		// TODO enhance :-)
-		for(String key : params.keySet()) {
-			List<String> values = params.get(key);
-			
-			if(key.equalsIgnoreCase("threads")) {
-				if(values != null && values.size() > 0) {
-					try {
-						threads = Integer.parseInt(values.get(0));
-					} catch(NumberFormatException e) {
-						status = HttpResponseStatus.BAD_REQUEST;
-						responseMessage = "Invalid value provided for parameter 'threads'";
-					}
-				} else {
-					status = HttpResponseStatus.BAD_REQUEST;
-					responseMessage = "Required parameter 'threads' missing";
-				}					
-			} else if(key.equalsIgnoreCase("recurrences")) {
-				if(values != null && values.size() > 0) {
-					try {
-						recurrences = Integer.parseInt(values.get(0));
-					} catch(NumberFormatException e) {
-						status = HttpResponseStatus.BAD_REQUEST;
-						responseMessage = "Invalid value provided for parameter 'recurrences'";
-					}
-				} else {
-					status = HttpResponseStatus.BAD_REQUEST;
-					responseMessage = "Required parameter 'recurrences' missing";
-				}	
-			} else if(key.equalsIgnoreCase("recurrencetype")) {
-				if(values != null && values.size() > 0) {
-					String tmp = values.get(0);
-					if(tmp.equalsIgnoreCase("TIMES"))
-						recurrenceType = TSPlanRecurrenceType.TIMES;
-					else if(tmp.equalsIgnoreCase("MILLIS"))
-						recurrenceType = TSPlanRecurrenceType.MILLIS;
-					else if(tmp.equalsIgnoreCase("SECONDS"))
-						recurrenceType = TSPlanRecurrenceType.SECONDS;
-					else if(tmp.equalsIgnoreCase("MINUTES"))
-						recurrenceType = TSPlanRecurrenceType.MINUTES;
-					else if(tmp.equalsIgnoreCase("HOURS"))
-						recurrenceType = TSPlanRecurrenceType.HOURS;
-					else if(tmp.equalsIgnoreCase("DAYS"))
-						recurrenceType = TSPlanRecurrenceType.DAYS;
-					else {
-						status = HttpResponseStatus.BAD_REQUEST;
-						responseMessage = "Required parameter 'recurrenceType' contains an invalid type: " + tmp;
-					}
-				}
-			} else if(key.equalsIgnoreCase("testplanpath")) {
-				if(values != null && values.size() > 0) {
-					testPlanPath = values.get(0);
-				} else {
-					status = HttpResponseStatus.BAD_REQUEST;
-					responseMessage = "Required parameter 'testPlanPath' missing";
-				}
-			} else {
-				if(values != null && values.size() > 0)
-					testPlanVars.put(key, values.get(0));
-			}			
-		}
-		
-		if(threads == -1) {
-			status = HttpResponseStatus.BAD_REQUEST;
-			responseMessage = "Required parameter 'threads' missing";
-		} else if(recurrences == -1) {
-			status = HttpResponseStatus.BAD_REQUEST;
-			responseMessage = "Required parameter 'recurrences' missing";
-		} else if(testPlanPath == null || testPlanPath.isEmpty()) {
-			status = HttpResponseStatus.BAD_REQUEST;
-			responseMessage = "Required parameter 'testPlanPath' missing";
-		}
-		
-		
-		if(status == HttpResponseStatus.OK) {
-			
-			try {
-				Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(testPlanPath);
-				TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
-				TSPlanExecEnvironment env = new TSPlanExecEnvironment("ptest-server", plan, recurrences, recurrenceType, threads);
-				TSPlanExecEnvironmentResult e = env.execute();
+		// fetch query parameters
+		Map<String, List<String>> queryParams = decoder.getParameters();
 				
-				StringBuffer r = new StringBuffer();
-				r.append("Test plan: " + e.getTestPlanName());
-				r.append("Execution environment: " + e.getExecutionEnvironmentId());
-				r.append("Start: " + new Date(e.getStartMillis()));
-				r.append("End: " + new Date(e.getEndMillis()));
-				r.append("Duration: " + (e.getEndMillis() - e.getStartMillis()) + "ms");
-				r.append("Average duration: " + e.getAverageDurationMillis() + "ms");
-				r.append("Max. duration (single run): " + e.getSingleRunExecutionDurationMax() + "ms");
-				r.append("Min. duration (single run): " + e.getSingleRunExecutionDurationMin() + "ms");
-				r.append("Avg. duration (single run): " + e.getSingleRunExecutionDurationAverage() + "ms");
-				r.append("Errors: " + e.getErrors());
-				responseMessage = r.toString();
+		if(queryParams.containsKey(REQUEST_PARAM_EXECUTE_TESTPLAN)) {
+			executeTestplan(queryParams, keepAlive, event);
+		} else if(queryParams.containsKey(REQUEST_PARAM_COLLECT_EXECUTION_RESULTS)) {
+			collectTestplanResults(queryParams, keepAlive, event);
+		} else {
+			sendResponse(generateErrorMessage(new int[]{ERROR_CODE_INVALID_OPTION_CODE}, ""), keepAlive, event);
+		}
+	}
+	
+	/**
+	 * Executes a test plan using the provided parameters and sends a response to the calling client
+	 * @param queryParams
+	 */
+	private boolean executeTestplan(Map<String, List<String>> queryParams, boolean keepAlive, MessageEvent event) {
+		
+		int errors = 0;		
+		
+		boolean threadsValid = true;
+		Integer numOfThreads = parseSingleIntValue(queryParams.get(REQUEST_PARAM_THREADS));
+		if(numOfThreads == null || numOfThreads.intValue() < 1) {
+			errors = errors + 1;
+			threadsValid = false;
+		}
+		
+		boolean recurrencesValid = true;
+		Integer numOfRecurrences = parseSingleIntValue(queryParams.get(REQUEST_PARAM_RECURRENCES));
+		if(numOfRecurrences == null || numOfRecurrences.intValue() < 1) {
+			errors = errors + 1;
+			recurrencesValid = false;
+		}
+		
+		boolean recurrencesTypeValid = false;
+		TSPlanRecurrenceType recurrenceType = parseSingleRecurrenceType(queryParams.get(REQUEST_PARAM_RECURRENCE_TYPE));
+		if(recurrenceType == null || recurrenceType == TSPlanRecurrenceType.UNKNOWN) {
+			errors = errors + 1;
+			recurrencesTypeValid = false;
+		}		
+		
+		boolean testPlanValid = false;
+		List<String> values = queryParams.get(REQUEST_PARAM_TESTPLAN);
+		String testPlan = (values != null && values.size() > 0 ? values.get(0): null);
+		if(testPlan == null || testPlan.isEmpty()) {
+			errors = errors + 1;
+			testPlanValid = false;
+		}
+		
+		Map<String, String> testPlanVars = new HashMap<String, String>();
+		for(String key : queryParams.keySet()) {
+			List<String> additionalValues = queryParams.get(key);
+			if(additionalValues != null && !additionalValues.isEmpty())
+				testPlanVars.put(key, additionalValues.get(0));			
+		}
+		
+		if(errors > 0) {
+			int[] errCodes = new int[errors];
+			int count = 0;
+			if(!threadsValid) {
+				errCodes[count] = ERROR_CODE_THREADS_MISSING_OR_INVALID;
+				count = count + 1;
+			}
+			if(!recurrencesValid) {
+				errCodes[count] = ERROR_CODE_RECURRENCES_MISSING_OR_INVALID;
+				count = count + 1;
+			}
+			if(!recurrencesTypeValid) {
+				errCodes[count] = ERROR_CODE_RECURRENCE_TYPE_MISSING_OR_INVALID;
+				count = count + 1;
+			}
+			if(!testPlanValid) {
+				errCodes[count] = ERROR_CODE_TESTPLAN_MISSING;
+				count = count + 1;
+			}
+			sendResponse(generateErrorMessage(errCodes, ""), keepAlive, event);
+			return false;
+		} else {
+						
+			try {
+				
+				Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(testPlan);
+				TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
+				TSPlanExecEnvironment env = new TSPlanExecEnvironment("ptest-server", plan, numOfRecurrences, recurrenceType, numOfThreads);
+				UUID resultIdentifier = UUID.fromString(new com.eaio.uuid.UUID().toString());
+				testPlanExecutorService.execute(new TSPlanExecutionJob(resultIdentifier.toString(), env));
+				sendResponse(generateExecutionStartedMessage(resultIdentifier.toString()), keepAlive, event);
+				return true;
 			} catch(Exception e) {
-				status = HttpResponseStatus.BAD_REQUEST;
-				responseMessage = "Failed to process test plan '"+testPlanPath+"'. Error: " + e.getMessage();
+				sendResponse(generateErrorMessage(new int[]{ERROR_CODE_TESTPLAN_PROCESSING_ERROR}, e.getMessage()), keepAlive, event);
+				return false;
 			}
 		}
+	}
+	
+	private boolean collectTestplanResults(Map<String, List<String>> queryParams, boolean keepAlive, MessageEvent event) {
 		
-		HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
+		List<String> values = queryParams.get(REQUEST_PARAM_TESTPLAN_RESULT_ID);
+		String testResultIdentifier = (values != null && values.size() > 0 ? values.get(0): null);
+		if(testResultIdentifier == null || testResultIdentifier.isEmpty()) {
+			sendResponse(generateErrorMessage(new int[]{ERROR_CODE_RESULT_ID_MISSING}, ""), keepAlive, event);
+			return false;
+		}
+		
+		sendResponse(generateExecutionResultMessage(testPlanExecutionResultCache.get(testResultIdentifier), testResultIdentifier), keepAlive, event);
+		return true;
+	}
+	
+	/**
+	 * Parses out a single int value from the provided list of values. If the result is null, the list did not contain any value
+	 * or the value could not be parsed into a integer object   
+	 * @param values
+	 * @return
+	 */
+	private Integer parseSingleIntValue(List<String> values)  {
+		
+		if(values == null)
+			return null;
+		
+		String tmp = values.get(0);
+		if(tmp == null || tmp.isEmpty())
+			return null;
+
+		try {
+			return Integer.valueOf(values.get(0));
+		} catch(NumberFormatException e) {
+			
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Parses out a single recurrences type from the provided list of values. If the result is null, the list did not contain any value
+	 * or the value could not be parsed into a integer object   
+	 * @param values
+	 * @return
+	 */
+	private TSPlanRecurrenceType parseSingleRecurrenceType(List<String> values) {
+		if(values == null)
+			return null;
+		
+		String tmp = values.get(0);
+		if(tmp == null || tmp.isEmpty())
+			return null;
+		
+		if(tmp.equalsIgnoreCase("TIMES"))
+			return TSPlanRecurrenceType.TIMES;
+		else if(tmp.equalsIgnoreCase("MILLIS"))
+			return TSPlanRecurrenceType.MILLIS;
+		else if(tmp.equalsIgnoreCase("SECONDS"))
+			return TSPlanRecurrenceType.SECONDS;
+		else if(tmp.equalsIgnoreCase("MINUTES"))
+			return TSPlanRecurrenceType.MINUTES;
+		else if(tmp.equalsIgnoreCase("HOURS"))
+			return TSPlanRecurrenceType.HOURS;
+		else if(tmp.equalsIgnoreCase("DAYS"))
+			return TSPlanRecurrenceType.DAYS;
+		
+		return null;
+	}
+	
+	/**
+	 * Generates an error message and inserts the provided information
+	 * @param errorCode
+	 * @return
+	 */
+	private String generateErrorMessage(int[] errorCodes, String errorMessage) {
+		StringBuffer buf = new StringBuffer("<testExecutionResponse>");
+		buf.append("<responseCode>").append(RESPONSE_CODE_ERROR).append("</responseCode>");
+		buf.append("<errorCodes>");
+		if(errorCodes != null && errorCodes.length > 0) {
+			for(int i = 0; i < errorCodes.length; i++)
+				buf.append("<errorCode>").append(errorCodes[i]).append("</errorCode>");
+		}
+		buf.append("</errorCodes>");
+		// TODO provide code specific mesages instead of a global one
+		buf.append("<errorMessage>").append(errorMessage).append("</errorMessage>");
+		buf.append("</testExecutionResponse>");
+		return buf.toString();		
+	}
+	
+	/**
+	 * Generates a response message stating that the execution has been started 
+	 * @param resultIdentifier
+	 * @return
+	 */
+	private String generateExecutionStartedMessage(String resultIdentifier) {
+		StringBuffer buf = new StringBuffer("<testExecutionResponse>");
+		buf.append("<responseCode>").append(RESPONSE_CODE_EXECUTION_STARTED).append("</responseCode>");
+		buf.append("<resultIdentifier>").append(resultIdentifier).append("</resultIdentifier>");
+		buf.append("</testExecutionResponse>");
+		return buf.toString();
+	}
+	
+	private String generateExecutionResultMessage(TSPlanExecEnvironmentResult tsResult, String resultIdentifier) {
+		StringBuffer buf = new StringBuffer("<testExecutionResponse>");
+		buf.append("<resultIdentifier>").append(resultIdentifier).append("</resultIdentifier>");
+		if(tsResult == null)
+			buf.append("<responseCode>").append(RESPONSE_CODE_EXECUTION_RESULTS_PENDING).append("</responseCode>");
+		else {
+			buf.append("<responseCode>").append(RESPONSE_CODE_EXECUTION_RESULTS_CONTAINED).append("</responseCode>");
+			buf.append("<testplan>").append(tsResult.getTestPlanName()).append("</testplan>");
+			buf.append("<executionEnvironment>").append(tsResult.getExecutionEnvironmentId()).append("</executionEnvironment>");
+			buf.append("<start>").append(tsResult.getStartMillis()).append("</start>");
+			buf.append("<end>").append(tsResult.getEndMillis()).append("</end>");
+			buf.append("<averageDuration>").append(tsResult.getAverageDurationMillis()).append("</averageDuration>");
+			buf.append("<singleMinDuration>").append(tsResult.getSingleRunExecutionDurationMin()).append("</singleMinDuration>");
+			buf.append("<singleMaxDuration>").append(tsResult.getSingleRunExecutionDurationMax()).append("</singleMaxDuration>");
+			buf.append("<singleAverageDuration>").append(tsResult.getSingleRunExecutionDurationAverage()).append("</singleAverageDuration>");
+			buf.append("<errors>").append(tsResult.getErrors()).append("</errors>");
+		}
+		buf.append("</testExecutionResponse>");
+		return buf.toString();
+		
+	}
+	
+	/**
+	 * Sends a response containing the given message to the calling client
+	 * @param responseMessage
+	 * @param keepAlive
+	 * @param event
+	 */
+	private void sendResponse(String responseMessage, boolean keepAlive, MessageEvent event) {
+		HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+		
 		httpResponse.setContent(ChannelBuffers.copiedBuffer(responseMessage, CharsetUtil.UTF_8));
 		httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=UTF-8");
 		
@@ -193,21 +329,12 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		ChannelFuture future = event.getChannel().write(httpResponse);
 		if(!keepAlive)
 			future.addListener(ChannelFutureListener.CLOSE);
-		
 	}
 	
-	/*
-		
-		TSPlanExecEnvironment env = new TSPlanExecEnvironment("exec-1", plan, recurrences, TSPlanRecurrenceType.TIMES, threads, vars);
-		TSPlanExecEnvironmentResult e = env.execute();
-*/
-	/**
-	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#exceptionCaught(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ExceptionEvent)
-	 */
-	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-		
+	protected static void addResponse(String identifier, TSPlanExecEnvironmentResult result) {
+		testPlanExecutionResultCache.put(identifier, result);
 	}
-
+	
 	
 	
 }

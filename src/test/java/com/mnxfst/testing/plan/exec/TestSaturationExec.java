@@ -209,28 +209,32 @@ public class TestSaturationExec {
 		env.execute();
 	}
 	
+	
 	@Test
 	public void testCase4() throws Exception {
 
 		
-		int threads = 8;
-		int recurrences = 100;
+		int threads = 4;
+		int recurrences = 200;
 		int maxRuntime = 40;
 		int warmupRuns = 5;
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss,SSS");
 
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/AddressIntTestPlan.xml");
+//		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/AddressIntTestPlan.xml");
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/placeOrderTestPlan_noTimeouts.xml");
+		
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 		
 		Map<String, Serializable> vars = new HashMap<String, Serializable>();
-		vars.put("scenarioId", "junitscenario");
-		vars.put("productId", "junittest");
-		vars.put("runId", "junitrun");
+		vars.put("scenarioId", "001");
+		vars.put("productId", "001");
+		vars.put("runId", "0001");
 		vars.put("threadCount", String.valueOf(threads));
 		vars.put("waitTime", "0");
 		vars.put("localhostName", "localhost");
-		vars.put("measuringPointId", "TC1");
+		vars.put("measuringPointOutId", "TC0");
+		vars.put("measuringPointInId", "TC1");
 		vars.put("date", formatter.format(new Date()));
 		
 		TSPlanExecEnvironment env = new TSPlanExecEnvironment("exec-1", plan, recurrences, TSPlanRecurrenceType.TIMES, threads, vars);
@@ -246,6 +250,11 @@ public class TestSaturationExec {
 		System.out.println("Min. duration (single run): " + e.getSingleRunExecutionDurationMin() + "ms");
 		System.out.println("Avg. duration (single run): " + e.getSingleRunExecutionDurationAverage() + "ms");
 		System.out.println("Errors: " + e.getErrors());
+		
+	}
+	
+	@Test
+	public void testDummey() {
 		
 	}
 
