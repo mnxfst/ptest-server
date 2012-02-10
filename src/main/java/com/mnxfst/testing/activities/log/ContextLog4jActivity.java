@@ -19,6 +19,7 @@
 
 package com.mnxfst.testing.activities.log;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +28,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import com.mnxfst.testing.activities.AbstractTSPlanActivity;
+import com.mnxfst.testing.activities.AbstractTSPlanVarExportActivity;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 import com.mnxfst.testing.plan.config.TSPlanConfigOption;
@@ -41,7 +42,7 @@ import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
  * @author ckreutzfeldt
  * @since 09.01.2012
  */
-public class ContextLog4jActivity extends AbstractTSPlanActivity {
+public class ContextLog4jActivity extends AbstractTSPlanVarExportActivity {
 	
 	private static Logger logger = Logger.getLogger(ContextLog4jActivity.class);
 
@@ -170,9 +171,10 @@ public class ContextLog4jActivity extends AbstractTSPlanActivity {
 					e.printStackTrace();
 					throw new TSPlanActivityExecutionException("Failed to evaluate " + logPattern);
 				}
-
-				if(ctxValue != null)
-					resultMessage = resultMessage.replaceAll(replacementPattern, ctxValue.toString());			
+				
+				if(ctxValue != null) {
+					resultMessage = resultMessage.replaceAll(replacementPattern, format(logPattern, (Serializable)ctxValue));
+				}
 			}
 		
 			switch(logLevel) {

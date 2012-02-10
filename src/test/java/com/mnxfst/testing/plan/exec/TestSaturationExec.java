@@ -215,7 +215,7 @@ public class TestSaturationExec {
 
 		
 		int threads = 4;
-		int recurrences = 200;
+		int recurrences = 100;
 		int maxRuntime = 40;
 		int warmupRuns = 5;
 
@@ -230,12 +230,11 @@ public class TestSaturationExec {
 		vars.put("scenarioId", "001");
 		vars.put("productId", "001");
 		vars.put("runId", "0001");
-		vars.put("threadCount", String.valueOf(threads));
-		vars.put("waitTime", "0");
-		vars.put("localhostName", "localhost");
-		vars.put("measuringPointOutId", "TC0");
-		vars.put("measuringPointInId", "TC1");
-		vars.put("date", formatter.format(new Date()));
+		vars.put("threadCount", Integer.valueOf(threads));
+		vars.put("waitTime", new Integer(0));
+		vars.put("localhostName", "vhost0103");
+		vars.put("measuringPointOutId", "TCO");
+		vars.put("measuringPointInId", "TCI");		
 		
 		TSPlanExecEnvironment env = new TSPlanExecEnvironment("exec-1", plan, recurrences, TSPlanRecurrenceType.TIMES, threads, vars);
 		TSPlanExecEnvironmentResult e = env.execute();
