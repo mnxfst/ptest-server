@@ -34,7 +34,8 @@ public class TimestampActivity extends AbstractTSPlanActivity {
 
 	private static final String CTX_EXPORT_TIMESTAMP_VARIABLE= "timestamp";
 	
-	private String contextExportVariableName = null;
+	private String[] contextExportVariables = null;
+	private boolean export = false;
 	
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
@@ -42,9 +43,23 @@ public class TimestampActivity extends AbstractTSPlanActivity {
 	public void initialize(TSPlanConfigOption cfgOpt) throws TSPlanActivityExecutionException {
 		
 		if(getContextExportVariables() != null) {
-			this.contextExportVariableName = getContextExportVariables().get(CTX_EXPORT_TIMESTAMP_VARIABLE);
+			String tmp = getContextExportVariables().get(CTX_EXPORT_TIMESTAMP_VARIABLE);
+			if(tmp != null && !tmp.isEmpty()) {
+				String[] vars = tmp.split(",");
+				if(vars != null && vars.length > 0) {
+					contextExportVariables = new String[vars.length];
+					for(int i = 0; i < vars.length; i++) {
+						contextExportVariables[i] = vars[i].trim();
+					}
+				}
+			}			
 		}
 
+		
+		if(contextExportVariables == null)
+			contextExportVariables = new String[0];
+
+		export = (contextExportVariables.length > 0);
 	}
 
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
@@ -52,7 +67,11 @@ public class TimestampActivity extends AbstractTSPlanActivity {
 		if(ctx == null)
 			throw new TSPlanActivityExecutionException("Missing required activity context!");
 		
-		ctx.addContextValue(contextExportVariableName, Long.valueOf(System.currentTimeMillis()), ExecutionContextValueType.RUN);
+		if(export) {
+			Long timestamp = Long.valueOf(System.currentTimeMillis());
+			for(int i = 0; i < contextExportVariables.length; i++)
+				ctx.addContextValue(contextExportVariables[i], timestamp, ExecutionContextValueType.RUN);
+		}
 
 		return ctx;
 	}

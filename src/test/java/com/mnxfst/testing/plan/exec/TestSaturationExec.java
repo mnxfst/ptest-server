@@ -216,12 +216,12 @@ public class TestSaturationExec {
 	}
 	
 	
-	
+	@Test
 	public void testCase4() throws Exception {
 
 		
-		int threads = 4;
-		int recurrences = 100;
+		int threads = 1;
+		int recurrences = 1;
 		int maxRuntime = 40;
 		int warmupRuns = 5;
 
@@ -285,7 +285,8 @@ public class TestSaturationExec {
 	
 	@Test
 	public void testDummey() {
-		
+		System.out.println(new Date((long)1328891265670L) + ": 2012-02-10 16:27:45.670");
+		System.out.println(new Date((long)1328891266127L) + ": 2012-02-10 16:27:46.127");
 	}
 	
 

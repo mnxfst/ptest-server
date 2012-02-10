@@ -87,7 +87,9 @@ public abstract class AbstractTSPlanVarExportActivity extends AbstractTSPlanActi
 					return this.threadCountFormatter.format((Integer)value);
 				else if(logPattern.equalsIgnoreCase("${global.waitTime}"))
 					return this.waitTimeFormatter.format((Integer)value);
-				else if(logPattern.equalsIgnoreCase("${run.date}"))
+				else if(logPattern.equalsIgnoreCase("${run.initDate}"))
+					return this.dateFormatter.format(new Date((Long)value));
+				else if(logPattern.equalsIgnoreCase("${run.finalDate}"))
 					return this.dateFormatter.format(new Date((Long)value));
 				return value.toString();
 			}			
