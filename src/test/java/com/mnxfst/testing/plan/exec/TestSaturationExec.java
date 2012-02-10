@@ -20,19 +20,25 @@
 package com.mnxfst.testing.plan.exec;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
@@ -210,7 +216,7 @@ public class TestSaturationExec {
 	}
 	
 	
-	@Test
+	
 	public void testCase4() throws Exception {
 
 		
@@ -252,9 +258,35 @@ public class TestSaturationExec {
 		
 	}
 	
+	
+	public void testExecClient() throws ClientProtocolException, IOException, SAXException, ParserConfigurationException {
+		
+		HttpGet getMethod = new HttpGet("/?execute=1&threads=4&recurrences=1&recurrencetype=times&testplan=AddressIntTestPlan.xml&scenarioId=sec1");
+		HttpHost host = new HttpHost("localhost", 9090);
+		DefaultHttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(host, getMethod);
+		InputStream s = response.getEntity().getContent();
+
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(s);
+		s.close();
+		Node rootNode = doc.getFirstChild();
+		System.out.println(rootNode.getNodeName());
+		NodeList childs = rootNode.getChildNodes();
+		for(int i = 0; i < childs.getLength(); i++) {
+			System.out.println(childs.item(i));
+		}
+	}
+	
+	public void testSaturationTest() throws ClientProtocolException, IOException, SAXException, ParserConfigurationException {
+		
+		
+		
+	}
+	
 	@Test
 	public void testDummey() {
 		
 	}
+	
 
 }
