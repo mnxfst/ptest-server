@@ -19,6 +19,8 @@
 
 package com.mnxfst.testing.server.handler;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +104,9 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		} else if(queryParams.containsKey(REQUEST_PARAM_COLLECT_EXECUTION_RESULTS)) {
 			collectTestplanResults(queryParams, keepAlive, event);
 		} else {
-			sendResponse(generateErrorMessage(new int[]{ERROR_CODE_INVALID_OPTION_CODE}, ""), keepAlive, event);
+			List<Integer> codes = new ArrayList<Integer>();
+			codes.add(ERROR_CODE_INVALID_OPTION_CODE);
+			sendResponse(generateErrorMessage(codes, ""), keepAlive, event);
 		}
 	}
 	
@@ -128,14 +132,14 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 			recurrencesValid = false;
 		}
 		
-		boolean recurrencesTypeValid = false;
+		boolean recurrencesTypeValid = true;
 		TSPlanRecurrenceType recurrenceType = parseSingleRecurrenceType(queryParams.get(REQUEST_PARAM_RECURRENCE_TYPE));
 		if(recurrenceType == null || recurrenceType == TSPlanRecurrenceType.UNKNOWN) {
 			errors = errors + 1;
 			recurrencesTypeValid = false;
 		}		
 		
-		boolean testPlanValid = false;
+		boolean testPlanValid = true;
 		List<String> values = queryParams.get(REQUEST_PARAM_TESTPLAN);
 		String testPlan = (values != null && values.size() > 0 ? values.get(0): null);
 		if(testPlan == null || testPlan.isEmpty()) {
@@ -143,7 +147,7 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 			testPlanValid = false;
 		}
 		
-		Map<String, String> testPlanVars = new HashMap<String, String>();
+		Map<String, Serializable> testPlanVars = new HashMap<String, Serializable>();
 		for(String key : queryParams.keySet()) {
 			List<String> additionalValues = queryParams.get(key);
 			if(additionalValues != null && !additionalValues.isEmpty())
@@ -151,39 +155,42 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		}
 		
 		if(errors > 0) {
-			int[] errCodes = new int[errors];
-			int count = 0;
+
+			List<Integer> codes = new ArrayList<Integer>();
+
 			if(!threadsValid) {
-				errCodes[count] = ERROR_CODE_THREADS_MISSING_OR_INVALID;
-				count = count + 1;
+				codes.add(ERROR_CODE_THREADS_MISSING_OR_INVALID);
 			}
 			if(!recurrencesValid) {
-				errCodes[count] = ERROR_CODE_RECURRENCES_MISSING_OR_INVALID;
-				count = count + 1;
+				codes.add(ERROR_CODE_RECURRENCES_MISSING_OR_INVALID);
 			}
 			if(!recurrencesTypeValid) {
-				errCodes[count] = ERROR_CODE_RECURRENCE_TYPE_MISSING_OR_INVALID;
-				count = count + 1;
+				codes.add(ERROR_CODE_RECURRENCE_TYPE_MISSING_OR_INVALID);
 			}
 			if(!testPlanValid) {
-				errCodes[count] = ERROR_CODE_TESTPLAN_MISSING;
-				count = count + 1;
+				codes.add(ERROR_CODE_TESTPLAN_MISSING);
 			}
-			sendResponse(generateErrorMessage(errCodes, ""), keepAlive, event);
+			
+			System.out.println("Errors: " + errors);
+
+			sendResponse(generateErrorMessage(codes, ""), keepAlive, event);
 			return false;
 		} else {
 						
 			try {
-				
+				System.out.println("Generating doc");
 				Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(testPlan);
+				System.out.println("Generated doc");
 				TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
-				TSPlanExecEnvironment env = new TSPlanExecEnvironment("ptest-server", plan, numOfRecurrences, recurrenceType, numOfThreads);
+				TSPlanExecEnvironment env = new TSPlanExecEnvironment("ptest-server", plan, numOfRecurrences, recurrenceType, numOfThreads, testPlanVars);
 				UUID resultIdentifier = UUID.fromString(new com.eaio.uuid.UUID().toString());
 				testPlanExecutorService.execute(new TSPlanExecutionJob(resultIdentifier.toString(), env));
 				sendResponse(generateExecutionStartedMessage(resultIdentifier.toString()), keepAlive, event);
 				return true;
 			} catch(Exception e) {
-				sendResponse(generateErrorMessage(new int[]{ERROR_CODE_TESTPLAN_PROCESSING_ERROR}, e.getMessage()), keepAlive, event);
+				List<Integer> codes = new ArrayList<Integer>();
+				codes.add(ERROR_CODE_TESTPLAN_PROCESSING_ERROR);
+				sendResponse(generateErrorMessage(codes, e.getMessage()), keepAlive, event);
 				return false;
 			}
 		}
@@ -194,7 +201,9 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		List<String> values = queryParams.get(REQUEST_PARAM_TESTPLAN_RESULT_ID);
 		String testResultIdentifier = (values != null && values.size() > 0 ? values.get(0): null);
 		if(testResultIdentifier == null || testResultIdentifier.isEmpty()) {
-			sendResponse(generateErrorMessage(new int[]{ERROR_CODE_RESULT_ID_MISSING}, ""), keepAlive, event);
+			List<Integer> codes = new ArrayList<Integer>();
+			codes.add(ERROR_CODE_RESULT_ID_MISSING);
+			sendResponse(generateErrorMessage(codes, ""), keepAlive, event);
 			return false;
 		}
 		
@@ -261,13 +270,13 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 	 * @param errorCode
 	 * @return
 	 */
-	private String generateErrorMessage(int[] errorCodes, String errorMessage) {
+	private String generateErrorMessage(List<Integer> errorCodes, String errorMessage) {
 		StringBuffer buf = new StringBuffer("<testExecutionResponse>");
 		buf.append("<responseCode>").append(RESPONSE_CODE_ERROR).append("</responseCode>");
-		buf.append("<errorCodes>");
-		if(errorCodes != null && errorCodes.length > 0) {
-			for(int i = 0; i < errorCodes.length; i++)
-				buf.append("<errorCode>").append(errorCodes[i]).append("</errorCode>");
+		buf.append("<errorCodes>");		
+		if(errorCodes != null && !errorCodes.isEmpty()) {
+			for(Integer e : errorCodes)
+				buf.append("<errorCode>").append(e.intValue()).append("</errorCode>");
 		}
 		buf.append("</errorCodes>");
 		// TODO provide code specific mesages instead of a global one
