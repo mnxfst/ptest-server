@@ -48,6 +48,8 @@ public class TSPlanExecEnvironmentResult implements Serializable {
 	private long endMillis = 0;
 	/** average test plan execution */
 	private long averageDurationMillis = 0;
+	/** average duration median */
+	private double averageDurationMedian = 0;
 	/** max test plan execution for all recurrences */
 	private long maxDurationMillis = 0;
 	/** min test plan execution for all recurrences */
@@ -172,6 +174,20 @@ public class TSPlanExecEnvironmentResult implements Serializable {
 	}
 
 	/**
+	 * @return the averageDurationMedian
+	 */
+	public double getAverageDurationMedian() {
+		return averageDurationMedian;
+	}
+
+	/**
+	 * @param averageDurationMedian the averageDurationMedian to set
+	 */
+	public void setAverageDurationMedian(double averageDurationMedian) {
+		this.averageDurationMedian = averageDurationMedian;
+	}
+
+	/**
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
@@ -186,6 +202,7 @@ public class TSPlanExecEnvironmentResult implements Serializable {
 				.append("singleRunExecutionDurationAverage", this.singleRunExecutionDurationAverage)
 				.append("singleRunExecutionDurationMin", this.singleRunExecutionDurationMin)
 				.append("singleRunExecutionDurationMax", this.singleRunExecutionDurationMax)
+				.append("averageDurationMedian", this.averageDurationMedian)
 				.append("errors", this.errors)
 				.append("executorIds", this.executorIds).toString();
 				

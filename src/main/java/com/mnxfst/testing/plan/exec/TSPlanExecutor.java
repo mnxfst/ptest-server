@@ -20,9 +20,14 @@
 package com.mnxfst.testing.plan.exec;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
@@ -139,6 +144,8 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		boolean keepRunning = true;
 		long loopExecutionStart = System.currentTimeMillis();
 		long loopCounter = 0;
+		
+		List<Long> testPlanRuntimes = new ArrayList<Long>();
 		do {
 			
 			
@@ -203,6 +210,9 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 				singleRunMin = singleRunDuration;
 			if(singleRunMax < singleRunDuration)
 				singleRunMax = singleRunDuration;
+			
+			// insert the current runtime into the set of runtimes
+			testPlanRuntimes.add(Long.valueOf(singleRunDuration));
 			
 			// add plan exec duration to average plan duration
 			averagePlanExecDuration = averagePlanExecDuration + singleRunDuration;
@@ -276,11 +286,56 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 		// calculate average plan duration
 		averagePlanExecDuration = averagePlanExecDuration / recurrences;
 		
-		if(logger.isDebugEnabled())
-			logger.debug("[execEnv:" + executionEnvironmentId + ", executor: " + planExecutorId + ", recurrences: " + recurrences + ", recType: " + recurrenceType + ", duration: " + duration+", averageRunDuration: "+ averagePlanExecDuration +"]");
+		double durationMedian = 0;
+		Collections.sort(testPlanRuntimes);
+		if(testPlanRuntimes.size() % 2 == 1) {
+			durationMedian = testPlanRuntimes.get((testPlanRuntimes.size() + 1) / 2 - 1);
+		} else {
+			double lower = testPlanRuntimes.get(testPlanRuntimes.size() / 2 - 1);
+			double upper = testPlanRuntimes.get(testPlanRuntimes.size() / 2);
+			durationMedian = (lower + upper) / 2.0;
+		}
 		
-		return new TSPlanExecutorResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, duration, singleRunMin, singleRunMax, averagePlanExecDuration, activityExecutionErrorCount);
+		if(logger.isDebugEnabled())
+			logger.debug("[execEnv:" + executionEnvironmentId + ", executor: " + planExecutorId + ", recurrences: " + recurrences + ", recType: " + recurrenceType + ", duration: " + duration+", averageRunDuration: "+ averagePlanExecDuration +", durationMedian: " +durationMedian +"]");
+		
+		return new TSPlanExecutorResult(executionEnvironmentId, planExecutorId, testPlan.getName(), overallStart, overallEnd, duration, singleRunMin, singleRunMax, averagePlanExecDuration, durationMedian, activityExecutionErrorCount);
 	}
+/*
+	
+	public static double Median(ArrayList values)
+
+	{
+
+	    Collections.sort(values);
+
+	 
+
+	    if (values.size() % 2 == 1)
+
+	        return values.get((values.size()+1)/2-1);
+
+	    else
+
+	    {
+
+	        double lower = values.get(values.size()/2-1);
+
+	        double upper = values.get(values.size()/2);
+
+	 
+
+	        return (lower + upper) / 2.0;
+
+	    }   
+
+	}
+
+	 
+*/
+	
+	
+
 	
 	public void interrupt() {
 		this.interrupted = true;

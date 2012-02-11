@@ -52,7 +52,9 @@ public class TSPlanExecutorResult implements Serializable {
 	/** min duration for a single test plan execution */
 	private long singleRunExecutionDurationMin = Long.MAX_VALUE;
 	/** max duration for a single test plan execution */
-	private long singleRunExecutionDurationMax = 0;
+	private long singleRunExecutionDurationMax = 0;	
+	/** duration median */
+	private double durationMedian = 0;
 	
 	private int errors = 0;
 	
@@ -63,7 +65,7 @@ public class TSPlanExecutorResult implements Serializable {
 	 * @param durationMillis
 	 * @param errors
 	 */
-	public TSPlanExecutorResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, long singleRunExecutionDurationMin, long singleRunExecutionDurationMax, long singleRunExecutionDurationAverage, int errors) {
+	public TSPlanExecutorResult(String executionEnvironmentId, String planExecutorId, String testPlanName, long startMillis, long endMillis, long durationMillis, long singleRunExecutionDurationMin, long singleRunExecutionDurationMax, long singleRunExecutionDurationAverage, double durationMedian, int errors) {
 		this.executionEnvironmentId = executionEnvironmentId;
 		this.planExecutorId = planExecutorId;
 		this.testPlanName = testPlanName;
@@ -73,6 +75,7 @@ public class TSPlanExecutorResult implements Serializable {
 		this.singleRunExecutionDurationMin = singleRunExecutionDurationMin;
 		this.singleRunExecutionDurationMax = singleRunExecutionDurationMax;
 		this.singleRunExecutionDurationAverage = singleRunExecutionDurationAverage;
+		this.durationMedian = durationMedian;
 		this.errors = errors;
 	}
 
@@ -158,6 +161,20 @@ public class TSPlanExecutorResult implements Serializable {
 	}
 
 	/**
+	 * @return the durationMedian
+	 */
+	public double getDurationMedian() {
+		return durationMedian;
+	}
+
+	/**
+	 * @param durationMedian the durationMedian to set
+	 */
+	public void setDurationMedian(double durationMedian) {
+		this.durationMedian = durationMedian;
+	}
+
+	/**
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
@@ -171,6 +188,7 @@ public class TSPlanExecutorResult implements Serializable {
 				.append("singleRunExecutionDurationMin", this.singleRunExecutionDurationMin)
 				.append("singleRunExecutionDurationMax", this.singleRunExecutionDurationMax)
 				.append("singleRunExecutionDurationAverage", this.singleRunExecutionDurationAverage)
+				.append("durationMedian", this.durationMedian)
 				.append("errors", this.errors).toString();
 				
 	}

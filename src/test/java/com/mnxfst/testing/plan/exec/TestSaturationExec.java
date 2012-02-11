@@ -221,7 +221,7 @@ public class TestSaturationExec {
 
 		
 		int threads = 1;
-		int recurrences = 1;
+		int recurrences = 20;
 		int maxRuntime = 40;
 		int warmupRuns = 5;
 
@@ -254,6 +254,7 @@ public class TestSaturationExec {
 		System.out.println("Max. duration (single run): " + e.getSingleRunExecutionDurationMax() + "ms");
 		System.out.println("Min. duration (single run): " + e.getSingleRunExecutionDurationMin() + "ms");
 		System.out.println("Avg. duration (single run): " + e.getSingleRunExecutionDurationAverage() + "ms");
+		System.out.println("Avg. duration median: " + e.getAverageDurationMedian() + "ms");
 		System.out.println("Errors: " + e.getErrors());
 		
 	}

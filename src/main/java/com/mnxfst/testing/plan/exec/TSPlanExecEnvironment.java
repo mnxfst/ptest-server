@@ -149,6 +149,8 @@ public class TSPlanExecEnvironment {
 		long singleRunMax = 0;
 		long singleRunMin = Long.MAX_VALUE;
 		
+		double averageDurationMedian = 0;
+		
 		
 		// iterate through results, extract them, provide missing data, move to overall result set
 		for(Future<TSPlanExecutorResult> futureRes : testPlanInvocResults) {
@@ -158,8 +160,9 @@ public class TSPlanExecEnvironment {
 					logger.error("Failed to retrieve results from a " + TSPlanExecutor.class.getName());
 				} else {
 					
-					// add plan exec duration to overall duration for calculating the average duration
+					// add plan exec duration and median to overall duration for calculating the average duration
 					averageDuration = averageDuration + executorResult.getDurationMillis();
+					averageDurationMedian = averageDurationMedian + executorResult.getDurationMedian();
 					numOfValidResults = numOfValidResults + 1;
 					
 					// validate the min/max runtimes for each executor and re-set the values if necessary
@@ -193,6 +196,7 @@ public class TSPlanExecEnvironment {
 		result.setAverageDurationMillis(averageDuration / numOfValidResults);
 		result.setMinDurationMillis(minDuration);
 		result.setMaxDurationMillis(maxDuration);
+		result.setAverageDurationMedian(averageDurationMedian / numOfValidResults);
 		result.setErrors(errors);
 		result.setSingleRunExecutionDurationAverage(singleRunAvg / numOfValidResults);
 		result.setSingleRunExecutionDurationMax(singleRunMax);
