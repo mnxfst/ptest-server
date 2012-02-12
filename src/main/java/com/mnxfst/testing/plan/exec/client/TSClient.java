@@ -136,6 +136,17 @@ public class TSClient {
 			return;
 		}
 	
+		TSPlanRecurrenceType recurrenceType = null;
+		try {
+			recurrenceType = extractRecurrenceType(cmd);
+		} catch(TSClientConfigurationExeception e) {
+			printHelp(options, "Please provide a valid recurrence type");
+			return;			
+		}
+		if(recurrenceType == TSPlanRecurrenceType.UNKNOWN) {
+			printHelp(options, "Please provide a valid recurrence type");
+			return;			
+		}
 		
 		
 	}
