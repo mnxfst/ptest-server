@@ -35,7 +35,7 @@ public class TimestampActivity extends AbstractTSPlanActivity {
 	private static final String CTX_EXPORT_TIMESTAMP_VARIABLE= "timestamp";
 	
 	private String[] contextExportVariables = null;
-	private boolean export = false;
+	private boolean export = false;	
 	
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)

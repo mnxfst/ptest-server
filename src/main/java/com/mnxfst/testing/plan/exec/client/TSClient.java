@@ -20,6 +20,8 @@
 package com.mnxfst.testing.plan.exec.client;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -33,7 +35,6 @@ import org.apache.http.client.ClientProtocolException;
 import org.xml.sax.SAXException;
 
 import com.mnxfst.testing.exception.TSClientConfigurationExeception;
-import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.plan.exec.TSPlanRecurrenceType;
 
 /**
@@ -49,6 +50,12 @@ public class TSClient {
 	public static final String CMD_OPT_RECURRENCES_SHORT = "r";
 	public static final String CMD_OPT_RECURRENCE_TYPE = "recurrenceType";
 	public static final String CMD_OPT_RECURRENCE_TYPE_SHORT = "rt";
+	public static final String CMD_OPT_TESTPLAN = "testPlan";
+	public static final String CMD_OPT_TESTPLAN_SHORT = "tp";
+	public static final String CMD_OPT_PTEST_SERVER_HOSTS = "ptestHosts";
+	public static final String CMD_OPT_PTEST_SERVER_HOSTS_SHORT = "h";
+	public static final String CMD_OPT_PTEST_SERVER_PORT = "ptestPort";
+	public static final String CMD_OPT_PTEST_SERVER_PORT_SHORT = "p";
 
 	public static void main(String[] args) throws ClientProtocolException, IOException, SAXException, ParserConfigurationException, ParseException {
 
@@ -148,6 +155,29 @@ public class TSClient {
 			return;			
 		}
 		
+		String testPlan = null;
+		try {
+			testPlan = extractStringValue(cmd, CMD_OPT_TESTPLAN, CMD_OPT_TESTPLAN_SHORT);
+		} catch(TSClientConfigurationExeception e) {
+			printHelp(options, "Please provide a valid test plan");
+			return;			
+		}
+		if(testPlan == null || testPlan.isEmpty()) {
+			printHelp(options, "Please provide a valid test plan");
+			return;			
+		}
+
+		String ptestServerHosts[] = null;
+		try {
+			ptestServerHosts = extractStringList(cmd, CMD_OPT_PTEST_SERVER_HOSTS, CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
+		} catch(TSClientConfigurationExeception e) {
+			printHelp(options, "Please provide a list of hosts running a ptest-server instance");
+			return;
+		}
+		if(ptestServerHosts == null || ptestServerHosts.length < 1) {
+			printHelp(options, "Please provide a list of hosts running a ptest-server instance");
+			return;
+		}
 		
 	}
 	
@@ -173,6 +203,43 @@ public class TSClient {
 		} catch(NumberFormatException e) {
 			throw new TSClientConfigurationExeception("Value for required option '"+opt+"' ('"+shortOpt+"') does not represent a valid numerical value: " + tmp);
 		}		
+	}
+	
+	/**
+	 * Extracts a string value from the named command-line option
+	 * @param cmd
+	 * @param opt
+	 * @param shortOpt
+	 * @return
+	 * @throws TSClientConfigurationExeception
+	 */
+	protected String extractStringValue(CommandLine cmd, String opt, String shortOpt) throws TSClientConfigurationExeception {
+		String tmp = cmd.getOptionValue(opt);
+		if(tmp == null || tmp.isEmpty())
+			tmp = cmd.getOptionValue(shortOpt);
+		if(tmp == null || tmp.isEmpty())
+			throw new TSClientConfigurationExeception("Missing value for required option '"+opt+"' ('"+shortOpt+"')");
+
+		return tmp.trim();		
+	}
+	
+	/**
+	 * Extracts a list of comma-separated string values from a given command-line option
+	 * @param cmd
+	 * @param opt
+	 * @param shortOpt
+	 * @return
+	 * @throws TSClientConfigurationExeception
+	 */
+	protected String[] extractStringList(CommandLine cmd, String opt, String shortOpt) throws TSClientConfigurationExeception {
+		String tmp = extractStringValue(cmd, opt, shortOpt);
+		String[] csvList = tmp.split(",");
+		if(csvList == null || csvList.length < 1)
+			throw new TSClientConfigurationExeception("Missing value for required option '"+opt+"' ('"+shortOpt+"')");
+			
+		for(int i = 0; i < csvList.length; i++)
+			csvList[i] = csvList[i].trim();
+		return csvList;
 	}
 	
 	/**
@@ -203,12 +270,9 @@ public class TSClient {
 		else if(tmp.equalsIgnoreCase(TSPlanRecurrenceType.DAYS.toString()))
 			return TSPlanRecurrenceType.DAYS;
 		
-		throw new TSClientConfigurationExeception("Unknown value '"+tmp+"' provided for required option '"+CMD_OPT_RECURRENCE_TYPE+"' ('"+CMD_OPT_RECURRENCE_TYPE_SHORT+"')");
-		
+		throw new TSClientConfigurationExeception("Unknown value '"+tmp+"' provided for required option '"+CMD_OPT_RECURRENCE_TYPE+"' ('"+CMD_OPT_RECURRENCE_TYPE_SHORT+"')");		
 	}
-	
-	
-	
+			
 	///////////////////////////////////////////////// COMMAND-LINE PREPARATION /////////////////////////////////////////////////
 	
 	/**
@@ -233,8 +297,10 @@ public class TSClient {
 		options.addOption("collect", false, "Collects the results from the ptest-server instance(s)");
 		options.addOption(CMD_OPT_THREADS_SHORT, CMD_OPT_THREADS, true, "Number of threads used for executing the test case");
 		options.addOption(CMD_OPT_RECURRENCES_SHORT, CMD_OPT_RECURRENCES, true, "Number of tesplan recurrences");
-		options.addOption("rt", "recurrenceType", true, "Recurrence type (TIMES, MILLIS, SECONDS, MINUTES, HOURS, DAYS)");
-		options.addOption("p", "testPlan", true, "Names the test plan to execute");
+		options.addOption(CMD_OPT_RECURRENCE_TYPE_SHORT, CMD_OPT_RECURRENCE_TYPE, true, "Recurrence type (TIMES, MILLIS, SECONDS, MINUTES, HOURS, DAYS)");
+		options.addOption(CMD_OPT_TESTPLAN_SHORT, CMD_OPT_TESTPLAN, true, "Names the test plan to execute");
+		options.addOption(CMD_OPT_PTEST_SERVER_HOSTS_SHORT, CMD_OPT_PTEST_SERVER_HOSTS, true, "Comma-separated list of hosts running an available ptest-server instance");
+		options.addOption(CMD_OPT_PTEST_SERVER_PORT_SHORT, CMD_OPT_PTEST_SERVER_PORT, true, "Names the port to use for communication with the ptest-server instances");
 		options.addOption("ri", true, "Response identifier used by the ptest-server to store results");
 		return options;
 	}

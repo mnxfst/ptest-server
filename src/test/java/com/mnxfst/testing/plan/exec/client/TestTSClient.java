@@ -20,6 +20,7 @@
 package com.mnxfst.testing.plan.exec.client;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -159,6 +160,83 @@ public class TestTSClient {
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.HOURS, TSPlanRecurrenceType.HOURS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "hours"})));
 		args = new String[]{"-rt", "days"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.DAYS, TSPlanRecurrenceType.DAYS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "days"})));
+	}
+	
+	@Test
+	public void testExtractTestPlan() throws TSClientConfigurationExeception, ParseException {
+
+		TSClient client = new TSClient();		
+		Options options = client.getTSClientCommandLineOptions();
+				
+		try {
+			client.extractStringValue(client.parseCommandline(options, null), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT);
+			Assert.fail("Invalid command-line");
+		} catch(TSClientConfigurationExeception e) {
+			//
+		}
+		
+		try {
+			client.extractStringValue(client.parseCommandline(options, new String[0]), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT);
+			Assert.fail("Empty command-line");
+		} catch(TSClientConfigurationExeception e) {
+			//
+		}
+		
+		try {
+			client.extractStringValue(client.parseCommandline(options, new String[]{"no", "valid", "value"}), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT);
+			Assert.fail("Command-line contains no required value");
+		} catch(TSClientConfigurationExeception e) {
+			//
+		}
+						
+		String[] args = new String[]{"-testPlan", "plan123"};
+		Assert.assertEquals("The name of the testplan must be plan123", "plan123", client.extractStringValue(client.parseCommandline(options, args), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT));
+		args = new String[]{"-tp", "plan123"};
+		Assert.assertEquals("The name of the testplan must be plan123", "plan123", client.extractStringValue(client.parseCommandline(options, args), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT));
+		
+	}
+
+	@Test
+	public void testExtractHosts() throws TSClientConfigurationExeception, ParseException {
+		TSClient client = new TSClient();		
+		Options options = client.getTSClientCommandLineOptions();
+				
+		try {
+			client.extractStringList(client.parseCommandline(options, null), TSClient.CMD_OPT_PTEST_SERVER_HOSTS, TSClient.CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
+			Assert.fail("Invalid command-line");
+		} catch(TSClientConfigurationExeception e) {
+			//
+		}
+		
+		try {
+			client.extractStringList(client.parseCommandline(options, new String[0]), TSClient.CMD_OPT_PTEST_SERVER_HOSTS, TSClient.CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
+			Assert.fail("Empty command-line");
+		} catch(TSClientConfigurationExeception e) {
+			//
+		}
+		
+		try {
+			client.extractStringList(client.parseCommandline(options, new String[]{"no", "valid", "value"}), TSClient.CMD_OPT_PTEST_SERVER_HOSTS, TSClient.CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
+			Assert.fail("Command-line contains no required value");
+		} catch(TSClientConfigurationExeception e) {
+			//
+		}
+						
+		String[] args = new String[]{"-ptestHosts", "host1, host2,  host3"};
+		String[] hosts = client.extractStringList(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_HOSTS, TSClient.CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
+		Assert.assertNotNull("The result must not be null", hosts);
+		Assert.assertEquals("The result size must be 3", 3, hosts.length);
+		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host1"));
+		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host2"));
+		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host3"));
+		
+		args = new String[]{"-h", "host1, host2,  host3"};
+		hosts = client.extractStringList(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_HOSTS, TSClient.CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
+		Assert.assertNotNull("The result must not be null", hosts);
+		Assert.assertEquals("The result size must be 3", 3, hosts.length);
+		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host1"));
+		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host2"));
+		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host3"));		
 	}
 	
 }
