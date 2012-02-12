@@ -179,6 +179,18 @@ public class TSClient {
 			return;
 		}
 		
+		long ptestServerPort = -1;
+		try {
+			ptestServerPort = extractLongValue(cmd, CMD_OPT_PTEST_SERVER_PORT, CMD_OPT_PTEST_SERVER_PORT_SHORT);
+		} catch(TSClientConfigurationExeception e) {
+			printHelp(options, "Please provide port to be used for ptest-server communication");
+			return;
+		}
+		if(ptestServerPort < 0){
+			printHelp(options, "Please provide port to be used for ptest-server communication");
+			return;
+		}
+		
 	}
 	
 	///////////////////////////////////////////////// PARSING HELPERS /////////////////////////////////////////////////

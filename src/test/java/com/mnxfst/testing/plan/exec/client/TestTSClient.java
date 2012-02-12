@@ -86,6 +86,11 @@ public class TestTSClient {
 		Assert.assertEquals("The number of recurrences must be 3", 3, client.extractLongValue(client.parseCommandline(options, args), TSClient.CMD_OPT_RECURRENCES, TSClient.CMD_OPT_RECURRENCES_SHORT));
 		args = new String[]{"-r", "3"};
 		Assert.assertEquals("The number of recurrences must be 3", 3, client.extractLongValue(client.parseCommandline(options, args), TSClient.CMD_OPT_RECURRENCES, TSClient.CMD_OPT_RECURRENCES_SHORT));		
+
+		args = new String[]{"-ptestPort", "9090"};
+		Assert.assertEquals("The port must be 9090", 9090, client.extractLongValue(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_PORT, TSClient.CMD_OPT_PTEST_SERVER_PORT_SHORT));
+		args = new String[]{"-p", "9090"};
+		Assert.assertEquals("The port must be 9090", 9090, client.extractLongValue(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_PORT, TSClient.CMD_OPT_PTEST_SERVER_PORT_SHORT));
 	}
 	
 	@Test
@@ -238,5 +243,6 @@ public class TestTSClient {
 		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host2"));
 		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host3"));		
 	}
+	
 	
 }
