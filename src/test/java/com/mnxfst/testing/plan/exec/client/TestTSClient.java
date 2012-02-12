@@ -21,6 +21,7 @@ package com.mnxfst.testing.plan.exec.client;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -31,7 +32,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.mnxfst.testing.exception.TSClientConfigurationExeception;
+import com.mnxfst.testing.exception.TSClientConfigurationException;
 import com.mnxfst.testing.plan.exec.TSPlanRecurrenceType;
 
 /**
@@ -51,7 +52,7 @@ public class TestTSClient {
 	}
 	
 	@Test
-	public void testExtractLongValue() throws ClientProtocolException, IOException, SAXException, ParserConfigurationException, ParseException, TSClientConfigurationExeception {
+	public void testExtractLongValue() throws ClientProtocolException, IOException, SAXException, ParserConfigurationException, ParseException, TSClientConfigurationException {
 
 		TSClient client = new TSClient();		
 		Options options = client.getTSClientCommandLineOptions();
@@ -59,21 +60,21 @@ public class TestTSClient {
 		try {
 			client.extractLongValue(client.parseCommandline(options, null), TSClient.CMD_OPT_THREADS, TSClient.CMD_OPT_THREADS_SHORT);
 			Assert.fail("Invalid command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractLongValue(client.parseCommandline(options, new String[0]), TSClient.CMD_OPT_THREADS, TSClient.CMD_OPT_THREADS_SHORT);
 			Assert.fail("Empty command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractLongValue(client.parseCommandline(options, new String[]{"no", "valid", "value"}), TSClient.CMD_OPT_THREADS, TSClient.CMD_OPT_THREADS_SHORT);
 			Assert.fail("Command-line contains no required value");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 						
@@ -94,49 +95,49 @@ public class TestTSClient {
 	}
 	
 	@Test
-	public void testExtractRecurrenceType() throws ParseException, TSClientConfigurationExeception {
+	public void testExtractRecurrenceType() throws ParseException, TSClientConfigurationException {
 		TSClient client = new TSClient();		
 		Options options = client.getTSClientCommandLineOptions();
 				
 		try {
 			client.extractRecurrenceType(client.parseCommandline(options, null));
 			Assert.fail("Invalid command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractRecurrenceType(client.parseCommandline(options, new String[0]));
 			Assert.fail("Empty command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractRecurrenceType(client.parseCommandline(options, new String[]{"no", "valid", "value"}));
 			Assert.fail("Command-line contains no required value");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 				
 		try {
 			client.extractRecurrenceType(client.parseCommandline(options, null));
 			Assert.fail("Invalid command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractRecurrenceType(client.parseCommandline(options, new String[0]));
 			Assert.fail("Empty command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractRecurrenceType(client.parseCommandline(options, new String[]{"no", "valid", "value"}));
 			Assert.fail("Command-line contains no required value");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
@@ -168,7 +169,7 @@ public class TestTSClient {
 	}
 	
 	@Test
-	public void testExtractTestPlan() throws TSClientConfigurationExeception, ParseException {
+	public void testExtractString() throws TSClientConfigurationException, ParseException {
 
 		TSClient client = new TSClient();		
 		Options options = client.getTSClientCommandLineOptions();
@@ -176,21 +177,21 @@ public class TestTSClient {
 		try {
 			client.extractStringValue(client.parseCommandline(options, null), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT);
 			Assert.fail("Invalid command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractStringValue(client.parseCommandline(options, new String[0]), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT);
 			Assert.fail("Empty command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractStringValue(client.parseCommandline(options, new String[]{"no", "valid", "value"}), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT);
 			Assert.fail("Command-line contains no required value");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 						
@@ -199,31 +200,36 @@ public class TestTSClient {
 		args = new String[]{"-tp", "plan123"};
 		Assert.assertEquals("The name of the testplan must be plan123", "plan123", client.extractStringValue(client.parseCommandline(options, args), TSClient.CMD_OPT_TESTPLAN, TSClient.CMD_OPT_TESTPLAN_SHORT));
 		
+		args = new String[]{"-addPropsFile", "file123"};
+		Assert.assertEquals("The name of the file must be file123", "file123", client.extractStringValue(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE, TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT));
+		args = new String[]{"-apfile", "file123"};
+		Assert.assertEquals("The name of the file must be file123", "file123", client.extractStringValue(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE, TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT));
+		
 	}
 
 	@Test
-	public void testExtractHosts() throws TSClientConfigurationExeception, ParseException {
+	public void testExtractHosts() throws TSClientConfigurationException, ParseException {
 		TSClient client = new TSClient();		
 		Options options = client.getTSClientCommandLineOptions();
 				
 		try {
 			client.extractStringList(client.parseCommandline(options, null), TSClient.CMD_OPT_PTEST_SERVER_HOSTS, TSClient.CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
 			Assert.fail("Invalid command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractStringList(client.parseCommandline(options, new String[0]), TSClient.CMD_OPT_PTEST_SERVER_HOSTS, TSClient.CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
 			Assert.fail("Empty command-line");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
 			client.extractStringList(client.parseCommandline(options, new String[]{"no", "valid", "value"}), TSClient.CMD_OPT_PTEST_SERVER_HOSTS, TSClient.CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
 			Assert.fail("Command-line contains no required value");
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			//
 		}
 						
@@ -243,6 +249,64 @@ public class TestTSClient {
 		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host2"));
 		Assert.assertTrue("The host must contained in list", Arrays.asList(hosts).contains("host3"));		
 	}
-	
+
+	@Test
+	public void testExtractAdditionalProperties() throws TSClientConfigurationException, ParseException {
+
+		TSClient client = new TSClient();		
+		Options options = client.getTSClientCommandLineOptions();
+		
+		try {
+			client.extractAdditionalProperties(null);
+			Assert.fail("No such file");
+		} catch(TSClientConfigurationException e) {
+			//
+		}
+		
+		try {
+			client.extractAdditionalProperties("");
+			Assert.fail("No such file");
+		} catch(TSClientConfigurationException e) {
+			//
+		}
+		
+		try {
+			client.extractAdditionalProperties(" ");
+			Assert.fail("No such file");
+		} catch(TSClientConfigurationException e) {
+			//
+		}
+		
+		try {		
+			client.extractAdditionalProperties("src/test/resource/noSuchFile.properties");
+			Assert.fail("No such file");
+		} catch(TSClientConfigurationException e) {
+			//
+		}
+		
+		try {		
+			client.extractAdditionalProperties("src/test/resources/sampleTestPlan.xml");
+		} catch(TSClientConfigurationException e) {
+			e.printStackTrace();
+		}
+		
+		Properties props = client.extractAdditionalProperties("src/test/resources/tsclient.properties");
+		Assert.assertNotNull("The result must not be null", props);
+		Assert.assertEquals("The size of the properties set must be 7", 7, props.size());
+		Assert.assertEquals("The property value must be equal", "001", props.get("scenarioId"));
+		Assert.assertEquals("The property value must be equal", "001", props.get("productId"));
+		Assert.assertEquals("The property value must be equal", "0001", props.get("runId"));
+		Assert.assertEquals("The property value must be equal", "12", props.get("waitTime"));
+		Assert.assertEquals("The property value must be equal", "vhost0103", props.get("localhostName"));
+		Assert.assertEquals("The property value must be equal", "TCO", props.get("measuringPointOutId"));
+		Assert.assertEquals("The property value must be equal", "TCI", props.get("measuringPointInId"));
+		
+//		
+//		
+//		String[] args = new String[]{"-addPropsFile", "file123"};
+//		Assert.assertEquals("The name of the file must be file123", "file123", client.extractStringValue(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE, TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT));
+//		
+		
+	}
 	
 }

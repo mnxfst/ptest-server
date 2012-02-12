@@ -22,27 +22,27 @@ package com.mnxfst.testing.exception;
 import com.mnxfst.testing.plan.exec.client.TSClient;
 
 /**
- * Thrown by the {@link TSClient} in case the provided configuration is invalid
+ * Thrown by {@link TSClient} in case anything fails during test plan execution
  * @author mnxfst
- * @since 11.02.2012
+ * @since 12.02.2012
  */
-public class TSClientConfigurationExeception extends Exception {
+public class TSClientExecutionException extends Exception {
 
-	private static final long serialVersionUID = 3942305528563866954L;
+	private static final long serialVersionUID = 7414840184370518087L;
 
-	public TSClientConfigurationExeception() {		
+	public TSClientExecutionException() {		
 	}
 	
-	public TSClientConfigurationExeception(String msg) {
+	public TSClientExecutionException(String msg) {
 		super(msg);
 	}
 	
-	public TSClientConfigurationExeception(Throwable cause) {
+	public TSClientExecutionException(Throwable cause) {
 		super(cause);
 	}
 	
-	public TSClientConfigurationExeception(String msg, Throwable cause) {
+	public TSClientExecutionException(String msg, Throwable cause) {
 		super(msg, cause);
 	}	
-	
+
 }

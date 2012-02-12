@@ -19,9 +19,21 @@
 
 package com.mnxfst.testing.plan.exec.client;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -31,10 +43,12 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.xml.sax.SAXException;
 
-import com.mnxfst.testing.exception.TSClientConfigurationExeception;
+import com.mnxfst.testing.exception.TSClientConfigurationException;
+import com.mnxfst.testing.exception.TSClientExecutionException;
 import com.mnxfst.testing.plan.exec.TSPlanRecurrenceType;
 
 /**
@@ -56,6 +70,10 @@ public class TSClient {
 	public static final String CMD_OPT_PTEST_SERVER_HOSTS_SHORT = "h";
 	public static final String CMD_OPT_PTEST_SERVER_PORT = "ptestPort";
 	public static final String CMD_OPT_PTEST_SERVER_PORT_SHORT = "p";
+	public static final String CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE = "addPropsFile";
+	public static final String CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT = "apfile";
+	public static final String CMD_OPT_PTEST_SERVER_URL_ENCODING = "urlEncoding";
+	public static final String CMD_OPT_PTEST_SERVER_URL_ENCODING_SHORT = "uenc";
 
 	public static void main(String[] args) throws ClientProtocolException, IOException, SAXException, ParserConfigurationException, ParseException {
 
@@ -65,24 +83,7 @@ public class TSClient {
 			System.out.println(args[i]);
 		
 		
-		/*
-		
-		
-				
-		HttpGet getMethod = new HttpGet("/?execute=1&threads=4&recurrences=1&recurrencetype=times&testplan=AddressIntTestPlan.xml&scenarioId=sec1");
-		HttpHost host = new HttpHost("localhost", 9090);
-		DefaultHttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(host, getMethod);
-		InputStream s = response.getEntity().getContent();
-
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(s);
-		s.close();
-		Node rootNode = doc.getFirstChild();
-		System.out.println(rootNode.getNodeName());
-		NodeList childs = rootNode.getChildNodes();
-		for(int i = 0; i < childs.getLength(); i++) {
-			System.out.println(childs.item(i));
-		}*/		
+	
 	}
 	
 	public void executeClient(String[] args) {
@@ -125,7 +126,7 @@ public class TSClient {
 		long threads = -1;
 		try {
 			threads = extractLongValue(cmd, CMD_OPT_THREADS, CMD_OPT_THREADS_SHORT);
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 		}
 		if(threads < 1) {
 			printHelp(options, "Please provide a valid number of threads used for test plan execution");
@@ -136,7 +137,7 @@ public class TSClient {
 		long recurrences = -1;
 		try {
 			recurrences = extractLongValue(cmd, CMD_OPT_RECURRENCES, CMD_OPT_RECURRENCES_SHORT);
-		} catch(TSClientConfigurationExeception e) {			
+		} catch(TSClientConfigurationException e) {			
 		}
 		if(recurrences < 1) {
 			printHelp(options, "Please provide a valid number of test plan recurrences");
@@ -146,7 +147,7 @@ public class TSClient {
 		TSPlanRecurrenceType recurrenceType = null;
 		try {
 			recurrenceType = extractRecurrenceType(cmd);
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			printHelp(options, "Please provide a valid recurrence type");
 			return;			
 		}
@@ -158,7 +159,7 @@ public class TSClient {
 		String testPlan = null;
 		try {
 			testPlan = extractStringValue(cmd, CMD_OPT_TESTPLAN, CMD_OPT_TESTPLAN_SHORT);
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			printHelp(options, "Please provide a valid test plan");
 			return;			
 		}
@@ -170,7 +171,7 @@ public class TSClient {
 		String ptestServerHosts[] = null;
 		try {
 			ptestServerHosts = extractStringList(cmd, CMD_OPT_PTEST_SERVER_HOSTS, CMD_OPT_PTEST_SERVER_HOSTS_SHORT);
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			printHelp(options, "Please provide a list of hosts running a ptest-server instance");
 			return;
 		}
@@ -182,7 +183,7 @@ public class TSClient {
 		long ptestServerPort = -1;
 		try {
 			ptestServerPort = extractLongValue(cmd, CMD_OPT_PTEST_SERVER_PORT, CMD_OPT_PTEST_SERVER_PORT_SHORT);
-		} catch(TSClientConfigurationExeception e) {
+		} catch(TSClientConfigurationException e) {
 			printHelp(options, "Please provide port to be used for ptest-server communication");
 			return;
 		}
@@ -191,6 +192,124 @@ public class TSClient {
 			return;
 		}
 		
+		String urlEncoding = cmd.getOptionValue(CMD_OPT_PTEST_SERVER_URL_ENCODING);
+		if(urlEncoding == null || urlEncoding.isEmpty())
+			urlEncoding = cmd.getOptionValue(CMD_OPT_PTEST_SERVER_URL_ENCODING_SHORT);
+		if(urlEncoding == null || urlEncoding.isEmpty())
+			urlEncoding = "UTF-8";
+		
+		String additionalPropertiesFile = cmd.getOptionValue(CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE);
+		if(additionalPropertiesFile == null || additionalPropertiesFile.isEmpty())
+			additionalPropertiesFile = cmd.getOptionValue(CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT);
+		Properties additionalProperties = null;
+		if(additionalPropertiesFile != null && !additionalPropertiesFile.isEmpty()) {
+			try {
+				additionalProperties = extractAdditionalProperties(additionalPropertiesFile);
+			} catch(TSClientConfigurationException e) {
+				printHelp(options, "Please provide a valid path to a file containing additional properties");
+				return;
+			}
+		} else {
+			additionalProperties = new Properties();
+		}
+		
+		
+	}
+	
+	private static final String REQUEST_PARAMETER_EXECUTE = "execute";
+	private static final String REQUEST_PARAMETER_THREADS = "threads";
+	private static final String REQUEST_PARAMETER_RECURRENCES = "recurrences";
+	private static final String REQUEST_PARAMETER_RECURRENCE_TYPE = "recurrencetype";
+	private static final String REQUEST_PARAMETER_TESTPLAN = "testplan";
+	
+	///////////////////////////////////////////////// EXECUTE HTTP CALL /////////////////////////////////////////////////
+	
+	/**
+	 * Executes the referenced test plan for all given host names. The result contains a mapping from a host name to the returned result identifier
+	 * of that ptest-server instance 
+	 * @param hostNames
+	 * @param port
+	 * @param threads
+	 * @param recurrences
+	 * @param recurrenceType
+	 * @param testplan
+	 * @param additionalParameters
+	 * @param urlEncoding
+	 * @return
+	 * @throws TSClientConfigurationException
+	 * @throws TSClientExecutionException
+	 */
+	protected Map<String, String> executeTestplan(String[] hostNames, int port, long threads, long recurrences, TSPlanRecurrenceType recurrenceType, String testplan, Properties additionalParameters, String urlEncoding) throws TSClientConfigurationException, TSClientExecutionException  {
+		
+//		// build the http hosts for the provided names
+//		HttpHost[] ptestServerHosts = new HttpHost[hostNames.length];
+//		for(int i = 0; i < hostNames.length; i++) {
+//			ptestServerHosts[i] = new HttpHost(hostNames[i], port);
+//		}
+		
+		// the ptest-server understands http get, thus we use it TODO refactor to post and send testplan as well and do not reference it anymore!
+		StringBuffer buffer = new StringBuffer("/?");
+		buffer.append(REQUEST_PARAMETER_EXECUTE).append("=1");
+		buffer.append("&").append(REQUEST_PARAMETER_RECURRENCES).append("=").append(threads);
+		buffer.append("&").append(REQUEST_PARAMETER_RECURRENCE_TYPE).append("=").append(recurrenceType.toString());
+		buffer.append("&").append(REQUEST_PARAMETER_TESTPLAN).append("=").append(testplan);
+		
+		try {
+			if(additionalParameters != null && !additionalParameters.isEmpty()) {
+				for(Object key : additionalParameters.keySet()) {
+					String value = (String)additionalParameters.get(key);
+					buffer.append("&").append(key).append("=").append(URLEncoder.encode(value, urlEncoding));
+				}
+			}
+		} catch(UnsupportedEncodingException e) {
+			throw new TSClientConfigurationException("Unsupported encoding type: " + urlEncoding + ". Error: " + e.getMessage());
+		}
+		
+		TSClientPlanExecCallable[] testplanCallables = new TSClientPlanExecCallable[hostNames.length];
+		for(int i = 0; i < hostNames.length; i++) {
+			testplanCallables[i] = new TSClientPlanExecCallable(hostNames[i], port, buffer.toString());
+		}
+		
+		ExecutorService executorService = Executors.newFixedThreadPool(hostNames.length);
+		List<Future<NameValuePair>> executionResults = new ArrayList<Future<NameValuePair>>();
+		try {
+			executionResults = executorService.invokeAll(Arrays.asList(testplanCallables));
+		} catch (InterruptedException e) {
+			System.out.println("Test execution interrupted: " + e.getMessage());
+		}
+		
+		Map<String, String> result = new HashMap<String, String>();
+		for(Future<NameValuePair> r : executionResults) {
+			
+			try {
+				NameValuePair nvp = r.get();
+				result.put(nvp.getName(), nvp.getValue());
+			} catch (InterruptedException e) {
+				System.out.println("Interrupted while waiting for results. Error: " + e.getMessage());
+			} catch (ExecutionException e) {
+				System.out.println("Interrupted while waiting for results. Error: " + e.getMessage());			
+			}			
+		}
+		
+		return null;
+		/*
+		
+		
+		
+		HttpGet getMethod = new HttpGet("/?execute=1&threads=4&recurrences=1&recurrencetype=times&testplan=AddressIntTestPlan.xml&scenarioId=sec1");
+		HttpHost host = new HttpHost("localhost", 9090);
+		DefaultHttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(host, getMethod);
+		InputStream s = response.getEntity().getContent();
+
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(s);
+		s.close();
+		Node rootNode = doc.getFirstChild();
+		System.out.println(rootNode.getNodeName());
+		NodeList childs = rootNode.getChildNodes();
+		for(int i = 0; i < childs.getLength(); i++) {
+			System.out.println(childs.item(i));
+		}*/		
 	}
 	
 	///////////////////////////////////////////////// PARSING HELPERS /////////////////////////////////////////////////
@@ -201,19 +320,19 @@ public class TSClient {
 	 * @param opt
 	 * @param shortOpt
 	 * @return
-	 * @throws TSClientConfigurationExeception
+	 * @throws TSClientConfigurationException
 	 */
-	protected long extractLongValue(CommandLine cmd, String opt, String shortOpt) throws TSClientConfigurationExeception {		
+	protected long extractLongValue(CommandLine cmd, String opt, String shortOpt) throws TSClientConfigurationException {		
 		String tmp = cmd.getOptionValue(opt);
 		if(tmp == null || tmp.isEmpty())
 			tmp = cmd.getOptionValue(shortOpt);
 		if(tmp == null || tmp.isEmpty())
-			throw new TSClientConfigurationExeception("Missing value for required option '"+opt+"' ('"+shortOpt+"')");
+			throw new TSClientConfigurationException("Missing value for required option '"+opt+"' ('"+shortOpt+"')");
 		
 		try {
 			return Long.parseLong(tmp.trim());
 		} catch(NumberFormatException e) {
-			throw new TSClientConfigurationExeception("Value for required option '"+opt+"' ('"+shortOpt+"') does not represent a valid numerical value: " + tmp);
+			throw new TSClientConfigurationException("Value for required option '"+opt+"' ('"+shortOpt+"') does not represent a valid numerical value: " + tmp);
 		}		
 	}
 	
@@ -223,14 +342,14 @@ public class TSClient {
 	 * @param opt
 	 * @param shortOpt
 	 * @return
-	 * @throws TSClientConfigurationExeception
+	 * @throws TSClientConfigurationException
 	 */
-	protected String extractStringValue(CommandLine cmd, String opt, String shortOpt) throws TSClientConfigurationExeception {
+	protected String extractStringValue(CommandLine cmd, String opt, String shortOpt) throws TSClientConfigurationException {
 		String tmp = cmd.getOptionValue(opt);
 		if(tmp == null || tmp.isEmpty())
 			tmp = cmd.getOptionValue(shortOpt);
 		if(tmp == null || tmp.isEmpty())
-			throw new TSClientConfigurationExeception("Missing value for required option '"+opt+"' ('"+shortOpt+"')");
+			throw new TSClientConfigurationException("Missing value for required option '"+opt+"' ('"+shortOpt+"')");
 
 		return tmp.trim();		
 	}
@@ -241,13 +360,13 @@ public class TSClient {
 	 * @param opt
 	 * @param shortOpt
 	 * @return
-	 * @throws TSClientConfigurationExeception
+	 * @throws TSClientConfigurationException
 	 */
-	protected String[] extractStringList(CommandLine cmd, String opt, String shortOpt) throws TSClientConfigurationExeception {
+	protected String[] extractStringList(CommandLine cmd, String opt, String shortOpt) throws TSClientConfigurationException {
 		String tmp = extractStringValue(cmd, opt, shortOpt);
 		String[] csvList = tmp.split(",");
 		if(csvList == null || csvList.length < 1)
-			throw new TSClientConfigurationExeception("Missing value for required option '"+opt+"' ('"+shortOpt+"')");
+			throw new TSClientConfigurationException("Missing value for required option '"+opt+"' ('"+shortOpt+"')");
 			
 		for(int i = 0; i < csvList.length; i++)
 			csvList[i] = csvList[i].trim();
@@ -258,15 +377,15 @@ public class TSClient {
 	 * Extracts the recurrence type from the command-line
 	 * @param cmd
 	 * @return
-	 * @throws TSClientConfigurationExeception
+	 * @throws TSClientConfigurationException
 	 */
-	protected TSPlanRecurrenceType extractRecurrenceType(CommandLine cmd) throws TSClientConfigurationExeception {
+	protected TSPlanRecurrenceType extractRecurrenceType(CommandLine cmd) throws TSClientConfigurationException {
 		
 		String tmp = cmd.getOptionValue(CMD_OPT_RECURRENCE_TYPE);
 		if(tmp == null || tmp.isEmpty())
 			tmp = cmd.getOptionValue(CMD_OPT_RECURRENCE_TYPE_SHORT);
 		if(tmp == null || tmp.isEmpty())
-			throw new TSClientConfigurationExeception("Missing value for required option '"+CMD_OPT_RECURRENCE_TYPE+"' ('"+CMD_OPT_RECURRENCE_TYPE_SHORT+"')");
+			throw new TSClientConfigurationException("Missing value for required option '"+CMD_OPT_RECURRENCE_TYPE+"' ('"+CMD_OPT_RECURRENCE_TYPE_SHORT+"')");
 		
 		tmp = tmp.trim().toLowerCase();
 		if(tmp.equalsIgnoreCase(TSPlanRecurrenceType.TIMES.toString()))
@@ -282,7 +401,31 @@ public class TSClient {
 		else if(tmp.equalsIgnoreCase(TSPlanRecurrenceType.DAYS.toString()))
 			return TSPlanRecurrenceType.DAYS;
 		
-		throw new TSClientConfigurationExeception("Unknown value '"+tmp+"' provided for required option '"+CMD_OPT_RECURRENCE_TYPE+"' ('"+CMD_OPT_RECURRENCE_TYPE_SHORT+"')");		
+		throw new TSClientConfigurationException("Unknown value '"+tmp+"' provided for required option '"+CMD_OPT_RECURRENCE_TYPE+"' ('"+CMD_OPT_RECURRENCE_TYPE_SHORT+"')");		
+	}
+	
+	/**
+	 * Reads additional properties from the referenced file
+	 * @param additionalPropertiesFile
+	 * @return
+	 * @throws TSClientConfigurationException
+	 */
+	protected Properties extractAdditionalProperties(String additionalPropertiesFile) throws TSClientConfigurationException {
+		
+		if(additionalPropertiesFile == null || additionalPropertiesFile.isEmpty() || additionalPropertiesFile.trim().isEmpty())
+			throw new TSClientConfigurationException("No file name provided");
+		
+		try {
+			FileInputStream fIn = new FileInputStream(additionalPropertiesFile);
+			Properties props = new Properties();
+			props.load(fIn);
+			return props;
+		} catch(FileNotFoundException e) {
+			throw new TSClientConfigurationException("No such file '"+additionalPropertiesFile+"'");
+		} catch(IOException e) {
+			throw new TSClientConfigurationException("Error while reading from '"+additionalPropertiesFile+"': " + e.getMessage());
+		}		
+		
 	}
 			
 	///////////////////////////////////////////////// COMMAND-LINE PREPARATION /////////////////////////////////////////////////
@@ -313,6 +456,8 @@ public class TSClient {
 		options.addOption(CMD_OPT_TESTPLAN_SHORT, CMD_OPT_TESTPLAN, true, "Names the test plan to execute");
 		options.addOption(CMD_OPT_PTEST_SERVER_HOSTS_SHORT, CMD_OPT_PTEST_SERVER_HOSTS, true, "Comma-separated list of hosts running an available ptest-server instance");
 		options.addOption(CMD_OPT_PTEST_SERVER_PORT_SHORT, CMD_OPT_PTEST_SERVER_PORT, true, "Names the port to use for communication with the ptest-server instances");
+		options.addOption(CMD_OPT_PTEST_SERVER_URL_ENCODING_SHORT, CMD_OPT_PTEST_SERVER_URL_ENCODING, true, "Encoding to be used for url parameters");
+		options.addOption(CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT, CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE, true, "Path to file which contains additional key/value pairs to be forwared to the ptest-server");
 		options.addOption("ri", true, "Response identifier used by the ptest-server to store results");
 		return options;
 	}

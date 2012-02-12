@@ -220,8 +220,8 @@ public class TestSaturationExec {
 	public void testCase4() throws Exception {
 
 		
-		int threads = 1;
-		int recurrences = 20;
+		int threads = 4;
+		int recurrences = 100;
 		int maxRuntime = 40;
 		int warmupRuns = 5;
 
