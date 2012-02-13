@@ -21,7 +21,15 @@ package com.mnxfst.testing.plan.exec.client;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -35,6 +43,9 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.mnxfst.testing.exception.TSClientExecutionException;
 
@@ -67,6 +78,11 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 	
 	}
 
+	private static final String TEST_EXEC_RESPONSE_ROOT = "testExecutionResponse";
+	private static final String TEST_EXEC_RESPONSE_CODE = "/testExecutionResponse/responseCode";
+	private static final String TEST_EXEC_RESULT_IDENTIFIER = "/testExecutionResponse/resultIdentifier";
+	private static final String TEST_EXEC_ERROR_CODES = "/testExecutionResponse/errorCodes/*";
+	private static final String TEST_EXEC_SINGLE_ERROR_CODE = "/errorCode";
 	/**
 	 * @see java.util.concurrent.Callable#call()
 	 */
@@ -74,22 +90,122 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 
 		try {
 			HttpResponse response = httpClient.execute(httpHost, getMethod);
-			InputStream responseStream = response.getEntity().getContent();
 
-			StringBuffer responseContent = new StringBuffer();
-			int c = 0;
-			while((c = responseStream.read()) != -1)
-				responseContent.append((char)c);
-							
-			return new BasicNameValuePair(httpHost.getHostName(), responseContent.toString());
+			Document responseDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(response.getEntity().getContent());			
+			if(response == null)
+				throw new TSClientExecutionException("No response document received from " + httpHost.getHostName());
+			
+			// fetch root node
+			Node rootNode = responseDoc.getFirstChild();
+			if(rootNode == null)
+				throw new TSClientExecutionException("No valid root node found in document received from " + httpHost.getHostName());
+			if(rootNode.getNodeName() == null || !rootNode.getNodeName().equalsIgnoreCase(TEST_EXEC_RESPONSE_ROOT))
+				throw new TSClientExecutionException("No valid root node found in document received from " + httpHost.getHostName());
+			
+			// fetch root childs
+			NodeList childNodes = rootNode.getChildNodes();
+			if(childNodes == null || childNodes.getLength() < 1)
+				throw new TSClientExecutionException("No child nodes found in document received from " + httpHost.getHostName());
+			
+			XPath xpath = XPathFactory.newInstance().newXPath();
+			
+			String responseCode = null;
+			try {
+				responseCode = (String) xpath.evaluate(TEST_EXEC_RESPONSE_CODE, TEST_EXEC_RESPONSE_CODE, XPathConstants.STRING);
+			} catch(XPathExpressionException e) {
+				throw new TSClientExecutionException("Failed to parse out response code from document received from " + httpHost.getHostName());
+			}
+			
+			return null;
 		} catch(ClientProtocolException e) {
 			throw new TSClientExecutionException("Failed to call " + httpHost.getHostName() + ":" + httpHost.getPort() + "/"+ getMethod.getURI() + ". Error: " + e.getMessage());
 		} catch(IOException e) {
 			throw new TSClientExecutionException("Failed to call " + httpHost.getHostName() + ":" + httpHost.getPort() + "/"+ getMethod.getURI() + ". Error: " + e.getMessage());
 		}
+	}
+	
+	/**
+	 * Parses the response code from the returned test plan execution result
+	 * @param rootNode
+	 * @return
+	 * @throws TSClientExecutionException
+	 */
+	protected long parseResponseCode(Node rootNode, XPath xpath) throws TSClientExecutionException {
+		
+		String responseCode = null;
+		try {
+			responseCode = (String) xpath.evaluate(TEST_EXEC_RESPONSE_CODE, rootNode, XPathConstants.STRING);
+		} catch(XPathExpressionException e) {
+			throw new TSClientExecutionException("Failed to parse out response code from document received from " + httpHost.getHostName());
+		}
+		
+		if(responseCode != null && !responseCode.isEmpty()) {
+			try {
+				return Long.parseLong(responseCode);
+			} catch(NumberFormatException e) {
+				throw new TSClientExecutionException("Failed to parse response code '"+responseCode+"' into a valid numerical value. Returning host: " + httpHost.getHostName());
+			}
+		}
+		
+		throw new TSClientExecutionException("No valid response code received from " + httpHost.getHostName());		
+	}
+	
+	/**
+	 * Parses the result identifier from the returned result
+	 * @param rootNode
+	 * @return
+	 * @throws TSClientExecutionException
+	 */
+	protected String parseResultIdentifier(Node rootNode, XPath xpath) throws TSClientExecutionException {
+		
+		String resultIdentifier = null;
+		try {
+			resultIdentifier = (String) xpath.evaluate(TEST_EXEC_RESULT_IDENTIFIER, rootNode, XPathConstants.STRING);
+		} catch(XPathExpressionException e) {
+			throw new TSClientExecutionException("Failed to parse out result identifier from document received from " + httpHost.getHostName());
+		}
 
+		if(resultIdentifier == null || resultIdentifier.isEmpty())
+			throw new TSClientExecutionException("Failed to parse out result identifier from document received from " + httpHost.getHostName());
+		
+		return resultIdentifier;		
 	}
 
+	/**
+	 * Returns the error codes
+	 * @param rootNode
+	 * @param xpath
+	 * @return
+	 * @throws TSClientExecutionException
+	 */
+	protected List<Long> parseErrorCodes(Node rootNode, XPath xpath) throws TSClientExecutionException {
+
+		NodeList errorCodeNodes = null;
+		try {
+			errorCodeNodes = (NodeList)xpath.evaluate(TEST_EXEC_ERROR_CODES, rootNode, XPathConstants.NODESET); 
+		} catch(XPathExpressionException e) {
+			throw new TSClientExecutionException("Failed to parse out error codes from document received from " + httpHost.getHostName());
+		}
+		
+		List<Long> result = new ArrayList<Long>();
+		if(errorCodeNodes != null && errorCodeNodes.getLength() > 0) {
+			for(int i = 0; i < errorCodeNodes.getLength(); i++) {
+				System.out.println(errorCodeNodes.item(i).toString());
+				if(errorCodeNodes.item(i).getNodeType() == Node.ELEMENT_NODE) {
+					try {
+						String errorCodeStr = (String)xpath.evaluate(TEST_EXEC_SINGLE_ERROR_CODE, errorCodeNodes.item(i), XPathConstants.STRING);
+						
+						result.add(Long.parseLong(errorCodeStr.trim()));
+					} catch(NumberFormatException e) {
+						throw new TSClientExecutionException("Failed to parse error code from document received from " + httpHost.getHostName() + ". Error: " + e.getMessage());
+					} catch(XPathExpressionException e) {
+						throw new TSClientExecutionException("Failed to parse error code from document received from " + httpHost.getHostName() + ". Error: " + e.getMessage());
+					}
+				}
+			}
+		}
+		return result;		
+	}
 	
 	
 }

@@ -281,7 +281,6 @@ public class TSPlanBuilder {
 		try {
 			activityNodes = (NodeList)xpath.evaluate(XPATH_EXPRESSION_ALL_ACTIVITIES, testPlanDocument, XPathConstants.NODESET);
 		} catch (XPathExpressionException e) {
-			e.printStackTrace();
 			throw new TSPlanConfigurationFormatException("Failed to parse provided test plan using a xpath expression. Error: " + e.getMessage(), e);
 		} 
 		

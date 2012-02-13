@@ -291,7 +291,7 @@ public class TSClient {
 			}			
 		}
 		
-		return null;
+		return result;
 		/*
 		
 		

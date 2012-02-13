@@ -41,6 +41,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.mnxfst.testing.exception.TSClientExecutionException;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.exception.TSPlanConfigurationFormatException;
 import com.mnxfst.testing.exception.TSPlanExecutionFailedException;
@@ -216,12 +217,12 @@ public class TestSaturationExec {
 	}
 	
 	
-	@Test
+	
 	public void testCase4() throws Exception {
 
 		
-		int threads = 4;
-		int recurrences = 100;
+		int threads = 1;
+		int recurrences = 1;
 		int maxRuntime = 40;
 		int warmupRuns = 5;
 
@@ -229,6 +230,7 @@ public class TestSaturationExec {
 
 //		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/AddressIntTestPlan.xml");
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/placeOrderTestPlan_noTimeouts.xml");
+//		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/placeOrderTestPlan_withTimeouts.xml");
 		
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 		
@@ -255,9 +257,9 @@ public class TestSaturationExec {
 		System.out.println("Min. duration (single run): " + e.getSingleRunExecutionDurationMin() + "ms");
 		System.out.println("Avg. duration (single run): " + e.getSingleRunExecutionDurationAverage() + "ms");
 		System.out.println("Avg. duration median: " + e.getAverageDurationMedian() + "ms");
-		System.out.println("Errors: " + e.getErrors());
-		
+		System.out.println("Errors: " + e.getErrors());		
 	}
+	
 	
 	
 	public void testExecClient() throws ClientProtocolException, IOException, SAXException, ParserConfigurationException {

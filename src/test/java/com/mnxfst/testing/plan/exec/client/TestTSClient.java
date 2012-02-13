@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
 
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.cli.Options;
@@ -30,9 +31,11 @@ import org.apache.commons.cli.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.mnxfst.testing.exception.TSClientConfigurationException;
+import com.mnxfst.testing.exception.TSClientExecutionException;
 import com.mnxfst.testing.plan.exec.TSPlanRecurrenceType;
 
 /**
@@ -306,7 +309,7 @@ public class TestTSClient {
 //		String[] args = new String[]{"-addPropsFile", "file123"};
 //		Assert.assertEquals("The name of the file must be file123", "file123", client.extractStringValue(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE, TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT));
 //		
-		
 	}
-	
+
+
 }
