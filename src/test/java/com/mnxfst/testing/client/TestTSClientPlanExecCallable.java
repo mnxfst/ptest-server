@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.plan.exec.client;
+package com.mnxfst.testing.client;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -26,14 +26,18 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import junit.framework.Assert;
 
 import org.junit.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.mnxfst.testing.client.TSClientPlanExecCallable;
 import com.mnxfst.testing.exception.TSClientExecutionException;
 
 /**
@@ -109,8 +113,8 @@ public class TestTSClientPlanExecCallable {
 		Assert.assertEquals("The result identifier must be 514de9d0-5618-11e1-88d6-0022fad0126c", "514de9d0-5618-11e1-88d6-0022fad0126c", callable.parseResultIdentifier(doc.getFirstChild(), xpath));
 	}
 
-	
-	public void testParseErrorCodes() throws SAXException, IOException, ParserConfigurationException, TSClientExecutionException {
+	@Test
+	public void testParseErrorCodes() throws SAXException, IOException, ParserConfigurationException, TSClientExecutionException, XPathExpressionException {
 		XPath xpath = XPathFactory.newInstance().newXPath();
 		TSClientPlanExecCallable callable = new TSClientPlanExecCallable("host", 1, "/");
 
@@ -120,10 +124,16 @@ public class TestTSClientPlanExecCallable {
 		
 		bin = new ByteArrayInputStream(new String("<testExecutionResponse><responseCode>4</responseCode><errorCodes><errorCode>5</errorCode><errorCode>3</errorCode></errorCodes><errorMessage></errorMessage></testExecutionResponse>").getBytes());
 		doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(bin);
+		
+		NodeList lst = (NodeList) xpath.evaluate("/testExecutionResponse/errorCodes/*", doc.getFirstChild(), XPathConstants.NODESET);
+		Assert.assertNotNull("The lst must not be null", lst);
+		Assert.assertEquals("The element must contain 2 nodes", 2, lst.getLength());
+		
 		List<Long> results = callable.parseErrorCodes(doc.getFirstChild(), xpath);
 		Assert.assertNotNull("The result must not be null", results);
 		Assert.assertEquals("The result must contain 2 elements", 2, results.size());
-		
+		Assert.assertTrue("The error codes contain code 3", results.contains(Long.valueOf(3)));
+		Assert.assertTrue("The error codes contain code 5", results.contains(Long.valueOf(5)));
 
 		
 	}

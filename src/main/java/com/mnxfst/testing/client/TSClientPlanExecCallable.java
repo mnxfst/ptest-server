@@ -17,11 +17,12 @@
  *
  */
 
-package com.mnxfst.testing.plan.exec.client;
+package com.mnxfst.testing.client;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -57,6 +58,15 @@ import com.mnxfst.testing.exception.TSClientExecutionException;
  */
 public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 
+	private static final String TEST_EXEC_RESPONSE_ROOT = "testExecutionResponse";
+	private static final String TEST_EXEC_RESPONSE_CODE = "/testExecutionResponse/responseCode";
+	private static final String TEST_EXEC_RESULT_IDENTIFIER = "/testExecutionResponse/resultIdentifier";
+	private static final String TEST_EXEC_ERROR_CODES = "/testExecutionResponse/errorCodes/*";
+	private static final String TEST_EXEC_SINGLE_ERROR_CODE = "/errorCode";
+
+	private static final int RESPONSE_CODE_EXECUTION_STARTED = 1;
+	private static final int RESPONSE_CODE_ERROR = 4;	
+
 	private HttpGet getMethod = null;
 	private HttpHost httpHost = null;
 	private DefaultHttpClient httpClient = null;
@@ -78,20 +88,19 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 	
 	}
 
-	private static final String TEST_EXEC_RESPONSE_ROOT = "testExecutionResponse";
-	private static final String TEST_EXEC_RESPONSE_CODE = "/testExecutionResponse/responseCode";
-	private static final String TEST_EXEC_RESULT_IDENTIFIER = "/testExecutionResponse/resultIdentifier";
-	private static final String TEST_EXEC_ERROR_CODES = "/testExecutionResponse/errorCodes/*";
-	private static final String TEST_EXEC_SINGLE_ERROR_CODE = "/errorCode";
 	/**
 	 * @see java.util.concurrent.Callable#call()
 	 */
+	@SuppressWarnings("unused")
 	public NameValuePair call() throws Exception {
 
+		InputStream ptestServerInputStream = null;
 		try {
 			HttpResponse response = httpClient.execute(httpHost, getMethod);
-
-			Document responseDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(response.getEntity().getContent());			
+			ptestServerInputStream = response.getEntity().getContent();
+			
+			XPath xpath = XPathFactory.newInstance().newXPath();
+			Document responseDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(ptestServerInputStream);			
 			if(response == null)
 				throw new TSClientExecutionException("No response document received from " + httpHost.getHostName());
 			
@@ -101,26 +110,43 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 				throw new TSClientExecutionException("No valid root node found in document received from " + httpHost.getHostName());
 			if(rootNode.getNodeName() == null || !rootNode.getNodeName().equalsIgnoreCase(TEST_EXEC_RESPONSE_ROOT))
 				throw new TSClientExecutionException("No valid root node found in document received from " + httpHost.getHostName());
-			
-			// fetch root childs
-			NodeList childNodes = rootNode.getChildNodes();
-			if(childNodes == null || childNodes.getLength() < 1)
-				throw new TSClientExecutionException("No child nodes found in document received from " + httpHost.getHostName());
-			
-			XPath xpath = XPathFactory.newInstance().newXPath();
-			
-			String responseCode = null;
-			try {
-				responseCode = (String) xpath.evaluate(TEST_EXEC_RESPONSE_CODE, TEST_EXEC_RESPONSE_CODE, XPathConstants.STRING);
-			} catch(XPathExpressionException e) {
-				throw new TSClientExecutionException("Failed to parse out response code from document received from " + httpHost.getHostName());
+
+			int responseCode = parseResponseCode(rootNode, xpath);
+			switch(responseCode) {
+				case RESPONSE_CODE_EXECUTION_STARTED: {
+					String responseIdentifier = parseResultIdentifier(rootNode, xpath);
+					return new BasicNameValuePair(httpHost.getHostName(), responseIdentifier);
+				}
+				case RESPONSE_CODE_ERROR: {
+					List<Long> errorCodes = parseErrorCodes(rootNode, xpath);
+					StringBuffer codes = new StringBuffer();
+					for(Iterator<Long> iter = errorCodes.iterator(); iter.hasNext();) {
+						codes.append(iter.next());
+						if(iter.hasNext())
+							codes.append(",");
+					}
+						
+					throw new TSClientExecutionException("Failed to execute test plan on " + httpHost.getHostName() + ":" + httpHost.getPort() + ". Error codes: " + codes.toString());
+				}
+				default: {
+					throw new TSClientExecutionException("Unexpected response code '"+responseCode+"' received from " + httpHost.getHostName() + ":" + httpHost.getPort());
+				}
 			}
 			
-			return null;
 		} catch(ClientProtocolException e) {
 			throw new TSClientExecutionException("Failed to call " + httpHost.getHostName() + ":" + httpHost.getPort() + "/"+ getMethod.getURI() + ". Error: " + e.getMessage());
 		} catch(IOException e) {
 			throw new TSClientExecutionException("Failed to call " + httpHost.getHostName() + ":" + httpHost.getPort() + "/"+ getMethod.getURI() + ". Error: " + e.getMessage());
+		} finally {
+			if(ptestServerInputStream != null) {
+				try {
+					ptestServerInputStream.close();
+					httpClient.getConnectionManager().shutdown();
+					
+				} catch(Exception e) {
+					System.out.println("Failed to close ptest-server connection");
+				} 
+			}
 		}
 	}
 	
@@ -130,7 +156,7 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 	 * @return
 	 * @throws TSClientExecutionException
 	 */
-	protected long parseResponseCode(Node rootNode, XPath xpath) throws TSClientExecutionException {
+	protected int parseResponseCode(Node rootNode, XPath xpath) throws TSClientExecutionException {
 		
 		String responseCode = null;
 		try {
@@ -141,7 +167,7 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 		
 		if(responseCode != null && !responseCode.isEmpty()) {
 			try {
-				return Long.parseLong(responseCode);
+				return Integer.parseInt(responseCode);
 			} catch(NumberFormatException e) {
 				throw new TSClientExecutionException("Failed to parse response code '"+responseCode+"' into a valid numerical value. Returning host: " + httpHost.getHostName());
 			}
@@ -190,22 +216,19 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 		List<Long> result = new ArrayList<Long>();
 		if(errorCodeNodes != null && errorCodeNodes.getLength() > 0) {
 			for(int i = 0; i < errorCodeNodes.getLength(); i++) {
-				System.out.println(errorCodeNodes.item(i).toString());
 				if(errorCodeNodes.item(i).getNodeType() == Node.ELEMENT_NODE) {
 					try {
-						String errorCodeStr = (String)xpath.evaluate(TEST_EXEC_SINGLE_ERROR_CODE, errorCodeNodes.item(i), XPathConstants.STRING);
-						
+						// TODO refactor to xpath
+						String errorCodeStr = errorCodeNodes.item(i).getTextContent();//;(String)xpath.evaluate(TEST_EXEC_SINGLE_ERROR_CODE, errorCodeNodes.item(i), XPathConstants.STRING);						
 						result.add(Long.parseLong(errorCodeStr.trim()));
 					} catch(NumberFormatException e) {
 						throw new TSClientExecutionException("Failed to parse error code from document received from " + httpHost.getHostName() + ". Error: " + e.getMessage());
-					} catch(XPathExpressionException e) {
-						throw new TSClientExecutionException("Failed to parse error code from document received from " + httpHost.getHostName() + ". Error: " + e.getMessage());
+//					} catch(XPathExpressionException e) {
+//						throw new TSClientExecutionException("Failed to parse error code from document received from " + httpHost.getHostName() + ". Error: " + e.getMessage());
 					}
 				}
 			}
 		}
 		return result;		
 	}
-	
-	
 }

@@ -19,7 +19,7 @@
 
 package com.mnxfst.testing.exception;
 
-import com.mnxfst.testing.plan.exec.client.TSClient;
+import com.mnxfst.testing.client.TSClient;
 
 /**
  * Thrown by {@link TSClient} in case anything fails during test plan execution

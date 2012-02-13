@@ -17,13 +17,12 @@
  *
  */
 
-package com.mnxfst.testing.plan.exec.client;
+package com.mnxfst.testing.client;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.cli.Options;
@@ -31,11 +30,10 @@ import org.apache.commons.cli.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import com.mnxfst.testing.client.TSClient;
 import com.mnxfst.testing.exception.TSClientConfigurationException;
-import com.mnxfst.testing.exception.TSClientExecutionException;
 import com.mnxfst.testing.plan.exec.TSPlanRecurrenceType;
 
 /**
@@ -103,72 +101,72 @@ public class TestTSClient {
 		Options options = client.getTSClientCommandLineOptions();
 				
 		try {
-			client.extractRecurrenceType(client.parseCommandline(options, null));
+			client.extractRecurrenceType(client.parseCommandline(options, null), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT);
 			Assert.fail("Invalid command-line");
 		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
-			client.extractRecurrenceType(client.parseCommandline(options, new String[0]));
+			client.extractRecurrenceType(client.parseCommandline(options, new String[0]), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT);
 			Assert.fail("Empty command-line");
 		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
-			client.extractRecurrenceType(client.parseCommandline(options, new String[]{"no", "valid", "value"}));
+			client.extractRecurrenceType(client.parseCommandline(options, new String[]{"no", "valid", "value"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT);
 			Assert.fail("Command-line contains no required value");
 		} catch(TSClientConfigurationException e) {
 			//
 		}
 				
 		try {
-			client.extractRecurrenceType(client.parseCommandline(options, null));
+			client.extractRecurrenceType(client.parseCommandline(options, null), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT);
 			Assert.fail("Invalid command-line");
 		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
-			client.extractRecurrenceType(client.parseCommandline(options, new String[0]));
+			client.extractRecurrenceType(client.parseCommandline(options, new String[0]), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT);
 			Assert.fail("Empty command-line");
 		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		try {
-			client.extractRecurrenceType(client.parseCommandline(options, new String[]{"no", "valid", "value"}));
+			client.extractRecurrenceType(client.parseCommandline(options, new String[]{"no", "valid", "value"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT);
 			Assert.fail("Command-line contains no required value");
 		} catch(TSClientConfigurationException e) {
 			//
 		}
 		
 		String[] args = new String[]{"-recurrenceType", "times"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.TIMES, TSPlanRecurrenceType.TIMES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "times"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.TIMES, TSPlanRecurrenceType.TIMES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "times"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-recurrenceType", "millis"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MILLIS, TSPlanRecurrenceType.MILLIS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "millis"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MILLIS, TSPlanRecurrenceType.MILLIS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "millis"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-recurrenceType", "seconds"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.SECONDS, TSPlanRecurrenceType.SECONDS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "seconds"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.SECONDS, TSPlanRecurrenceType.SECONDS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "seconds"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-recurrenceType", "minutes"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MINUTES, TSPlanRecurrenceType.MINUTES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "minutes"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MINUTES, TSPlanRecurrenceType.MINUTES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "minutes"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-recurrenceType", "hours"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.HOURS, TSPlanRecurrenceType.HOURS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "hours"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.HOURS, TSPlanRecurrenceType.HOURS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "hours"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-recurrenceType", "days"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.DAYS, TSPlanRecurrenceType.DAYS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "days"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.DAYS, TSPlanRecurrenceType.DAYS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "days"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 
 		args = new String[]{"-rt", "times"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.TIMES, TSPlanRecurrenceType.TIMES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "times"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.TIMES, TSPlanRecurrenceType.TIMES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "times"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-rt", "millis"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MILLIS, TSPlanRecurrenceType.MILLIS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "millis"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MILLIS, TSPlanRecurrenceType.MILLIS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "millis"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-rt", "seconds"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.SECONDS, TSPlanRecurrenceType.SECONDS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "seconds"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.SECONDS, TSPlanRecurrenceType.SECONDS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "seconds"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-rt", "minutes"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MINUTES, TSPlanRecurrenceType.MINUTES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "minutes"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MINUTES, TSPlanRecurrenceType.MINUTES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "minutes"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-rt", "hours"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.HOURS, TSPlanRecurrenceType.HOURS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "hours"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.HOURS, TSPlanRecurrenceType.HOURS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "hours"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 		args = new String[]{"-rt", "days"};
-		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.DAYS, TSPlanRecurrenceType.DAYS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "days"})));
+		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.DAYS, TSPlanRecurrenceType.DAYS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "days"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 	}
 	
 	@Test

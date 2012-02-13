@@ -125,7 +125,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		}
 		
 		try {
-			TextMessage jmsMessage = this.jmsSession.createTextMessage("this is a sample text message");
+			TextMessage jmsMessage = this.jmsSession.createTextMessage(payload.toString());
 			this.jmsMessageProducer.send(jmsMessage);
 		} catch (JMSException e) {
 			throw new TSPlanActivityExecutionException("Failed to send jms message to topic '"+this.destinationName+"'. Error: " + e.getMessage(), e);

@@ -313,6 +313,7 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 			buf.append("<singleMinDuration>").append(tsResult.getSingleRunExecutionDurationMin()).append("</singleMinDuration>");
 			buf.append("<singleMaxDuration>").append(tsResult.getSingleRunExecutionDurationMax()).append("</singleMaxDuration>");
 			buf.append("<singleAverageDuration>").append(tsResult.getSingleRunExecutionDurationAverage()).append("</singleAverageDuration>");
+			buf.append("<averageDurationMedian>").append(tsResult.getAverageDurationMedian()).append("</averageDurationMedian>");
 			buf.append("<errors>").append(tsResult.getErrors()).append("</errors>");
 		}
 		buf.append("</testExecutionResponse>");
