@@ -35,6 +35,14 @@ import com.mnxfst.testing.server.handler.TSHttpRequestHandler;
  */
 public class TSPipelineFactory implements ChannelPipelineFactory {
 
+	private String hostname = null;
+	private int port = 0;
+	
+	public TSPipelineFactory(String hostname, int port) {
+		this.hostname = hostname;
+		this.port = port;
+	}
+	
 	/**
 	 * @see org.jboss.netty.channel.ChannelPipelineFactory#getPipeline()
 	 */
@@ -45,7 +53,7 @@ public class TSPipelineFactory implements ChannelPipelineFactory {
 		channelPipeline.addLast("decoder", new HttpRequestDecoder());
 		channelPipeline.addLast("encoder", new HttpResponseEncoder());
 		channelPipeline.addLast("deflater", new HttpContentCompressor());
-		channelPipeline.addLast("handler", new TSHttpRequestHandler());
+		channelPipeline.addLast("handler", new TSHttpRequestHandler(hostname, port));
 		
 		return channelPipeline;
 		

@@ -45,6 +45,8 @@ public class TSMain extends AbstractTSCommandLineTool {
 	
 	public static final String CMD_OPT_PORT = "port";
 	public static final String CMD_OPT_PORT_SHORT = "p";
+	public static final String CMD_OPT_HOSTNAME = "hostname";
+	public static final String CMD_OPT_HOSTNAME_SHORT = "h";
 
 	
 	/**
@@ -59,14 +61,26 @@ public class TSMain extends AbstractTSCommandLineTool {
 	public void execute(String[] args) {
 		
 		Options commandLineOptions = getTSClientCommandLineOptions();
-		int port = -1;
+		CommandLine commandLine = null;
 		try {
-			CommandLine commandLine = parseCommandline(commandLineOptions, args);
-			port = extractIntValue(commandLine, CMD_OPT_PORT, CMD_OPT_PORT_SHORT);
+			commandLine = parseCommandline(commandLineOptions, args);
 		} catch(ParseException e) {
 			System.out.println("Failed to parse command-line");
+		}
+		
+		int port = -1;
+		try {
+			port = extractIntValue(commandLine, CMD_OPT_PORT, CMD_OPT_PORT_SHORT);
 		} catch (TSClientConfigurationException e) {
 			printHelp(commandLineOptions, "Failed to parse port from command-line");
+			return;
+		}
+		
+		String hostname = null;
+		try {
+			hostname = extractStringValue(commandLine, CMD_OPT_HOSTNAME, CMD_OPT_HOSTNAME_SHORT);
+		} catch(TSClientConfigurationException e) {
+			printHelp(commandLineOptions, "Failed to parse host name from command-line");
 			return;
 		}
 		
@@ -80,7 +94,7 @@ public class TSMain extends AbstractTSCommandLineTool {
 		ChannelFactory channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
 		
 		ServerBootstrap serverBootstrap = new ServerBootstrap(channelFactory);
-		serverBootstrap.setPipelineFactory(new TSPipelineFactory());
+		serverBootstrap.setPipelineFactory(new TSPipelineFactory(hostname, port));
 		serverBootstrap.setOption("child.tcpNoDelay", true);
 		serverBootstrap.setOption("child.keepAlive", true);
 		
@@ -95,6 +109,7 @@ public class TSMain extends AbstractTSCommandLineTool {
 	 */
 	protected Options getTSClientCommandLineOptions() {
 		Options options = new Options();
+		options.addOption(CMD_OPT_HOSTNAME_SHORT, CMD_OPT_HOSTNAME, true, "Host name to be provided to each test plan context as global variable");
 		options.addOption(CMD_OPT_PORT_SHORT, CMD_OPT_PORT, true, "Port to be used for setting up communication");
 		return options;
 	}

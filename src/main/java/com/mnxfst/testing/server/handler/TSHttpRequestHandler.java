@@ -86,6 +86,18 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 	private static final int ERROR_CODE_TESTPLAN_PROCESSING_ERROR = 6;
 	private static final int ERROR_CODE_RESULT_ID_MISSING = 7;
 	
+	private static final String SERVER_SIDE_CONST_VAR_HOSTNAME = "ptestServerHostname";
+	private static final String SERVER_SIDE_CONST_VAR_PORT = "ptestServerPort";
+	
+	private String hostname = null;
+	private int port = 0;
+	
+	public TSHttpRequestHandler(String hostname, int port) {
+		this.hostname = hostname;
+		this.port = port;
+
+	}
+	
 	/**
 	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#messageReceived(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.MessageEvent)
 	 */
@@ -153,6 +165,8 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 			if(additionalValues != null && !additionalValues.isEmpty())
 				testPlanVars.put(key, additionalValues.get(0));			
 		}
+		testPlanVars.put(SERVER_SIDE_CONST_VAR_HOSTNAME, hostname);
+		testPlanVars.put(SERVER_SIDE_CONST_VAR_PORT, Integer.valueOf(port));
 		
 		if(errors > 0) {
 

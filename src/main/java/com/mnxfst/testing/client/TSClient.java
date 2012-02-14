@@ -137,7 +137,7 @@ public class TSClient extends AbstractTSCommandLineTool {
 			}
 			
 		} catch(ParseException e) {
-			System.out.println("Failed to parse command-line");
+			System.out.println("Failed to parse command-line. Error: " + e.getMessage());
 		}
 		
 	}
@@ -324,13 +324,12 @@ public class TSClient extends AbstractTSCommandLineTool {
 					for(String hostName : resultIdentifiers.keySet())
 						System.out.println("Host: " + hostName + ", Result Identifier: " + resultIdentifiers.get(hostName));
 					
-					System.out.println("Waiting for approx. for "+  recurrences + " " + recurrenceType + " before fetching the results");
 					// TODO problem with TIMES!!
 					long waitMillis = 0;
 					
 					switch(recurrenceType) {
 						case TIMES: {
-							
+							waitMillis = recurrences * 500;
 						}
 						case MILLIS: {
 							waitMillis = recurrences;				
@@ -356,6 +355,8 @@ public class TSClient extends AbstractTSCommandLineTool {
 					
 					waitMillis = waitMillis + 5000; // add 5sec to be sure :-)
 					
+					System.out.println("Waiting for approx. "+  (waitMillis / 1000) + " seconds before fetching the results");
+
 					try {
 						Thread.sleep(waitMillis);
 					} catch(InterruptedException e) {

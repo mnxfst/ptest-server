@@ -293,11 +293,12 @@ public class TestTSClient {
 		
 		Properties props = client.extractAdditionalProperties("src/test/resources/tsclient.properties");
 		Assert.assertNotNull("The result must not be null", props);
-		Assert.assertEquals("The size of the properties set must be 7", 7, props.size());
+		Assert.assertEquals("The size of the properties set must be 8", 8, props.size());
 		Assert.assertEquals("The property value must be equal", "001", props.get("scenarioId"));
 		Assert.assertEquals("The property value must be equal", "001", props.get("productId"));
 		Assert.assertEquals("The property value must be equal", "0001", props.get("runId"));
-		Assert.assertEquals("The property value must be equal", "12", props.get("waitTime"));
+		Assert.assertEquals("The property value must be equal", "1000", props.get("waitTime"));
+		Assert.assertEquals("The property value must be equal", "100", props.get("waitTimeDecrement"));
 		Assert.assertEquals("The property value must be equal", "vhost0103", props.get("localhostName"));
 		Assert.assertEquals("The property value must be equal", "TCO", props.get("measuringPointOutId"));
 		Assert.assertEquals("The property value must be equal", "TCI", props.get("measuringPointInId"));

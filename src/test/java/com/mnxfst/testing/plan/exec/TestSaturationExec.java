@@ -60,6 +60,7 @@ import com.mnxfst.testing.plan.TSPlanExecEnvironmentResult;
  */
 public class TestSaturationExec {
 
+	@Test
 	public void doTest() throws SAXException, IOException, ParserConfigurationException, TSPlanConfigurationFormatException, TSPlanInstantiationException, TSPlanActivityExecutionException, TSPlanMissingException, TSPlanExecutionFailedException {
 		
 		int threads = 1;

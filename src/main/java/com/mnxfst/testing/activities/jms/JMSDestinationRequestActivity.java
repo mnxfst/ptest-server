@@ -91,11 +91,19 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		try {
 			// fetches the settings provided via jndi.properties from classpath
 			this.initialJNDIContext = new InitialContext();
+			logger.error("JNDI context initialized");
+			for(Object k : initialJNDIContext.getEnvironment().keySet())
+				logger.error(k + " = " + initialJNDIContext.getEnvironment().get(k));
 			this.jmsConnectionFactory = (ConnectionFactory)initialJNDIContext.lookup("ConnectionFactory");
+			logger.error("jmsConnectionFactory: " + jmsConnectionFactory);
 			this.jmsConnection = this.jmsConnectionFactory.createConnection();
+			logger.error("jmsConnection: " + jmsConnection);
 			this.jmsSession = this.jmsConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-			this.jmsDestination = (Destination)initialJNDIContext.lookup(this.destinationName);				
+			logger.error("jmsSession: " + jmsSession);
+			this.jmsDestination = (Destination)initialJNDIContext.lookup(this.destinationName);
+			logger.error("jmsDestination: " + jmsDestination);
 			this.jmsMessageProducer = this.jmsSession.createProducer(this.jmsDestination);
+			logger.error("jmsMessageProducer: " + jmsMessageProducer);
 		} catch (NamingException e) {
 			throw new TSPlanActivityExecutionException("Failed to set up initial JNDI context. Error: " + e.getMessage(), e);
 		} catch (JMSException e) {
@@ -125,9 +133,13 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		}
 		
 		try {
+			logger.error("Preparing message: " + payload.toLowerCase());
 			TextMessage jmsMessage = this.jmsSession.createTextMessage(payload.toString());
+			logger.error("Sending");
 			this.jmsMessageProducer.send(jmsMessage);
+			logger.error("Sent");
 		} catch (JMSException e) {
+			e.printStackTrace();
 			throw new TSPlanActivityExecutionException("Failed to send jms message to topic '"+this.destinationName+"'. Error: " + e.getMessage(), e);
 		}
 				
