@@ -19,8 +19,8 @@
 
 package com.mnxfst.testing.activities.jms;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 
 import javax.jms.Connection;
@@ -30,7 +30,6 @@ import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
@@ -90,6 +89,8 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		if(jmsMessageTemplate == null || jmsMessageTemplate.isEmpty())
 			throw new TSPlanActivityExecutionException("Required payload template not provided for activity '"+getName()+"'");		
 		
+		this.jmsPayloadVariables = getContextVariablesFromString(jmsMessageTemplate);
+		
 		try {
 			// fetches the settings provided via jndi.properties from classpath
 			this.initialJNDIContext = new InitialContext();
@@ -115,8 +116,14 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 
 		// replace payload variables with values fetched from context
-		String payload = new String(this.jmsMessageTemplate);		
+		String payload = null;
+		try {
+			payload = new String(this.jmsMessageTemplate.getBytes(), "UTF-8");
+		} catch(UnsupportedEncodingException e) {
+			throw new TSPlanActivityExecutionException("Failed to convert jms message template into UTF-8 string. Error: " + e.getMessage());
+		}
 		for(String logPattern : jmsPayloadVariables.keySet()) {
+			
 			String replacementPattern = jmsPayloadVariables.get(logPattern);
 			Object ctxValue = null;
 			try {
@@ -130,7 +137,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		}
 		
 		try {
-			TextMessage jmsMessage = this.jmsSession.createTextMessage(payload.toString());
+			TextMessage jmsMessage = this.jmsSession.createTextMessage(payload.trim());
 			this.jmsMessageProducer.send(jmsMessage);
 		} catch (JMSException e) {
 			logger.error("Failed to send jms message to queue/topic '"+this.destinationName+"'. Error: " + e.getMessage(), e);			

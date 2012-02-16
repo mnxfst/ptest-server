@@ -59,7 +59,7 @@ import com.mnxfst.testing.plan.TSPlanExecEnvironmentResult;
  */
 public class TestSaturationExec {
 
-	@Test
+	
 	public void doTest() throws SAXException, IOException, ParserConfigurationException, TSPlanConfigurationFormatException, TSPlanInstantiationException, TSPlanActivityExecutionException, TSPlanMissingException, TSPlanExecutionFailedException {
 		
 		int threads = 1;
@@ -279,14 +279,16 @@ public class TestSaturationExec {
 			System.out.println(childs.item(i));
 		}
 	}
-	
+
+	@Test
 	public void testSaturationTest() throws ClientProtocolException, IOException, SAXException, ParserConfigurationException {
 		
-		
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp.xml");
+		System.out.println(doc);
 		
 	}
 	
-	@Test
+	
 	public void testDummey() {
 		System.out.println(new Date((long)1328891265670L) + ": 2012-02-10 16:27:45.670");
 		System.out.println(new Date((long)1328891266127L) + ": 2012-02-10 16:27:46.127");
