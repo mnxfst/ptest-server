@@ -83,6 +83,8 @@ public class TSClient extends AbstractTSCommandLineTool {
 	public static final String CMD_OPT_SAT_TEST_MAX_RUNTIME_SHORT = "maxrun";
 	public static final String CMD_OPT_SAT_TEST_THREAD_INCREMENT = "threadIncrement";
 	public static final String CMD_OPT_SAT_TEST_THREAD_INCREMENT_SHORT = "ti";
+	public static final String CMD_OPT_SAT_TEST_WAIT_TIME = "waitTime";
+	public static final String CMD_OPT_SAT_TEST_WAIT_TIME_SHORT = "wt";
 
 	public static final String REQUEST_PARAMETER_EXECUTE = "execute";
 	public static final String REQUEST_PARAMETER_COLLECT = "collect";
@@ -302,6 +304,18 @@ public class TSClient extends AbstractTSCommandLineTool {
 			printHelp(options, "Error received while attempting to read test plan file: " + e.getMessage());
 			return null;
 		}
+		
+		// TODO remove this as it is required for a company specific test! 
+		String waitTime = null;
+		try {
+			waitTime = extractStringValue(cmd, CMD_OPT_SAT_TEST_WAIT_TIME, CMD_OPT_SAT_TEST_WAIT_TIME_SHORT);
+		} catch(TSClientConfigurationException e) {
+			waitTime = null;
+			System.out.println("No wait time provided, using the one contained in tsclient.properties");
+		}
+		
+		if(waitTime != null && !waitTime.isEmpty())
+			additionalProperties.put("waitTime", waitTime);
 		
 		if(cmd.hasOption(CMD_OPT_MODE_EXECUTE)) {
 			try {
@@ -622,6 +636,7 @@ public class TSClient extends AbstractTSCommandLineTool {
 		options.addOption(CMD_OPT_RESULT_IDENTIFIER_SHORT, CMD_OPT_RESULT_IDENTIFIER, true, "Key to identify results on the ptest-server (to be used with 'collect' option only)");
 		options.addOption(CMD_OPT_SAT_TEST_MAX_RUNTIME_SHORT, CMD_OPT_SAT_TEST_MAX_RUNTIME, true, "Max. average runtime accepted for saturation test before quitting test");
 		options.addOption(CMD_OPT_SAT_TEST_THREAD_INCREMENT_SHORT, CMD_OPT_SAT_TEST_THREAD_INCREMENT, true, "Number to increase the running threads by during saturation test (default: 1). The value will be used as initial value.");
+		options.addOption(CMD_OPT_SAT_TEST_WAIT_TIME_SHORT, CMD_OPT_SAT_TEST_WAIT_TIME, true, "Defines the value for the waitTime parameter being provided as global variable to the test plan (default: 0)");
 		options.addOption("ri", true, "Response identifier used by the ptest-server to store results");
 		return options;
 	}

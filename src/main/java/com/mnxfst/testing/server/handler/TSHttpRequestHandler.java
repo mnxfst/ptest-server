@@ -121,8 +121,6 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		if(httpRequest.getMethod() == HttpMethod.POST) {
 			decoder = new QueryStringDecoder("?" + httpRequest.getContent().toString(CharsetUtil.UTF_8));
 			queryParams.putAll(decoder.getParameters());
-			
-			logger.error("Incoming xml: " + queryParams.get("testplan"));
 		}
 				
 		if(queryParams.containsKey(REQUEST_PARAM_EXECUTE_TESTPLAN)) {
@@ -189,15 +187,14 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 				// TODO replace by var converter imposed by test plan
 				if(key.equalsIgnoreCase("waittime")) {
 					try {
-						testPlanVars.put(key, Integer.parseInt(additionalValues.get(0)));
+						testPlanVars.put(key, Long.parseLong(additionalValues.get(0)));
 					} catch(NumberFormatException e) {
+						logger.error("Failed to parse waittime: " + e.getMessage());
 						testPlanVars.put(key, additionalValues.get(0));		
 					}
 				} else {
 					testPlanVars.put(key, additionalValues.get(0));
 				}
-				
-							
 			}
 		}
 		testPlanVars.put(SERVER_SIDE_CONST_VAR_HOSTNAME, hostname);
