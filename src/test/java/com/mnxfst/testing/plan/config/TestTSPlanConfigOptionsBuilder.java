@@ -122,7 +122,7 @@ public class TestTSPlanConfigOptionsBuilder {
 		bin = new ByteArrayInputStream(new String("<configuration><configuration name=\"configurationStats\"><url>localhost</url>"+
 										"<port>9160</port><user>testUser</user><password>{SHA-1}8bb6118f8fd6935ad0876a3be34a717d32708ffd</password>"+
 										"<keyspace>stats</keyspace></configuration><mail name=\"sampleMail\"><address>test@home.com</address></mail></configuration>").getBytes());
-		Document configDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(bin);
+		DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(bin);
 		
 //		TODO
 //		Map<String, TSPlanConfigOption> options = parser.parseConfigurationNode(configDoc.getFirstChild(), null);		

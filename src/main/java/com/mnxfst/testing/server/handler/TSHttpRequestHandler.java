@@ -19,6 +19,7 @@
 
 package com.mnxfst.testing.server.handler;
 
+import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,14 +32,17 @@ import java.util.concurrent.Executors;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.log4j.Logger;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -61,8 +65,9 @@ import com.mnxfst.testing.plan.exec.TSPlanRecurrenceType;
  */
 public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 
-	private static ConcurrentMap<String, TSPlanExecEnvironmentResult> testPlanExecutionResultCache = new ConcurrentHashMap<String, TSPlanExecEnvironmentResult>();
+	private static final Logger logger = Logger.getLogger(TSHttpRequestHandler.class);
 	
+	private static ConcurrentMap<String, TSPlanExecEnvironmentResult> testPlanExecutionResultCache = new ConcurrentHashMap<String, TSPlanExecEnvironmentResult>();
 	private static ExecutorService testPlanExecutorService = Executors.newCachedThreadPool();
 	
 	private static final String REQUEST_PARAM_EXECUTE_TESTPLAN = "execute";
@@ -105,11 +110,20 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 
 		// extract http request from incoming message, get keep alive attribute as it will be transferred to response and decode query string 		
 		HttpRequest httpRequest = (HttpRequest)event.getMessage();
+		
 		boolean keepAlive = HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(httpRequest.getHeader(HttpHeaders.Names.CONNECTION));		
-		QueryStringDecoder decoder = new QueryStringDecoder(httpRequest.getUri());	
+		QueryStringDecoder decoder = new QueryStringDecoder(httpRequest.getUri());
 
 		// fetch query parameters
 		Map<String, List<String>> queryParams = decoder.getParameters();
+		
+		// handle post request
+		if(httpRequest.getMethod() == HttpMethod.POST) {
+			decoder = new QueryStringDecoder("?" + httpRequest.getContent().toString(CharsetUtil.UTF_8));
+			queryParams.putAll(decoder.getParameters());
+			
+			logger.error("Incoming xml: " + queryParams.get("testplan"));
+		}
 				
 		if(queryParams.containsKey(REQUEST_PARAM_EXECUTE_TESTPLAN)) {
 			executeTestplan(queryParams, keepAlive, event);
@@ -122,6 +136,14 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		}
 	}
 	
+	/**
+	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#exceptionCaught(org.jboss.netty.channel.ChannelHandlerContext, org.jboss.netty.channel.ExceptionEvent)
+	 */
+	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+		super.exceptionCaught(ctx, e);
+		logger.error("Failed to process incoming request. Error: " + e.getCause().getMessage(), e.getCause());
+	}
+
 	/**
 	 * Executes a test plan using the provided parameters and sends a response to the calling client
 	 * @param queryParams
@@ -162,8 +184,21 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		Map<String, Serializable> testPlanVars = new HashMap<String, Serializable>();
 		for(String key : queryParams.keySet()) {
 			List<String> additionalValues = queryParams.get(key);
-			if(additionalValues != null && !additionalValues.isEmpty())
-				testPlanVars.put(key, additionalValues.get(0));			
+			if(additionalValues != null && !additionalValues.isEmpty()) {
+				
+				// TODO replace by var converter imposed by test plan
+				if(key.equalsIgnoreCase("waittime")) {
+					try {
+						testPlanVars.put(key, Integer.parseInt(additionalValues.get(0)));
+					} catch(NumberFormatException e) {
+						testPlanVars.put(key, additionalValues.get(0));		
+					}
+				} else {
+					testPlanVars.put(key, additionalValues.get(0));
+				}
+				
+							
+			}
 		}
 		testPlanVars.put(SERVER_SIDE_CONST_VAR_HOSTNAME, hostname);
 		testPlanVars.put(SERVER_SIDE_CONST_VAR_PORT, Integer.valueOf(port));
@@ -185,16 +220,12 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 				codes.add(ERROR_CODE_TESTPLAN_MISSING);
 			}
 			
-			System.out.println("Errors: " + errors);
-
 			sendResponse(generateErrorMessage(codes, ""), keepAlive, event);
 			return false;
 		} else {
 						
 			try {
-				System.out.println("Generating doc");
-				Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(testPlan);
-				System.out.println("Generated doc");
+				Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(testPlan.getBytes()));
 				TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 				TSPlanExecEnvironment env = new TSPlanExecEnvironment("ptest-server", plan, numOfRecurrences, recurrenceType, numOfThreads, testPlanVars);
 				UUID resultIdentifier = UUID.fromString(new com.eaio.uuid.UUID().toString());
@@ -202,6 +233,7 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 				sendResponse(generateExecutionStartedMessage(resultIdentifier.toString()), keepAlive, event);
 				return true;
 			} catch(Exception e) {
+				logger.error("Failed to parse testplan. Error: " + e.getMessage(), e);
 				List<Integer> codes = new ArrayList<Integer>();
 				codes.add(ERROR_CODE_TESTPLAN_PROCESSING_ERROR);
 				sendResponse(generateErrorMessage(codes, e.getMessage()), keepAlive, event);

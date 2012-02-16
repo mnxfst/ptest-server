@@ -89,7 +89,7 @@ public class WaitTimerActivity extends AbstractTSPlanActivity {
 	 */
 	public TSPlanExecutionContext execute(TSPlanExecutionContext ctx) throws TSPlanActivityExecutionException {
 		
-		try {
+		try {			
 			if(fetchWaitTimeFromContext)
 				this.waitTime = (Long)ctx.evaluate(this.waitTimeCtxPattern);
 		} catch(TSVariableEvaluationFailedException e) {

@@ -74,9 +74,7 @@ public class TestWaitTimerActivity {
 		
 		cfgOpt.addOption("waitTime", "20");
 		activity.initialize(cfgOpt);
-		long start = System.currentTimeMillis();
 		activity.execute(new TSPlanExecutionContext());
-		long end = System.currentTimeMillis();
 		
 	}
 	

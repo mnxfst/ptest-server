@@ -20,6 +20,10 @@
 package com.mnxfst.testing.plan.exec;
 
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.Assert;
@@ -53,15 +57,17 @@ public class TestTSPlanExecutor {
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/sampleTestPlan.xml");		
 //		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("src/test/resources/simpleHttpRequestTest.xml");
 		TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
-		TSPlanExecutorResult result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.TIMES).call();
+		Map<String, Serializable> addVars = new HashMap<String, Serializable>();
+		addVars.put("waitTime", Long.valueOf(5));
+		TSPlanExecutorResult result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.TIMES, addVars).call();
 		Assert.assertNotNull("The result must not be null", result);
 		Assert.assertTrue("The execution time must be greater than 5ms", 5 <= result.getDurationMillis());
 		
-		result = new TSPlanExecutor(plan, "junit", "exec-1", 100, TSPlanRecurrenceType.MILLIS).call();
+		result = new TSPlanExecutor(plan, "junit", "exec-1", 100, TSPlanRecurrenceType.MILLIS, addVars).call();
 		Assert.assertNotNull("The result must not be null", result);
 		Assert.assertTrue("The execution time must be greater than 100ms", 100 <= result.getDurationMillis());
 		
-		result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.SECONDS).call();
+		result = new TSPlanExecutor(plan, "junit", "exec-1", 1, TSPlanRecurrenceType.SECONDS, addVars).call();
 		Assert.assertNotNull("The result must not be null", result);
 		Assert.assertTrue("The execution time must be greater than 1000ms", 1000 <= result.getDurationMillis());
 		

@@ -19,6 +19,7 @@
 
 package com.mnxfst.testing.client;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -40,6 +41,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.xml.sax.SAXException;
@@ -79,14 +81,16 @@ public class TSClient extends AbstractTSCommandLineTool {
 	public static final String CMD_OPT_RESULT_IDENTIFIER_SHORT = "rid";
 	public static final String CMD_OPT_SAT_TEST_MAX_RUNTIME = "maxRuntime";
 	public static final String CMD_OPT_SAT_TEST_MAX_RUNTIME_SHORT = "maxrun";
+	public static final String CMD_OPT_SAT_TEST_THREAD_INCREMENT = "threadIncrement";
+	public static final String CMD_OPT_SAT_TEST_THREAD_INCREMENT_SHORT = "ti";
 
-	private static final String REQUEST_PARAMETER_EXECUTE = "execute";
-	private static final String REQUEST_PARAMETER_COLLECT = "collect";
-	private static final String REQUEST_PARAMETER_RESULT_IDENTIFIER = "resultIdentifier";
-	private static final String REQUEST_PARAMETER_THREADS = "threads";
-	private static final String REQUEST_PARAMETER_RECURRENCES = "recurrences";
-	private static final String REQUEST_PARAMETER_RECURRENCE_TYPE = "recurrencetype";
-	private static final String REQUEST_PARAMETER_TESTPLAN = "testplan";
+	public static final String REQUEST_PARAMETER_EXECUTE = "execute";
+	public static final String REQUEST_PARAMETER_COLLECT = "collect";
+	public static final String REQUEST_PARAMETER_RESULT_IDENTIFIER = "resultIdentifier";
+	public static final String REQUEST_PARAMETER_THREADS = "threads";
+	public static final String REQUEST_PARAMETER_RECURRENCES = "recurrences";
+	public static final String REQUEST_PARAMETER_RECURRENCE_TYPE = "recurrencetype";
+	public static final String REQUEST_PARAMETER_TESTPLAN = "testplan";
 
 	public static void main(String[] args) throws ClientProtocolException, IOException, SAXException, ParserConfigurationException, ParseException {
 
@@ -201,9 +205,9 @@ public class TSClient extends AbstractTSCommandLineTool {
 	protected Map<String, String> executeTestPlan(Options options, CommandLine cmd) {
 		
 		// extract number of threads to start
-		long threads = -1;
+		int threads = -1;
 		try {
-			threads = extractLongValue(cmd, CMD_OPT_THREADS, CMD_OPT_THREADS_SHORT);
+			threads = extractIntValue(cmd, CMD_OPT_THREADS, CMD_OPT_THREADS_SHORT);
 		} catch(TSClientConfigurationException e) {
 		}
 		if(threads < 1) {
@@ -238,11 +242,11 @@ public class TSClient extends AbstractTSCommandLineTool {
 		try {
 			testPlan = extractStringValue(cmd, CMD_OPT_TESTPLAN, CMD_OPT_TESTPLAN_SHORT);
 		} catch(TSClientConfigurationException e) {
-			printHelp(options, "Please provide a valid test plan");
+			printHelp(options, "Please reference a valid test plan");
 			return null;	
 		}
 		if(testPlan == null || testPlan.isEmpty()) {
-			printHelp(options, "Please provide a valid test plan");
+			printHelp(options, "Please reference a valid test plan");
 			return null;	
 		}
 
@@ -291,9 +295,17 @@ public class TSClient extends AbstractTSCommandLineTool {
 			additionalProperties = new Properties();
 		}
 		
+		byte[] testplanContent = null;
+		try {
+			testplanContent = loadTestplan(testPlan);
+		} catch(TSClientConfigurationException e) {
+			printHelp(options, "Error received while attempting to read test plan file: " + e.getMessage());
+			return null;
+		}
+		
 		if(cmd.hasOption(CMD_OPT_MODE_EXECUTE)) {
 			try {
-				return executeTestPlan(ptestServerHosts, (int)ptestServerPort, threads, recurrences, recurrenceType, testPlan, additionalProperties, urlEncoding);
+				return executeTestPlan(ptestServerHosts, (int)ptestServerPort, threads, recurrences, recurrenceType, testplanContent, additionalProperties, urlEncoding);
 			} catch (TSClientConfigurationException e) {
 				System.out.println("Error while configuring the client: " + e.getMessage());
 			} catch (TSClientExecutionException e) {
@@ -313,16 +325,56 @@ public class TSClient extends AbstractTSCommandLineTool {
 				return null;
 			}
 			
+			int threadIncrement = 1;
+			try {
+				threadIncrement = extractIntValue(cmd, CMD_OPT_SAT_TEST_THREAD_INCREMENT, CMD_OPT_SAT_TEST_THREAD_INCREMENT_SHORT);
+			} catch(TSClientConfigurationException e) {
+				System.out.println("No or invalid value provided for '"+CMD_OPT_SAT_TEST_THREAD_INCREMENT+"/"+CMD_OPT_SAT_TEST_THREAD_INCREMENT_SHORT+"'");
+				threadIncrement = 1;
+			}
+			
+
+			StringBuffer hn = new StringBuffer();
+			for(int i = 0; i < ptestServerHosts.length; i++) {
+				hn.append(ptestServerHosts[i]);
+				if(i < ptestServerHosts.length - 1)
+					hn.append(", ");
+			}
+
+			
+			System.out.println("ptest-client");
+			System.out.println("test mode:               saturation test");
+			System.out.println("ptest-server instances:  " + hn.toString());
+			System.out.println("ptest-server port:       " + ptestServerPort);
+			System.out.println("max. threads:            " + threads);
+			System.out.println("thread increment:        " + threadIncrement);
+			System.out.println("allowed max. runtime:    " + maxRuntime);
+			System.out.println("recurrences per thread:  " + recurrences);			
+			System.out.println("recurrence type:         " + recurrenceType);
+			System.out.println("test plan:               " + testPlan);
+			System.out.println("url encoding:            " + urlEncoding);
+			
 			long maxThreads = 0;
 			boolean interrupt = false;
 			
 			try {
-				for(int i = 1; i <= threads; i++) {
-					System.out.println("-----------------------------------------------------------");
-					System.out.println("Executing test plan '"+testPlan+"' on " + ptestServerHosts.length + " hosts using " + i + " threads. The plan will be recurred for " + recurrences + " " + recurrenceType +". Allowed max. runtime: " + maxRuntime + "ms");
-					Map<String, String> resultIdentifiers = executeTestPlan(ptestServerHosts, (int)ptestServerPort, i, recurrences, recurrenceType, testPlan, additionalProperties, urlEncoding);
+				
+				if(threadIncrement > threads) {
+					threadIncrement = threads;
+					System.out.println("\nthread increment refixed to " + threadIncrement + " since it was greater than num. of threads " + threads);
+				}
+				
+				System.out.println("\n\n");
+				System.out.println("Saturation test execution:\n");
+				
+				for(int i = threadIncrement; i <= threads; i = i + threadIncrement) {
+					
+					System.out.println("Hosts: " + ptestServerHosts.length + ", Threads: " + i + ", Recurrences: " + recurrences + ", Recurrence Type: " + recurrenceType + ", Allowed Max. Runtime: " + maxRuntime);
+					System.out.println("Result identifiers (per host):");
+					
+					Map<String, String> resultIdentifiers = executeTestPlan(ptestServerHosts, (int)ptestServerPort, i, recurrences, recurrenceType, testplanContent, additionalProperties, urlEncoding);
 					for(String hostName : resultIdentifiers.keySet())
-						System.out.println("Host: " + hostName + ", Result Identifier: " + resultIdentifiers.get(hostName));
+						System.out.println("\t\t" + hostName + ": " + resultIdentifiers.get(hostName));
 					
 					// TODO problem with TIMES!!
 					long waitMillis = 0;
@@ -414,14 +466,13 @@ public class TSClient extends AbstractTSCommandLineTool {
 	 * @throws TSClientConfigurationException
 	 * @throws TSClientExecutionException
 	 */
-	protected Map<String, String> executeTestPlan(String[] hostNames, int port, long threads, long recurrences, TSPlanRecurrenceType recurrenceType, String testplan, Properties additionalParameters, String urlEncoding) throws TSClientConfigurationException, TSClientExecutionException  {
+	protected Map<String, String> executeTestPlan(String[] hostNames, int port, long threads, long recurrences, TSPlanRecurrenceType recurrenceType, byte[] testplan, Properties additionalParameters, String urlEncoding) throws TSClientConfigurationException, TSClientExecutionException  {
 		
 		// the ptest-server understands http get, thus we use it TODO refactor to post and send testplan as well and do not reference it anymore!
 		StringBuffer buffer = new StringBuffer("/?");
 		buffer.append(REQUEST_PARAMETER_EXECUTE).append("=1");
-		buffer.append("&").append(REQUEST_PARAMETER_RECURRENCES).append("=").append(threads);
+		buffer.append("&").append(REQUEST_PARAMETER_RECURRENCES).append("=").append(recurrences);
 		buffer.append("&").append(REQUEST_PARAMETER_RECURRENCE_TYPE).append("=").append(recurrenceType.toString());
-		buffer.append("&").append(REQUEST_PARAMETER_TESTPLAN).append("=").append(testplan);
 		buffer.append("&").append(REQUEST_PARAMETER_THREADS).append("=").append(threads);
 		
 		try {
@@ -435,10 +486,26 @@ public class TSClient extends AbstractTSCommandLineTool {
 			throw new TSClientConfigurationException("Unsupported encoding type: " + urlEncoding + ". Error: " + e.getMessage());
 		}
 
+		StringBuffer hn = new StringBuffer();
+		for(int i = 0; i < hostNames.length; i++) {
+			hn.append(hostNames[i]);
+			if(i < hostNames.length - 1)
+				hn.append(", ");
+		}
+		
+		System.out.println("Execute testplan:");
+		System.out.println("\thostNames: " + hn.toString());
+		System.out.println("\tport: " + port);
+		System.out.println("\tthreads: " +threads);
+		System.out.println("\trecurrences: " + recurrences);
+		System.out.println("\trecurrenceType: " + recurrenceType);
+		System.out.println("\turl enc: " + urlEncoding);
+		System.out.println("\n\turi: "+ buffer.toString());
+		
 		
 		TSClientPlanExecCallable[] testplanCallables = new TSClientPlanExecCallable[hostNames.length];
 		for(int i = 0; i < hostNames.length; i++) {
-			testplanCallables[i] = new TSClientPlanExecCallable(hostNames[i], port, buffer.toString());
+			testplanCallables[i] = new TSClientPlanExecCallable(hostNames[i], port, buffer.toString(), testplan);
 		}
 		
 		ExecutorService executorService = Executors.newFixedThreadPool(hostNames.length);
@@ -506,6 +573,31 @@ public class TSClient extends AbstractTSCommandLineTool {
 		return result;		
 	}
 	
+	/**
+	 * Reads in a test plan
+	 * @param fileName
+	 * @return
+	 * @throws TSClientConfigurationException
+	 */
+	protected byte[] loadTestplan(String fileName) throws TSClientConfigurationException {
+		FileInputStream fin = null;
+		try {
+			fin = new FileInputStream(fileName);
+			return IOUtils.toByteArray(fin);
+		} catch(IOException e) {
+			throw new TSClientConfigurationException("Failed to read test plan file '"+fileName+"'. Error: " + e.getMessage());
+		} finally {
+			if(fin != null) {
+				try {
+					fin.close();
+				} catch(IOException e) {
+					System.out.println("Failed to close test plan file '"+fileName+"'. Error: " + e.getMessage());
+				}
+			}
+		}
+		
+	}
+	
 			
 	///////////////////////////////////////////////// COMMAND-LINE PREPARATION /////////////////////////////////////////////////
 	
@@ -522,13 +614,14 @@ public class TSClient extends AbstractTSCommandLineTool {
 		options.addOption(CMD_OPT_THREADS_SHORT, CMD_OPT_THREADS, true, "Number of threads used for executing the test case. In case of the saturation load this will be used as max, starting with one thread");
 		options.addOption(CMD_OPT_RECURRENCES_SHORT, CMD_OPT_RECURRENCES, true, "Number of tesplan recurrences");
 		options.addOption(CMD_OPT_RECURRENCE_TYPE_SHORT, CMD_OPT_RECURRENCE_TYPE, true, "Recurrence type (TIMES, MILLIS, SECONDS, MINUTES, HOURS, DAYS)");
-		options.addOption(CMD_OPT_TESTPLAN_SHORT, CMD_OPT_TESTPLAN, true, "Names the test plan to execute");
+		options.addOption(CMD_OPT_TESTPLAN_SHORT, CMD_OPT_TESTPLAN, true, "References the file containing the test plan definition");
 		options.addOption(CMD_OPT_PTEST_SERVER_HOSTS_SHORT, CMD_OPT_PTEST_SERVER_HOSTS, true, "Comma-separated list of hosts running an available ptest-server instance");
 		options.addOption(CMD_OPT_PTEST_SERVER_PORT_SHORT, CMD_OPT_PTEST_SERVER_PORT, true, "Names the port to use for communication with the ptest-server instances");
 		options.addOption(CMD_OPT_PTEST_SERVER_URL_ENCODING_SHORT, CMD_OPT_PTEST_SERVER_URL_ENCODING, true, "Encoding to be used for url parameters");
 		options.addOption(CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT, CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE, true, "Path to file which contains additional key/value pairs to be forwared to the ptest-server");
 		options.addOption(CMD_OPT_RESULT_IDENTIFIER_SHORT, CMD_OPT_RESULT_IDENTIFIER, true, "Key to identify results on the ptest-server (to be used with 'collect' option only)");
-		options.addOption(CMD_OPT_SAT_TEST_MAX_RUNTIME_SHORT, CMD_OPT_SAT_TEST_MAX_RUNTIME, true, "Max.average runtime accepted for saturation test before quitting test");
+		options.addOption(CMD_OPT_SAT_TEST_MAX_RUNTIME_SHORT, CMD_OPT_SAT_TEST_MAX_RUNTIME, true, "Max. average runtime accepted for saturation test before quitting test");
+		options.addOption(CMD_OPT_SAT_TEST_THREAD_INCREMENT_SHORT, CMD_OPT_SAT_TEST_THREAD_INCREMENT, true, "Number to increase the running threads by during saturation test (default: 1). The value will be used as initial value.");
 		options.addOption("ri", true, "Response identifier used by the ptest-server to store results");
 		return options;
 	}

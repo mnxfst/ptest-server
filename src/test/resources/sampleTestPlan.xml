@@ -47,12 +47,12 @@
 			<description>Simple wait timer which halts the plan execution for a configured time</description>
 			<class>com.mnxfst.testing.activities.timer.WaitTimerActivity</class>
 			<contextExportVars>
-				<waitTime>waitTime</waitTime>
+				<waitTime>waitTimer</waitTime>
 			</contextExportVars>
 			
 			<nextActivity>finalTimestamp</nextActivity>
 			<configuration>
-				<waitTime>20</waitTime>
+				<waitTime>${global.waitTime}</waitTime>
 			</configuration>
 		</activity>
 		
@@ -86,7 +86,7 @@
 			<description>Write out context</description>
 			<class>com.mnxfst.testing.activities.log.ContextLog4jActivity</class>
 			<configuration>
-				<logMessage>[start=${run.initTimestamp}, end=${run.finalTimestamp}, duration=${run.sampleTestplanExecutionDuration}, requestId=${run.requestId}, ${run.address.city}]</logMessage>
+				<logMessage>[start=${run.initTimestamp}, end=${run.finalTimestamp}, duration=${run.sampleTestplanExecutionDuration}, requestId=${run.requestId}, ${run.address.city}, waitTime=${run.waitTimer}]</logMessage>
 				<conversionPattern>%d [%t] %-5p %c - %m%n</conversionPattern>
 				<logAppender>console</logAppender>
 				<logLevel>WARN</logLevel>
@@ -99,5 +99,4 @@
 		</activity>		
 		 
 	</activities>		
-	<fuck></fuck>
 </ptestplan>

@@ -57,6 +57,12 @@ public class DateValueFormatter implements TSValueFormatter<Date> {
 			throw new TSPlanActivityExecutionException("Invalid date format pattern '"+pattern+"'. Error: " + e.getMessage());
 		}
 		
+		try {
+			this.dateFormatter.format(new Date());
+		} catch(IllegalArgumentException e) {
+			throw new TSPlanActivityExecutionException("Invalid date format pattern '"+pattern+"'. Error: " + e.getMessage());
+		}
+		
 		this.timezone = (String)cfgOpt.getOption(CFG_OPT_TIMEZONE);
 		if(this.timezone == null || this.timezone.isEmpty())
 			throw new TSPlanActivityExecutionException("Missing required timezone option");

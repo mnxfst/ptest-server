@@ -32,7 +32,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.mnxfst.testing.client.TSClient;
 import com.mnxfst.testing.exception.TSClientConfigurationException;
 import com.mnxfst.testing.plan.exec.TSPlanRecurrenceType;
 
@@ -142,30 +141,18 @@ public class TestTSClient {
 			//
 		}
 		
-		String[] args = new String[]{"-recurrenceType", "times"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.TIMES, TSPlanRecurrenceType.TIMES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "times"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-recurrenceType", "millis"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MILLIS, TSPlanRecurrenceType.MILLIS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "millis"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-recurrenceType", "seconds"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.SECONDS, TSPlanRecurrenceType.SECONDS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "seconds"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-recurrenceType", "minutes"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MINUTES, TSPlanRecurrenceType.MINUTES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "minutes"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-recurrenceType", "hours"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.HOURS, TSPlanRecurrenceType.HOURS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "hours"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-recurrenceType", "days"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.DAYS, TSPlanRecurrenceType.DAYS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "days"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 
-		args = new String[]{"-rt", "times"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.TIMES, TSPlanRecurrenceType.TIMES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "times"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-rt", "millis"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MILLIS, TSPlanRecurrenceType.MILLIS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "millis"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-rt", "seconds"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.SECONDS, TSPlanRecurrenceType.SECONDS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "seconds"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-rt", "minutes"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.MINUTES, TSPlanRecurrenceType.MINUTES, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "minutes"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-rt", "hours"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.HOURS, TSPlanRecurrenceType.HOURS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "hours"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
-		args = new String[]{"-rt", "days"};
 		Assert.assertEquals("The type must be equal to " + TSPlanRecurrenceType.DAYS, TSPlanRecurrenceType.DAYS, client.extractRecurrenceType(client.parseCommandline(options, new String[]{"-recurrenceType", "days"}), TSClient.CMD_OPT_RECURRENCE_TYPE, TSClient.CMD_OPT_RECURRENCE_TYPE_SHORT));
 	}
 	
@@ -255,7 +242,6 @@ public class TestTSClient {
 	public void testExtractAdditionalProperties() throws TSClientConfigurationException, ParseException {
 
 		TSClient client = new TSClient();		
-		Options options = client.getTSClientCommandLineOptions();
 		
 		try {
 			client.extractAdditionalProperties(null);
@@ -293,15 +279,16 @@ public class TestTSClient {
 		
 		Properties props = client.extractAdditionalProperties("src/test/resources/tsclient.properties");
 		Assert.assertNotNull("The result must not be null", props);
-		Assert.assertEquals("The size of the properties set must be 8", 8, props.size());
+		Assert.assertEquals("The size of the properties set must be 9", 9, props.size());
 		Assert.assertEquals("The property value must be equal", "001", props.get("scenarioId"));
 		Assert.assertEquals("The property value must be equal", "001", props.get("productId"));
 		Assert.assertEquals("The property value must be equal", "0001", props.get("runId"));
-		Assert.assertEquals("The property value must be equal", "1000", props.get("waitTime"));
+		Assert.assertEquals("The property value must be equal", "999", props.get("waitTime"));
 		Assert.assertEquals("The property value must be equal", "100", props.get("waitTimeDecrement"));
 		Assert.assertEquals("The property value must be equal", "vhost0103", props.get("localhostName"));
 		Assert.assertEquals("The property value must be equal", "TCO", props.get("measuringPointOutId"));
 		Assert.assertEquals("The property value must be equal", "TCI", props.get("measuringPointInId"));
+		Assert.assertEquals("The property value must be equal", "ülzenener straße", props.get("umlautTest"));
 		
 //		
 //		
@@ -309,6 +296,30 @@ public class TestTSClient {
 //		Assert.assertEquals("The name of the file must be file123", "file123", client.extractStringValue(client.parseCommandline(options, args), TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE, TSClient.CMD_OPT_PTEST_SERVER_ADDITIONAL_PROPERTIES_FILE_SHORT));
 //		
 	}
+	/*
+	private static String sampleConfigXML = new String("<?xml version=\"1.0\" encoding=\"UTF-8\"?><ptestplan><name>sample test plan name</name><description>sample description</description>"+
+	"<creationDate>2011-12-20</creationDate><createdBy>mnxfst</createdBy><initActivity>randomRequestIdGenerator</initActivity><globalConfiguration><configuration name=\"rndCtxValGenCfg\"><key>value</key></configuration></globalConfiguration>"+
+	"<activities><!-- random value generator activity --><activity id=\"randomCtxValueGenerator\" name=\"randomRequestIdGenerator\"><description>Generate random variable values and store them under the given variable</description>"+
+	"<class>com.mnxfst.testing.activities.context.random.RandomCtxVarGenActivity</class><configuration><generate.variable.requestId.class>com.mnxfst.testing.activities.context.random.RandomUUIDValueGenerator</generate.variable.requestId.class>"+
+	"<generate.variable.requestId.uuidType>TIME</generate.variable.requestId.uuidType><generate.variable.address.class>com.mnxfst.testing.activities.context.random.RandomAddressGenerator</generate.variable.address.class>"+
+	"</configuration><nextActivity>finalTimestamp</nextActivity></activity><!-- set end timestamp --><activity id=\"timestamp\" name=\"finalTimestamp\"><description>Sets an initial timestamp stored under the given variable</description>"+
+	"<class>com.mnxfst.testing.activities.timer.TimestampActivity</class><contextExportVars><timestamp>finalTimestamp</timestamp></contextExportVars><nextActivity>finish</nextActivity></activity>"+
+	"</activities></ptestplan>");
+*/
 
+	@Test
+	public void testLocalServer() {
+
+		String[] args = new String[]{"-execute", "-t", "4", "-h", "localhost", "-p", "8080", "-r", "1", "-rt", "times", "-tp", "src/test/resources/sampleTestPlan.xml", "-apfile", "src/test/resources/tsclient.properties"};
+		TSClient client = new TSClient();
+		client.executeClient(args);
+		
+	}
+
+	@Test
+	public void testLoadTestplan() throws TSClientConfigurationException {
+		byte[] content = new TSClient().loadTestplan("src/test/resources/tsclient.properties");
+		System.out.println(new String(content));
+	}
 
 }

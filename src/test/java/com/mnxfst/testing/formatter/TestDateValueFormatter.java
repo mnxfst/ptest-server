@@ -19,7 +19,11 @@
 
 package com.mnxfst.testing.formatter;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
+
+import junit.framework.Assert;
 
 import org.junit.Test;
 
@@ -34,12 +38,60 @@ import com.mnxfst.testing.plan.config.TSPlanConfigOption;
 public class TestDateValueFormatter {
 
 	@Test
-	public void testConfigure() {
-		// TODO
+	public void testConfigure() throws TSPlanActivityExecutionException {
+		try {
+			new DateValueFormatter().configure(null);
+			Assert.fail("Invalid configuration provided");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		try {
+			new DateValueFormatter().configure(new TSPlanConfigOption());
+			Assert.fail("Invalid configuration provided");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		
+		TSPlanConfigOption cfg = new TSPlanConfigOption();
+		cfg.addOption("pattern", null);
+		try {
+			new DateValueFormatter().configure(cfg);
+			Assert.fail("Invalid pattern");
+		} catch(TSPlanActivityExecutionException e) {
+		}
+
+		cfg.addOption("pattern", "");
+		try {
+			new DateValueFormatter().configure(cfg);
+			Assert.fail("Invalid pattern");
+		} catch(TSPlanActivityExecutionException e) {
+		}
+
+		cfg.addOption("pattern", "invalid");
+		try {
+			new DateValueFormatter().configure(cfg);
+			Assert.fail("Invalid pattern");
+		} catch(TSPlanActivityExecutionException e) {
+		}
+
+		cfg.addOption("pattern", "yyyy-MM-dd HHmm:ss,SSS");
+		try {
+			new DateValueFormatter().configure(cfg);
+			Assert.fail("Missing timezone");
+		} catch(TSPlanActivityExecutionException e) {
+		}
+		
+		cfg.addOption("timezone", "UTC");
+		new DateValueFormatter().configure(cfg);		
 	}
 	
 	@Test
 	public void testFormat() throws TSPlanActivityExecutionException {
+		
+		Date date = new Date();
+		
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
+		format.setTimeZone(TimeZone.getTimeZone("UTC"));
 		
 		TSPlanConfigOption cfgOpt = new TSPlanConfigOption();
 		cfgOpt.addOption("pattern", "yyyy-MM-dd HH:mm:ss,SSS");
@@ -47,7 +99,7 @@ public class TestDateValueFormatter {
 		DateValueFormatter f = new DateValueFormatter();
 		f.configure(cfgOpt);
 		
-		System.out.println(f.format(new Date()));
+		Assert.assertEquals("The strings must be equal", format.format(date), f.format(date)); 
 		
 		
 	}

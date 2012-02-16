@@ -51,7 +51,7 @@ public class TestTSClientPlanExecCallable {
 	public void testParseResponseCode() throws TSClientExecutionException, SAXException, IOException, ParserConfigurationException {
 
 		XPath xpath = XPathFactory.newInstance().newXPath();
-		TSClientPlanExecCallable callable = new TSClientPlanExecCallable("host", 1, "/");
+		TSClientPlanExecCallable callable = new TSClientPlanExecCallable("host", 1, "/", "".getBytes());
 
 		ByteArrayInputStream bin = new ByteArrayInputStream(new String("<testExecutionResponse></testExecutionResponse>").getBytes());
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(bin);
@@ -88,7 +88,7 @@ public class TestTSClientPlanExecCallable {
 	@Test
 	public void testParseResponseIdentifier() throws TSClientExecutionException, SAXException, IOException, ParserConfigurationException {
 		XPath xpath = XPathFactory.newInstance().newXPath();
-		TSClientPlanExecCallable callable = new TSClientPlanExecCallable("host", 1, "/");
+		TSClientPlanExecCallable callable = new TSClientPlanExecCallable("host", 1, "/", "".getBytes());
 
 		ByteArrayInputStream bin = new ByteArrayInputStream(new String("<testExecutionResponse></testExecutionResponse>").getBytes());
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(bin);
@@ -116,7 +116,7 @@ public class TestTSClientPlanExecCallable {
 	@Test
 	public void testParseErrorCodes() throws SAXException, IOException, ParserConfigurationException, TSClientExecutionException, XPathExpressionException {
 		XPath xpath = XPathFactory.newInstance().newXPath();
-		TSClientPlanExecCallable callable = new TSClientPlanExecCallable("host", 1, "/");
+		TSClientPlanExecCallable callable = new TSClientPlanExecCallable("host", 1, "/", "".getBytes());
 
 		ByteArrayInputStream bin = new ByteArrayInputStream(new String("<testExecutionResponse></testExecutionResponse>").getBytes());
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(bin);

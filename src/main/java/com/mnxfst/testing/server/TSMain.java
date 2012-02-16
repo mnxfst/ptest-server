@@ -23,17 +23,13 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 import com.mnxfst.testing.AbstractTSCommandLineTool;
-import com.mnxfst.testing.client.TSClient;
 import com.mnxfst.testing.exception.TSClientConfigurationException;
 
 /**
@@ -47,6 +43,8 @@ public class TSMain extends AbstractTSCommandLineTool {
 	public static final String CMD_OPT_PORT_SHORT = "p";
 	public static final String CMD_OPT_HOSTNAME = "hostname";
 	public static final String CMD_OPT_HOSTNAME_SHORT = "h";
+	public static final String CMD_OPT_THREAD_POOL_SIZE = "poolSize";
+	public static final String CMD_OPT_THREAD_POOL_SIZE_SHORT = "ps";
 
 	
 	/**
@@ -67,15 +65,7 @@ public class TSMain extends AbstractTSCommandLineTool {
 		} catch(ParseException e) {
 			System.out.println("Failed to parse command-line");
 		}
-		
-		int port = -1;
-		try {
-			port = extractIntValue(commandLine, CMD_OPT_PORT, CMD_OPT_PORT_SHORT);
-		} catch (TSClientConfigurationException e) {
-			printHelp(commandLineOptions, "Failed to parse port from command-line");
-			return;
-		}
-		
+
 		String hostname = null;
 		try {
 			hostname = extractStringValue(commandLine, CMD_OPT_HOSTNAME, CMD_OPT_HOSTNAME_SHORT);
@@ -83,15 +73,37 @@ public class TSMain extends AbstractTSCommandLineTool {
 			printHelp(commandLineOptions, "Failed to parse host name from command-line");
 			return;
 		}
-		
+
+		int port = -1;
+		try {
+			port = extractIntValue(commandLine, CMD_OPT_PORT, CMD_OPT_PORT_SHORT);
+		} catch (TSClientConfigurationException e) {
+			printHelp(commandLineOptions, "Failed to parse port from command-line");
+			return;
+		}
+
 		if(port < 1) {
 			printHelp(commandLineOptions, "Failed to parse port from command-line");
 			return;
 		}
-			
 
-		// TODO fetch thread pool size and protocol from command line or properties
-		ChannelFactory channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
+		int threadPoolSize = -1;
+		try {
+			threadPoolSize = extractIntValue(commandLine, CMD_OPT_THREAD_POOL_SIZE, CMD_OPT_THREAD_POOL_SIZE_SHORT);
+		} catch(TSClientConfigurationException e) {
+			threadPoolSize = -1;
+		}
+		
+		System.out.println("ptest-server");
+		System.out.println("hostname: " + hostname);
+		System.out.println("port: " + port);
+		System.out.println("server socket thread pool size: " + threadPoolSize);
+
+		ChannelFactory channelFactory = null;
+		if(threadPoolSize > 0)
+			channelFactory = new NioServerSocketChannelFactory(Executors.newFixedThreadPool(threadPoolSize), Executors.newFixedThreadPool(threadPoolSize));
+		else
+			channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
 		
 		ServerBootstrap serverBootstrap = new ServerBootstrap(channelFactory);
 		serverBootstrap.setPipelineFactory(new TSPipelineFactory(hostname, port));
@@ -111,6 +123,7 @@ public class TSMain extends AbstractTSCommandLineTool {
 		Options options = new Options();
 		options.addOption(CMD_OPT_HOSTNAME_SHORT, CMD_OPT_HOSTNAME, true, "Host name to be provided to each test plan context as global variable");
 		options.addOption(CMD_OPT_PORT_SHORT, CMD_OPT_PORT, true, "Port to be used for setting up communication");
+		options.addOption(CMD_OPT_THREAD_POOL_SIZE_SHORT, CMD_OPT_THREAD_POOL_SIZE, true, "Size used for setting up the server socket thread pool (optional)");
 		return options;
 	}
 	

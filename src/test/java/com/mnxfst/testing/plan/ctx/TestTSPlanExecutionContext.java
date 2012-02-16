@@ -28,7 +28,6 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.mnxfst.testing.activities.context.random.RandomAddressGenerator;
 import com.mnxfst.testing.exception.TSVariableEvaluationFailedException;
 
 /**

@@ -41,7 +41,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.mnxfst.testing.exception.TSClientExecutionException;
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.exception.TSPlanConfigurationFormatException;
 import com.mnxfst.testing.exception.TSPlanExecutionFailedException;
@@ -76,12 +75,14 @@ public class TestSaturationExec {
 		// instantiate environment and execute tests
 		TSPlanExecEnvironment env = null;
 		TSPlanExecEnvironmentResult result = null;
-		
+		Map<String, Serializable> addVars = new HashMap<String, Serializable>();
+		addVars.put("waitTime", Long.valueOf(1));
+
 		for(threads = 1; threads <= 30;  threads++) {
 			System.out.println("--------------------------------------------------------------------");
 			System.out.println("Threads: " + threads);
 			for(recurrences = 1; recurrences <= 30; recurrences++) {
-				env = new TSPlanExecEnvironment("env-"+threads+"-"+recurrences, plan, recurrences, TSPlanRecurrenceType.TIMES, threads);
+				env = new TSPlanExecEnvironment("env-"+threads+"-"+recurrences, plan, recurrences, TSPlanRecurrenceType.TIMES, threads, addVars);
 				result = env.execute();
 				System.out.println("\tThreads: " + threads + ", recurrences: " + recurrences + ", overallAvg: " + result.getAverageDurationMillis() + ", avgDuration: " + result.getSingleRunExecutionDurationAverage() + ", min: " + result.getSingleRunExecutionDurationMin() + ", max: " + result.getSingleRunExecutionDurationMax());
 				warmupRuns = warmupRuns - 1;
@@ -224,10 +225,8 @@ public class TestSaturationExec {
 		
 		int threads = 1;
 		int recurrences = 1;
-		int maxRuntime = 40;
-		int warmupRuns = 5;
 
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss,SSS");
+//		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss,SSS");
 
 //		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/AddressIntTestPlan.xml");
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("c:/temp/placeOrderTestPlan_noTimeouts.xml");

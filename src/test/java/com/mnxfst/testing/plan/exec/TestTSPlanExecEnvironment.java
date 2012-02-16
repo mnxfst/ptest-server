@@ -90,18 +90,20 @@ public class TestTSPlanExecEnvironment {
 		} catch(TSPlanInstantiationException e) {
 			//
 		}		
+		Map<String, Serializable> addVars = new HashMap<String, Serializable>();
+		addVars.put("waitTime", Long.valueOf(1));
 
-		TSPlanExecEnvironment env = new TSPlanExecEnvironment("test-env", plan, 10, TSPlanRecurrenceType.TIMES, 2);
+		TSPlanExecEnvironment env = new TSPlanExecEnvironment("test-env", plan, 10, TSPlanRecurrenceType.TIMES, 2, addVars);
 
 		TSPlanExecEnvironmentResult results = env.execute();
 		Assert.assertNotNull("The result set must not be null", results);
 		
-		env = new TSPlanExecEnvironment("test-env", plan, 100, TSPlanRecurrenceType.MILLIS, 2);
+		env = new TSPlanExecEnvironment("test-env", plan, 100, TSPlanRecurrenceType.MILLIS, 2, addVars);
 		results = env.execute();
 		Assert.assertNotNull("The result must not be null", results);
 		Assert.assertTrue("The execution time must be greater than 100ms", 100 <= (results.getEndMillis() - results.getStartMillis()));
 		
-		env = new TSPlanExecEnvironment("test-env", plan, 1, TSPlanRecurrenceType.SECONDS, 2);
+		env = new TSPlanExecEnvironment("test-env", plan, 1, TSPlanRecurrenceType.SECONDS, 2, addVars);
 		results = env.execute();
 		Assert.assertNotNull("The result must not be null", results);
 		Assert.assertTrue("The execution time must be greater than 1000ms", 1000 <= (results.getEndMillis() - results.getStartMillis()));
@@ -120,6 +122,8 @@ public class TestTSPlanExecEnvironment {
 		// TODO test for existence
 		Map<String, Serializable> vars = new HashMap<String, Serializable>();
 		vars.put("test", "var");
+		vars.put("waitTime", Long.valueOf(1));
+
 		// instantiate environment and execute tests
 		TSPlanExecEnvironment env = new TSPlanExecEnvironment("env-1", plan, 5, TSPlanRecurrenceType.TIMES, 8, vars);
 		TSPlanExecEnvironmentResult result = env.execute();

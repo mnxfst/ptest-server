@@ -26,8 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
@@ -270,6 +268,10 @@ public class TSPlanExecutor implements Callable<TSPlanExecutorResult> {
 					if(loopCounter >= recurrences)
 						keepRunning = false;
 					break;
+				}
+				default: {
+					keepRunning = false;
+					logger.error("Invalid recurrence type " + recurrenceType);
 				}
 
 			}

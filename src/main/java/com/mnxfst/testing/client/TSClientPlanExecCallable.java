@@ -21,6 +21,8 @@ package com.mnxfst.testing.client;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,11 +38,12 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
@@ -67,14 +70,22 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 	private static final int RESPONSE_CODE_EXECUTION_STARTED = 1;
 	private static final int RESPONSE_CODE_ERROR = 4;	
 
-	private HttpGet getMethod = null;
+//	private HttpGet getMethod = null;
 	private HttpHost httpHost = null;
 	private DefaultHttpClient httpClient = null;
+	private HttpPost postMethod = null;
 	
 	// TODO test and refactor from name value pair to something different and check the content copy method
-	public TSClientPlanExecCallable(String hostname, int port, String uri) {
+	public TSClientPlanExecCallable(String hostname, int port, String uri, byte[] testplan) {
 		this.httpHost = new HttpHost(hostname, port);
-		this.getMethod = new HttpGet(uri.toString());		
+//		this.getMethod = new HttpGet(uri.toString());
+		this.postMethod = new HttpPost(uri.toString());
+		try {
+			String convertedTestplan = new String(testplan, "UTF-8");
+			postMethod.setEntity(new StringEntity(TSClient.REQUEST_PARAMETER_TESTPLAN+"="+URLEncoder.encode(convertedTestplan, "UTF-8")));
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Unsupported encoding exception. Error: " + e.getMessage());
+		}
 
 		// TODO setting?
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
@@ -96,7 +107,8 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 
 		InputStream ptestServerInputStream = null;
 		try {
-			HttpResponse response = httpClient.execute(httpHost, getMethod);
+//			HttpResponse response = httpClient.execute(httpHost, getMethod);
+			HttpResponse response = httpClient.execute(httpHost, postMethod);
 			ptestServerInputStream = response.getEntity().getContent();
 			
 			XPath xpath = XPathFactory.newInstance().newXPath();
@@ -134,9 +146,9 @@ public class TSClientPlanExecCallable implements Callable<NameValuePair> {
 			}
 			
 		} catch(ClientProtocolException e) {
-			throw new TSClientExecutionException("Failed to call " + httpHost.getHostName() + ":" + httpHost.getPort() + "/"+ getMethod.getURI() + ". Error: " + e.getMessage());
+			throw new TSClientExecutionException("Failed to call " + httpHost.getHostName() + ":" + httpHost.getPort() + "/"+ postMethod.getURI() + ". Error: " + e.getMessage());
 		} catch(IOException e) {
-			throw new TSClientExecutionException("Failed to call " + httpHost.getHostName() + ":" + httpHost.getPort() + "/"+ getMethod.getURI() + ". Error: " + e.getMessage());
+			throw new TSClientExecutionException("Failed to call " + httpHost.getHostName() + ":" + httpHost.getPort() + "/"+ postMethod.getURI() + ". Error: " + e.getMessage());
 		} finally {
 			if(ptestServerInputStream != null) {
 				try {
