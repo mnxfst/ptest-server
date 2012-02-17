@@ -20,7 +20,9 @@
 package com.mnxfst.testing.activities.jms;
 
 import java.io.UnsupportedEncodingException;
+import java.security.Principal;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 
 import javax.jms.Connection;
@@ -30,6 +32,7 @@ import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
@@ -52,6 +55,13 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 	
 	private static final String CFG_OPT_PAYLOAD_TEMPLATE = "jmsPayloadTemplate";
 	private static final String CFG_OPT_DESTINATION_NAME = "destinationName";
+	
+	private static final String CFG_OPT_JNDI_CONNECTION_FACTORY_CLASS = "connectionFactoryClass";
+	private static final String CFG_OPT_JNDI_CONNECTION_FACTORY_LOOKUP_NAME = "connectionFactoryLookupName";
+	private static final String CFG_OPT_JNDI_PROVIDER_URL_LOOKUP_NAME = "providerUrl";
+	private static final String CFG_OPT_JNDI_SECURITY_PRINCIPAL_LOOKUP_NAME = "principal";
+	private static final String CFG_OPT_JNDI_SECURITY_CREDENTIALS_LOOKUP_NAME = "credentials";
+	private static final String CFG_OPT_JNDI_VENDOR_SPECIFIC_PREFIX = "vendor.config.";
 	
 	/** destination name, eg. myTopic or myQueue */
 	private String destinationName = null;
@@ -91,10 +101,46 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		
 		this.jmsPayloadVariables = getContextVariablesFromString(jmsMessageTemplate);
 		
-		try {
+		String connectionFactoryClass = (String)cfgOpt.getOption(CFG_OPT_JNDI_CONNECTION_FACTORY_CLASS);
+		if(connectionFactoryClass == null || connectionFactoryClass.isEmpty())
+			throw new TSPlanActivityExecutionException("Missing required connection factory class for activity '"+getName()+"'");
+		
+		String connectionFactoryLookupName = (String)cfgOpt.getOption(CFG_OPT_JNDI_CONNECTION_FACTORY_LOOKUP_NAME);
+		if(connectionFactoryLookupName == null || connectionFactoryLookupName.isEmpty())
+			throw new TSPlanActivityExecutionException("Missing required connection factory lookup name for activity '"+getName()+"'");
+		
+		String providerUrl = (String)cfgOpt.getOption(CFG_OPT_JNDI_PROVIDER_URL_LOOKUP_NAME);
+		if(providerUrl == null || providerUrl.isEmpty())
+			throw new TSPlanActivityExecutionException("Missing required provider url for activity '"+getName()+"'");
+		
+		String securityPrincipal = (String)cfgOpt.getOption(CFG_OPT_JNDI_SECURITY_PRINCIPAL_LOOKUP_NAME);
+		String securityCredentials = (String)cfgOpt.getOption(CFG_OPT_JNDI_SECURITY_CREDENTIALS_LOOKUP_NAME);
+		
+		Hashtable<String, String> jndiEnvironment = new Hashtable<String, String>();
+		jndiEnvironment.put(Context.INITIAL_CONTEXT_FACTORY, connectionFactoryClass);
+		jndiEnvironment.put(Context.PROVIDER_URL, providerUrl);
+		
+		if(securityPrincipal != null && !securityPrincipal.isEmpty())
+			jndiEnvironment.put(Context.SECURITY_PRINCIPAL, securityPrincipal);
+		if(securityCredentials != null && !securityCredentials.isEmpty())
+			jndiEnvironment.put(Context.SECURITY_CREDENTIALS, securityCredentials);
+
+		StringBuffer additionalJndiProps = new StringBuffer();
+		// add additional vendor specific configuration options
+		for(String cfgKey : cfgOpt.getOptions().keySet()) {
+			if(cfgKey.startsWith(CFG_OPT_JNDI_VENDOR_SPECIFIC_PREFIX)) {
+				String value = (String)cfgOpt.getOption(cfgKey);
+				jndiEnvironment.put(cfgKey.substring(CFG_OPT_JNDI_VENDOR_SPECIFIC_PREFIX.length()), value);
+				additionalJndiProps.append(", ").append(cfgKey.substring(CFG_OPT_JNDI_VENDOR_SPECIFIC_PREFIX.length())).append("=").append(value);
+			}
+		}
+		
+		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+"]");
+		
+		try {						
 			// fetches the settings provided via jndi.properties from classpath
-			this.initialJNDIContext = new InitialContext();
-			this.jmsConnectionFactory = (ConnectionFactory)initialJNDIContext.lookup("ConnectionFactory");
+			this.initialJNDIContext = new InitialContext(jndiEnvironment);
+			this.jmsConnectionFactory = (ConnectionFactory)initialJNDIContext.lookup(connectionFactoryLookupName);
 			this.jmsConnection = this.jmsConnectionFactory.createConnection();
 			this.jmsSession = this.jmsConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 			this.jmsDestination = (Destination)initialJNDIContext.lookup(this.destinationName);
@@ -106,9 +152,8 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 			logger.error("Error while sending a JMS message. Error: " + e.getMessage(), e);
 			throw new TSPlanActivityExecutionException("Failed to setup jms connection. Error: " + e.getMessage(), e);
 		}
-
-
 	}
+	
 
 	/**
 	 * @see com.mnxfst.testing.activities.TSPlanActivity#execute(com.mnxfst.testing.plan.ctx.ITSPlanExecutionContext)
@@ -120,6 +165,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		try {
 			payload = new String(this.jmsMessageTemplate.getBytes(), "UTF-8");
 		} catch(UnsupportedEncodingException e) {
+			logger.error("Failed to convert jms message template into UTF-8 string. Error: " + e.getMessage());
 			throw new TSPlanActivityExecutionException("Failed to convert jms message template into UTF-8 string. Error: " + e.getMessage());
 		}
 		for(String logPattern : jmsPayloadVariables.keySet()) {

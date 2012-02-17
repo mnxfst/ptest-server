@@ -19,6 +19,8 @@
 
 package com.mnxfst.testing.activities.jms;
 
+import java.security.AccessControlException;
+
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -33,6 +35,18 @@ import com.mnxfst.testing.plan.config.TSPlanConfigOption;
  */
 public class TestJMSDestinationRequestActivity {
 
+	private static final String JMS_TESTPLAN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ptestplan><name>JMS Testplan</name><description>Sample</description><creationDate>2012-02-18</creationDate><createdBy>mnxfst</createdBy><initActivity>jms</initActivity>"+
+	"<activities><activity id=\"jmsMessage\" name=\"jms\">"+
+			"<description>Sends a JMS message</description>"+
+			"<class>com.mnxfst.testing.activities.jms.JMSDestinationRequestActivity</class>"+
+			"<contextExportVars><timestamp>ctxMsg</timestamp></contextExportVars>"+
+			"<configuration>"+
+			"<destinationName>esptopic</destinationName>"+
+			"<jmsPayloadTemplate><![CDATA[<payload>content</payload>]]></jmsPayloadTemplate>"+
+			"</configuration>"+
+			"<nextActivity>finish</nextActivity>"+
+			"</activity></activities></ptestplan>";
+	
 	@Test
 	public void testInitialize() throws TSPlanActivityExecutionException {
 		
@@ -55,11 +69,19 @@ public class TestJMSDestinationRequestActivity {
 		TSPlanConfigOption cfgOpt = new TSPlanConfigOption();
 		try {
 			activity.initialize(cfgOpt);
-			Assert.fail("Destination name missing");
+			Assert.fail("Connection factory class missing");
 		} catch(TSPlanActivityExecutionException e) {
 			//
 		}
 		
+		cfgOpt.addOption("connectionFactoryClass", "content");		
+		try {
+			activity.initialize(cfgOpt);
+			Assert.fail("Destination name missing");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+				
 		cfgOpt.addOption("destinationName", "espTestTopic");
 		
 		try {
@@ -70,6 +92,45 @@ public class TestJMSDestinationRequestActivity {
 		}
 		
 		cfgOpt.addOption("jmsPayloadTemplate", "content");		
-//		activity.initialize(cfgOpt); TODO MOCK!
+		try {
+			activity.initialize(cfgOpt);
+			Assert.fail("Connection factory jndi name missing");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		
+		cfgOpt.addOption("connectionFactoryLookupName", "content");		
+		try {
+			activity.initialize(cfgOpt);
+			Assert.fail("Missing required provider url missing");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		
+		cfgOpt.addOption("providerUrl", "content");		
+		try {
+			activity.initialize(cfgOpt);
+			Assert.fail("Missing required principal missing");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		
+		cfgOpt.addOption("principal", "content");
+		try {
+			activity.initialize(cfgOpt);
+			Assert.fail("Missing required credentials missing");
+		} catch(TSPlanActivityExecutionException e) {
+			//
+		}
+		
+		cfgOpt.addOption("credentials", "content");		
+		cfgOpt.addOption("vendor.config.com.sonicsw.jndi.mfcontext.domain", "dmTestDomain");
+		try {
+			activity.initialize(cfgOpt);
+			Assert.fail("Invalid options");
+		} catch(TSPlanActivityExecutionException e) {
+			// 
+		}
 	}
 }
+
