@@ -20,7 +20,8 @@
 package com.mnxfst.testing.activities.jms;
 
 import java.io.UnsupportedEncodingException;
-import java.security.Principal;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -61,6 +62,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 	private static final String CFG_OPT_JNDI_PROVIDER_URL_LOOKUP_NAME = "providerUrl";
 	private static final String CFG_OPT_JNDI_SECURITY_PRINCIPAL_LOOKUP_NAME = "principal";
 	private static final String CFG_OPT_JNDI_SECURITY_CREDENTIALS_LOOKUP_NAME = "credentials";
+	private static final String CFG_OPT_CLIENT_ID = "clientId";
 	private static final String CFG_OPT_JNDI_VENDOR_SPECIFIC_PREFIX = "vendor.config.";
 	
 	/** destination name, eg. myTopic or myQueue */
@@ -113,6 +115,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		if(providerUrl == null || providerUrl.isEmpty())
 			throw new TSPlanActivityExecutionException("Missing required provider url for activity '"+getName()+"'");
 		
+		String clientId = (String)cfgOpt.getOption(CFG_OPT_CLIENT_ID);		
 		String securityPrincipal = (String)cfgOpt.getOption(CFG_OPT_JNDI_SECURITY_PRINCIPAL_LOOKUP_NAME);
 		String securityCredentials = (String)cfgOpt.getOption(CFG_OPT_JNDI_SECURITY_CREDENTIALS_LOOKUP_NAME);
 		
@@ -135,13 +138,20 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 			}
 		}
 		
-		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+"]");
+		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+", clientId="+clientId+"]");
 		
 		try {						
 			// fetches the settings provided via jndi.properties from classpath
 			this.initialJNDIContext = new InitialContext(jndiEnvironment);
 			this.jmsConnectionFactory = (ConnectionFactory)initialJNDIContext.lookup(connectionFactoryLookupName);
 			this.jmsConnection = this.jmsConnectionFactory.createConnection();
+			if(clientId != null && !clientId.isEmpty()) {
+				try {
+					this.jmsConnection.setClientID(clientId + "-" + InetAddress.getLocalHost().getHostName());
+				} catch(UnknownHostException e) {
+					logger.error("Failed to read local host name. Client identifier will not be set for JMS connection. Error: " + e.getMessage());
+				}
+			}
 			this.jmsSession = this.jmsConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 			this.jmsDestination = (Destination)initialJNDIContext.lookup(this.destinationName);
 			this.jmsMessageProducer = this.jmsSession.createProducer(this.jmsDestination);
@@ -200,7 +210,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		try {
 			this.jmsMessageProducer.close();
 			this.jmsSession.close();
-			this.jmsConnection.close();		
+			this.jmsConnection.close();			
 		} catch (JMSException e) {
 			logger.error("Failed to shutdown JMS activity '"+getName()+"'. Error: " + e.getMessage(), e);
 		}
