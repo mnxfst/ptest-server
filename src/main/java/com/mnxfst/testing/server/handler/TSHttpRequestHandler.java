@@ -222,7 +222,7 @@ public class TSHttpRequestHandler extends SimpleChannelUpstreamHandler {
 		} else {
 						
 			try {
-				Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(testPlan.getBytes()));
+				Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(testPlan.getBytes("UTF-8")));
 				TSPlan plan = TSPlanBuilder.getInstance().buildPlan(doc);
 				TSPlanExecEnvironment env = new TSPlanExecEnvironment("ptest-server", plan, numOfRecurrences, recurrenceType, numOfThreads, testPlanVars);
 				UUID resultIdentifier = UUID.fromString(new com.eaio.uuid.UUID().toString());

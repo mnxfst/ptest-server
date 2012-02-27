@@ -19,6 +19,7 @@
 
 package com.mnxfst.testing.activities.jms;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -138,7 +139,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 			}
 		}
 		
-		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+", clientId="+clientId+"]");
+		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+", clientId="+clientId+",]");
 		
 		try {						
 			// fetches the settings provided via jndi.properties from classpath
