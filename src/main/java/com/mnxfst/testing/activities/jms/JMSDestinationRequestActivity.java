@@ -29,6 +29,7 @@ import java.util.Map;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
@@ -55,8 +56,12 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 
 	private static final Logger logger = Logger.getLogger(JMSDestinationRequestActivity.class);
 	
+	private static final String CFG_VAL_DELIVERY_MODE_PERSISTENT = "persistent";
+	private static final String CFG_VAL_DELIVERY_MODE_NON_PERSISTENT = "non_persistent";
+	
 	private static final String CFG_OPT_PAYLOAD_TEMPLATE = "jmsPayloadTemplate";
 	private static final String CFG_OPT_DESTINATION_NAME = "destinationName";
+	private static final String CFG_OPT_DELIVERY_MODE = "deliveryMode";
 	
 	private static final String CFG_OPT_JNDI_CONNECTION_FACTORY_CLASS = "connectionFactoryClass";
 	private static final String CFG_OPT_JNDI_CONNECTION_FACTORY_LOOKUP_NAME = "connectionFactoryLookupName";
@@ -119,6 +124,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 		String clientId = (String)cfgOpt.getOption(CFG_OPT_CLIENT_ID);		
 		String securityPrincipal = (String)cfgOpt.getOption(CFG_OPT_JNDI_SECURITY_PRINCIPAL_LOOKUP_NAME);
 		String securityCredentials = (String)cfgOpt.getOption(CFG_OPT_JNDI_SECURITY_CREDENTIALS_LOOKUP_NAME);
+		String deliveryMode = (String) cfgOpt.getOption(CFG_OPT_DELIVERY_MODE);
 		
 		Hashtable<String, String> jndiEnvironment = new Hashtable<String, String>();
 		jndiEnvironment.put(Context.INITIAL_CONTEXT_FACTORY, connectionFactoryClass);
@@ -139,7 +145,7 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 			}
 		}
 		
-		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+", clientId="+clientId+",]");
+		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+", clientId="+clientId+", deliveryMode="+deliveryMode+"]");
 		
 		try {						
 			// fetches the settings provided via jndi.properties from classpath
@@ -156,6 +162,18 @@ public class JMSDestinationRequestActivity extends AbstractTSPlanActivity {
 			this.jmsSession = this.jmsConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 			this.jmsDestination = (Destination)initialJNDIContext.lookup(this.destinationName);
 			this.jmsMessageProducer = this.jmsSession.createProducer(this.jmsDestination);
+			if(deliveryMode != null) {
+				deliveryMode = deliveryMode.trim();
+				if(deliveryMode.equalsIgnoreCase(CFG_VAL_DELIVERY_MODE_PERSISTENT)) 			
+					this.jmsMessageProducer.setDeliveryMode(DeliveryMode.PERSISTENT);
+				else if(deliveryMode.equalsIgnoreCase(CFG_VAL_DELIVERY_MODE_NON_PERSISTENT)) 
+					this.jmsMessageProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+				else
+					throw new TSPlanActivityExecutionException("Unknown delivery mode: " + deliveryMode);
+			} else {
+				throw new TSPlanActivityExecutionException("Missing required option 'deliveryMode' in activity configuration");
+			}
+				
 		} catch (NamingException e) {
 			logger.error("Error while initializing the naming context. Error: " + e.getMessage(), e);
 			throw new TSPlanActivityExecutionException("Failed to set up initial JNDI context. Error: " + e.getMessage(), e);
