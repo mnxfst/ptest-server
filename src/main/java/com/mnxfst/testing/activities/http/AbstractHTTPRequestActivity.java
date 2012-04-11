@@ -31,6 +31,8 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.conn.scheme.PlainSocketFactory;
@@ -78,6 +80,11 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 	private static final String CFG_OPT_PROXY_PORT = "proxyPort";
 	private static final String CFG_OPT_PROXY_USER = "proxyUser";
 	private static final String CFG_OPT_PROXY_PASSWORD = "proxyPassword";
+	
+	private static final String CFG_OPT_BASIC_AUTH_USERNAME = "basicAuthUsername";
+	private static final String CFG_OPT_BASIC_AUTH_PASSWORD = "basicAuthPassword";
+	private static final String CFG_OPT_BASIC_AUTH_HOST_SCOPE = "basicAuthHostScope";
+	private static final String CFG_OPT_BASIC_AUTH_PORT_SCOPE = "basicAuthPortScope";
 	
 	private static final String CFG_OPT_USER_AGENT = "userAgent";
 	private static final String CFG_OPT_HTTP_PROTOCOL_VERSION = "httpProtocolVersion"; 
@@ -165,6 +172,14 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
     protected ConnectionReuseStrategy httpConnectionStrategy = new DefaultConnectionReuseStrategy();
     /** additional header information */
     protected Map<String, String> header = new HashMap<String, String>();
+    /** http basic authentication - username */
+    private String basicAuthUsername = null;
+    /** http basic authentication - password */
+    private String basicAuthPassword = null;
+    /** http basic authentication - host scope */
+    private String basicAuthHostScope = null;
+    /** http basic authentication - port scope */
+    private int basicAuthPortScope = -1;
     
 	/////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -195,6 +210,21 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 				throw new TSPlanActivityExecutionException("Failed to parse expected numerical value for config option '"+CFG_OPT_PORT+"' for activity '"+getName()+"'");
 			}
 		}
+		
+		// fetch username and password
+		this.basicAuthUsername = (String)cfg.getOption(CFG_OPT_BASIC_AUTH_USERNAME);
+		this.basicAuthPassword = (String)cfg.getOption(CFG_OPT_BASIC_AUTH_PASSWORD);
+		this.basicAuthHostScope = (String)cfg.getOption(CFG_OPT_BASIC_AUTH_HOST_SCOPE);
+		
+		String authPortScopeStr = (String)cfg.getOption(CFG_OPT_BASIC_AUTH_PORT_SCOPE);
+		if(authPortScopeStr != null && !authPortScopeStr.trim().isEmpty()) {
+			try {
+				this.basicAuthPortScope = Integer.parseInt(authPortScopeStr.trim());
+			} catch(NumberFormatException e) {
+				throw new TSPlanActivityExecutionException("Failed to parse expected numerical value for config option '"+CFG_OPT_BASIC_AUTH_PORT_SCOPE +"' for activity '"+getName()+"'");
+			}
+		}
+			
 		
 		if(this.port <= 0)
 			this.port = 80;
@@ -282,7 +312,7 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 		HttpProtocolParams.setUserAgent(httpParameters, userAgent);
 		HttpProtocolParams.setVersion(httpParameters, httpVersion);
 		HttpProtocolParams.setContentCharset(httpParameters, contentChartset);
-		HttpProtocolParams.setUseExpectContinue(httpParameters, expectContinue);
+		HttpProtocolParams.setUseExpectContinue(httpParameters, expectContinue);		
 		
 		String httpProcStr = (String)cfg.getOption(CFG_OPT_HTTP_REQUEST_PROCESSORS);
 		if(httpProcStr != null && !httpProcStr.isEmpty()) {
@@ -376,23 +406,29 @@ public abstract class AbstractHTTPRequestActivity extends AbstractTSPlanActivity
 		
 		ThreadSafeClientConnManager threadSafeClientConnectionManager = new ThreadSafeClientConnManager(schemeRegistry);
 		threadSafeClientConnectionManager.setMaxTotal(maxConnections);
-		threadSafeClientConnectionManager.setDefaultMaxPerRoute(maxConnections);
+		threadSafeClientConnectionManager.setDefaultMaxPerRoute(maxConnections);		
 		this.httpClient = new DefaultHttpClient(threadSafeClientConnectionManager);
-//		this.httpClient.setParams(httpParameters);
 		
-		
+		if(this.basicAuthUsername != null && !this.basicAuthUsername.trim().isEmpty() && this.basicAuthPassword != null && !this.basicAuthPassword.trim().isEmpty()) {
+			UsernamePasswordCredentials creds = new UsernamePasswordCredentials(this.basicAuthUsername, this.basicAuthPassword);
+			AuthScope authScope = null;
+			if(basicAuthHostScope != null && !basicAuthHostScope.isEmpty() && basicAuthPortScope > 0) {
+				authScope = new AuthScope(basicAuthHostScope, basicAuthPortScope);
+			} else {
+				authScope = new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT);
+			}
+			
+			
+			this.httpClient.getCredentialsProvider().setCredentials(authScope, creds);
+			
+			if(logger.isDebugEnabled())
+				logger.debug("activity[name="+getName()+", id="+getId()+", credentials=("+creds.getUserName()+", " + creds.getPassword()+"), authScope=("+authScope.getHost()+":"+authScope.getPort()+")]");
+		}
 		
 		if(logger.isDebugEnabled())
 			logger.debug("activity[name="+getName()+", id="+getId()+", threadSafeClientConnectionManager=initialized]");
 		
 	}
-
-	
-	
-	
-	
-	
-	
 	
 }
 
