@@ -37,8 +37,10 @@ import com.mnxfst.testing.plan.ctx.TSPlanExecutionContext;
 public class HTTPRequestActivity extends AbstractHTTPRequestActivity {
 
 	private static final String CTX_EXPORT_VAR_RESPONSE_CONTENT = "responseContent";
+	private static final String CTX_EXPORT_VAR_REQUEST_CONTENT = "requestContent";
 	
 	protected String contextExportVariableResponseContent = null;
+	protected String contextExportVariableRequestInput = null;
 	
 	/**
 	 * @see com.mnxfst.testing.activities.http.AbstractHTTPRequestActivity#initialize(com.mnxfst.testing.plan.config.TSPlanConfigOption)
@@ -47,6 +49,7 @@ public class HTTPRequestActivity extends AbstractHTTPRequestActivity {
 		super.initialize(cfg);
 		
 		this.contextExportVariableResponseContent = getContextExportVariables().get(CTX_EXPORT_VAR_RESPONSE_CONTENT);
+		this.contextExportVariableRequestInput = getContextExportVariables().get(CTX_EXPORT_VAR_REQUEST_CONTENT);
 	}
 
 	/**

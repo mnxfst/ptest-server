@@ -21,6 +21,7 @@ package com.mnxfst.testing.activities.http;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -113,6 +114,8 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 			
 		}
 		
+		ctx.addContextValue(contextExportVariableRequestInput, payload, ExecutionContextValueType.RUN);
+		
 		// convert payload into request entity and assign it
 		StringEntity  entity = null;
 		try {
@@ -123,9 +126,10 @@ public class SOAPRequestActivity extends HTTPRequestActivity {
 		}
 		try {
 			HttpResponse response = sendPOSTRequest(entity, header);
-			ctx.addContextValue(contextExportVariableResponseContent, EntityUtils.toString(response.getEntity()), ExecutionContextValueType.RUN);
+			String content = EntityUtils.toString(response.getEntity());
+			ctx.addContextValue(contextExportVariableResponseContent, content, ExecutionContextValueType.RUN);
 		} catch (IOException e) {
-			// TODO log errors
+			logger.error("Error found while accessing remote server: " +e.getMessage(), e);
 		}
 		
 		return ctx;

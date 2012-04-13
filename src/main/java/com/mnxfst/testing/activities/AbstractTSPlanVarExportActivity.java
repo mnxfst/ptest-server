@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 import com.mnxfst.testing.exception.TSPlanActivityExecutionException;
 import com.mnxfst.testing.formatter.DateValueFormatter;
@@ -102,7 +103,7 @@ public abstract class AbstractTSPlanVarExportActivity extends AbstractTSPlanActi
 					return this.dateFormatter.format(new Date((Long)value));
 				else if(logPattern.equalsIgnoreCase("${run.finalDate}"))
 					return this.dateFormatter.format(new Date((Long)value));
-				return value.toString();
+				return Matcher.quoteReplacement(value.toString());
 			}			
 		}
 		return "";
